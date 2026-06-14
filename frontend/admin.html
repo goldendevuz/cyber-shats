@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHATS.KIBER — Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--green:#00ff41;--red:#ff0033;--gold:#ffd700;--blue:#4a90e2;--bg:#060606;--card:#0d0d0d;--sidebar:#080808}
+body{background:var(--bg);color:#ccc;font-family:'Fira Code',monospace;display:flex;min-height:100vh}
+/* SIDEBAR */
+.sidebar{width:240px;background:var(--sidebar);border-right:1px solid #111;flex-shrink:0;display:flex;flex-direction:column}
+.sidebar-logo{padding:20px;border-bottom:1px solid #111;text-align:center}
+.sidebar-logo h1{color:var(--green);font-size:16px;letter-spacing:3px}
+.sidebar-logo p{color:#333;font-size:10px;margin-top:2px}
+.sidebar-admin{padding:14px 20px;border-bottom:1px solid #111;display:flex;align-items:center;gap:10px}
+.admin-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 1s infinite}
+.admin-info{flex:1}
+.admin-info .name{font-size:12px;color:var(--green)}
+.admin-info .role{font-size:10px;color:#444}
+nav{flex:1;padding:8px}
+.nav-group{margin-bottom:4px}
+.nav-label{font-size:9px;color:#333;letter-spacing:2px;padding:8px 12px 4px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:6px;cursor:pointer;font-size:12px;color:#555;transition:.15s;margin-bottom:2px}
+.nav-item:hover{background:rgba(0,255,65,.06);color:var(--green)}
+.nav-item.active{background:rgba(0,255,65,.1);color:var(--green);border-left:2px solid var(--green)}
+.nav-item .badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;padding:2px 6px;border-radius:10px}
+.logout{padding:12px 20px;border-top:1px solid #111}
+.logout button{width:100%;padding:8px;background:transparent;border:1px solid #222;border-radius:6px;color:#444;font-family:'Fira Code',monospace;font-size:11px;cursor:pointer}
+.logout button:hover{border-color:var(--red);color:var(--red)}
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--sidebar);border-bottom:1px solid #111;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.topbar h2{font-size:14px;color:#888;font-weight:400}
+.topbar h2 span{color:var(--green)}
+.time{font-size:11px;color:#333}
+.content{flex:1;overflow-y:auto;padding:24px}
+/* CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid #111;border-radius:10px;padding:20px;position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent,var(--green))}
+.stat-value{font-size:32px;font-weight:700;color:var(--green);margin-bottom:4px}
+.stat-label{font-size:11px;color:#444;letter-spacing:1px}
+.stat-card.red{--accent:var(--red)}.stat-card.red .stat-value{color:var(--red)}
+.stat-card.gold{--accent:var(--gold)}.stat-card.gold .stat-value{color:var(--gold)}
+.stat-card.blue{--accent:var(--blue)}.stat-card.blue .stat-value{color:var(--blue)}
+/* TABLE */
+.section{background:var(--card);border:1px solid #111;border-radius:10px;margin-bottom:20px;overflow:hidden}
+.section-head{padding:16px 20px;border-bottom:1px solid #111;display:flex;align-items:center;justify-content:space-between}
+.section-head h3{font-size:13px;color:var(--green)}
+.btn-sm{padding:6px 14px;border-radius:6px;font-family:'Fira Code',monospace;font-size:11px;cursor:pointer;border:none;font-weight:600;letter-spacing:1px}
+.btn-green{background:rgba(0,255,65,.15);color:var(--green);border:1px solid rgba(0,255,65,.3)}
+.btn-green:hover{background:rgba(0,255,65,.25)}
+.btn-red{background:rgba(255,0,51,.15);color:var(--red);border:1px solid rgba(255,0,51,.3)}
+.btn-red:hover{background:rgba(255,0,51,.25)}
+.btn-gold{background:rgba(255,215,0,.1);color:var(--gold);border:1px solid rgba(255,215,0,.3)}
+.btn-blue{background:rgba(74,144,226,.15);color:var(--blue);border:1px solid rgba(74,144,226,.3)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:10px 16px;text-align:left;color:#333;font-weight:500;letter-spacing:1px;font-size:10px;border-bottom:1px solid #111;text-transform:uppercase}
+td{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(0,255,65,.02)}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600}
+.status-badge.pending{background:rgba(255,215,0,.1);color:var(--gold);border:1px solid rgba(255,215,0,.2)}
+.status-badge.approved{background:rgba(0,255,65,.1);color:var(--green);border:1px solid rgba(0,255,65,.2)}
+.status-badge.rejected{background:rgba(255,0,51,.1);color:var(--red);border:1px solid rgba(255,0,51,.2)}
+.status-badge.blocked{background:#1a1a1a;color:#555;border:1px solid #222}
+.status-badge.pro{background:rgba(255,215,0,.15);color:var(--gold)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+/* MODAL */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;display:none;align-items:center;justify-content:center}
+.modal.open{display:flex}
+.modal-box{background:#0d0d0d;border:1px solid rgba(0,255,65,.2);border-radius:12px;padding:28px;width:100%;max-width:480px}
+.modal-box h3{color:var(--green);font-size:15px;margin-bottom:20px}
+.modal-box label{display:block;font-size:10px;color:#444;margin-bottom:5px;margin-top:14px;letter-spacing:1px}
+.modal-box input,.modal-box textarea,.modal-box select{width:100%;background:rgba(0,255,65,.04);border:1px solid #222;border-radius:6px;padding:10px 12px;color:var(--green);font-family:'Fira Code',monospace;font-size:12px;outline:none}
+.modal-box textarea{resize:vertical;min-height:80px}
+.modal-footer{display:flex;gap:10px;margin-top:20px}
+.modal-footer button{flex:1;padding:10px;border-radius:6px;font-family:'Fira Code',monospace;font-size:12px;cursor:pointer;font-weight:600}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:blink 1s infinite;margin-right:6px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.page{display:none}.page.active{display:block}
+.log-entry{padding:8px 16px;border-bottom:1px solid #0a0a0a;font-size:11px;display:flex;gap:12px}
+.log-time{color:#333;min-width:140px}
+.log-user{color:var(--blue);min-width:100px}
+.log-action{color:var(--green)}
+.log-details{color:#444;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.announce-form{padding:20px}
+.tg-msg{padding:12px 16px;border-bottom:1px solid #0a0a0a;display:flex;flex-direction:column;gap:4px}
+.tg-msg.unread{background:rgba(0,255,65,.04)}
+.tg-msg.out{background:rgba(74,144,226,.05)}
+.tg-msg-head{display:flex;justify-content:space-between;font-size:11px;color:#444}
+.tg-msg-from{color:var(--blue);font-weight:600}
+.tg-msg-from.out{color:var(--green)}
+.tg-msg-text{font-size:12px;color:#ccc;white-space:pre-wrap;word-break:break-word}
+.tg-reply{display:flex;gap:8px;margin-top:6px}
+.tg-reply input{flex:1;background:rgba(0,255,65,.04);border:1px solid #222;border-radius:6px;padding:8px 10px;color:var(--green);font-family:'Fira Code',monospace;font-size:11px;outline:none}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <h1>🛡 SHATS</h1>
+    <p>ADMIN PANEL</p>
+  </div>
+  <div class="sidebar-admin">
+    <div class="admin-dot"></div>
+    <div class="admin-info">
+      <div class="name" id="adminName">superadmin</div>
+      <div class="role" id="adminRole">Super Admin</div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-group">
+      <div class="nav-label">Asosiy</div>
+      <div class="nav-item active" onclick="showPage('dashboard')">📊 Dashboard</div>
+      <div class="nav-item" onclick="showPage('requests')">📥 So'rovlar <span class="badge" id="req-badge">0</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Foydalanuvchilar</div>
+      <div class="nav-item" onclick="showPage('users')">👥 Barcha userlar</div>
+      <div class="nav-item" onclick="showPage('pro-users')">⭐ PRO userlar</div>
+      <div class="nav-item" onclick="showPage('monitor')">👁 Real-time kuzatuv</div>
+      <div class="nav-item" onclick="showPage('blocked')">🚫 Bloklangan IPlar</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Tizim</div>
+      <div class="nav-item" onclick="showPage('telegram')">💬 Telegram <span class="badge" id="tg-badge">0</span></div>
+      <div class="nav-item" onclick="showPage('logs')">📋 Loglar</div>
+      <div class="nav-item" onclick="showPage('announce')">📢 E'lon</div>
+    </div>
+  </nav>
+  <div class="logout">
+    <button onclick="logout()">[ CHIQISH ]</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <h2>SHATS.KIBER / <span id="page-title">Dashboard</span></h2>
+    <div class="time" id="clock"></div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card">
+          <div class="stat-value" id="s-total">0</div>
+          <div class="stat-label">JAMI USERLAR</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-value" id="s-pro">0</div>
+          <div class="stat-label">⭐ PRO</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-value" id="s-free">0</div>
+          <div class="stat-label">FREE</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-value" id="s-pending">0</div>
+          <div class="stat-label">KUTILMOQDA</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-value" id="s-logins">0</div>
+          <div class="stat-label">BUGUN KIRDI</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-value" id="s-blocked" style="font-size:18px">0</div>
+          <div class="stat-label">BLOKLANGAN</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-value" id="s-payments">0</div>
+          <div class="stat-label">TO'LOVLAR</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="s-ai">0</div>
+          <div class="stat-label">AI SO'ROVLAR</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REQUESTS -->
+    <div class="page" id="page-requests">
+      <div class="section">
+        <div class="section-head">
+          <h3>📥 Kutilayotgan so'rovlar</h3>
+          <button class="btn-sm btn-green" onclick="loadRequests()">♻ Yangilash</button>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Ism</th><th>Telefon</th><th>Telegram</th><th>Soha</th><th>Tajriba</th><th>Sana</th><th>Amallar</th></tr>
+          </thead>
+          <tbody id="requests-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="page-users">
+      <div class="section">
+        <div class="section-head">
+          <h3>👥 Barcha foydalanuvchilar</h3>
+          <button class="btn-sm btn-green" onclick="loadUsers()">♻ Yangilash</button>
+        </div>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Ism</th><th>Login</th><th>Parol</th><th>Status</th><th>Kirish</th><th>Amallar</th></tr>
+          </thead>
+          <tbody id="users-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRO USERS -->
+    <div class="page" id="page-pro-users">
+      <div class="section">
+        <div class="section-head">
+          <h3>⭐ PRO Foydalanuvchilar</h3>
+          <button class="btn-sm btn-green" onclick="loadProUsers()">♻ Yangilash</button>
+        </div>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Ism</th><th>Login</th><th>PRO Muddat</th><th>Status</th><th>Amallar</th></tr>
+          </thead>
+          <tbody id="pro-users-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MONITOR -->
+    <div class="page" id="page-monitor">
+      <div class="section">
+        <div class="section-head">
+          <h3><span class="live-dot"></span>Real-time kuzatuv</h3>
+          <button class="btn-sm btn-green" onclick="loadMonitor()">♻ Yangilash</button>
+        </div>
+        <div id="monitor-list"></div>
+      </div>
+    </div>
+
+    <!-- BLOCKED IPs -->
+    <div class="page" id="page-blocked">
+      <div class="section">
+        <div class="section-head">
+          <h3>🚫 Bloklangan IP manzillar</h3>
+          <button class="btn-sm btn-green" onclick="loadBlocked()">♻ Yangilash</button>
+        </div>
+        <table>
+          <thead><tr><th>IP</th><th>Sabab</th><th>Vaqt</th><th>Amal</th></tr></thead>
+          <tbody id="blocked-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TELEGRAM -->
+    <div class="page" id="page-telegram">
+      <div class="section">
+        <div class="section-head">
+          <h3><span class="live-dot"></span>💬 Telegram xabarlari (bot: @shedow_777 admin)</h3>
+          <div class="actions">
+            <button class="btn-sm btn-blue" onclick="markTelegramRead()">✓ O'qilgan deb belgilash</button>
+            <button class="btn-sm btn-green" onclick="loadTelegram()">♻ Yangilash</button>
+          </div>
+        </div>
+        <div id="telegram-list" style="padding:8px 0"></div>
+      </div>
+    </div>
+
+    <!-- LOGS -->
+    <div class="page" id="page-logs">
+      <div class="section">
+        <div class="section-head">
+          <h3>📋 Foydalanuvchi harakatlari logi</h3>
+          <button class="btn-sm btn-green" onclick="loadLogs()">♻ Yangilash</button>
+        </div>
+        <div id="logs-list"></div>
+      </div>
+    </div>
+
+    <!-- ANNOUNCE -->
+    <div class="page" id="page-announce">
+      <div class="section">
+        <div class="section-head"><h3>📢 Barcha foydalanuvchilarga e'lon</h3></div>
+        <div class="announce-form">
+          <label>Sarlavha</label>
+          <input type="text" id="ann-title" placeholder="E'lon sarlavhasi">
+          <label style="margin-top:12px">Matn</label>
+          <textarea id="ann-content" style="width:100%;margin-top:6px" placeholder="E'lon matni..."></textarea>
+          <button class="btn-sm btn-green" style="margin-top:16px;padding:10px 20px" onclick="sendAnnounce()">📢 Yuborish</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL: Tasdiqlash -->
+<div class="modal" id="modal-approve">
+  <div class="modal-box">
+    <h3>✅ Foydalanuvchini tasdiqlash</h3>
+    <p style="font-size:12px;color:#555" id="approve-user-info"></p>
+    <input type="hidden" id="approve-user-id">
+    <label>Versiya</label>
+    <select id="approve-version">
+      <option value="free">FREE (bepul)</option>
+      <option value="pro">PRO (150,000 so'm/oy)</option>
+    </select>
+    <div class="modal-footer">
+      <button class="btn-sm btn-green" style="padding:10px" onclick="confirmApprove()">✅ TASDIQLASH</button>
+      <button class="btn-sm btn-red" style="padding:10px" onclick="closeModal('modal-approve')">✖ BEKOR</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Rad etish -->
+<div class="modal" id="modal-reject">
+  <div class="modal-box">
+    <h3>❌ Rad etish</h3>
+    <input type="hidden" id="reject-user-id">
+    <label>Sabab</label>
+    <textarea id="reject-reason" placeholder="Rad etish sababi..."></textarea>
+    <div class="modal-footer">
+      <button class="btn-sm btn-red" style="padding:10px" onclick="confirmReject()">❌ RAD ETISH</button>
+      <button class="btn-sm btn-blue" style="padding:10px" onclick="closeModal('modal-reject')">✖ BEKOR</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PRO ga o'tkazish -->
+<div class="modal" id="modal-upgrade">
+  <div class="modal-box">
+    <h3>⭐ PRO ga o'tkazish</h3>
+    <p style="font-size:12px;color:#888;margin-bottom:12px" id="upgrade-user-info"></p>
+    <input type="hidden" id="upgrade-user-id">
+    <label>Muddat (oy)</label>
+    <select id="upgrade-months" style="width:100%;background:rgba(0,255,65,.04);border:1px solid #222;border-radius:6px;padding:10px 12px;color:var(--green);font-family:'Fira Code',monospace;font-size:12px;outline:none">
+      <option value="1">1 oy (30 kun)</option>
+      <option value="3">3 oy</option>
+      <option value="6">6 oy</option>
+      <option value="12">12 oy (1 yil)</option>
+    </select>
+    <div style="background:rgba(255,215,0,.05);border:1px solid rgba(255,215,0,.1);border-radius:6px;padding:12px;margin-top:14px;font-size:11px;color:#888">
+      ⚠️ Eslatma: Login va parol O'ZGARMAYDI! Foydalanuvchi eski ma'lumotlari bilan kira oladi.
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-gold" style="padding:10px" onclick="confirmUpgradePro()">⭐ PRO GA O'TKAZISH</button>
+      <button class="btn-sm btn-red" style="padding:10px" onclick="closeModal('modal-upgrade')">✖ BEKOR</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Foydalanuvchi detail -->
+<div class="modal" id="modal-userdetail">
+  <div class="modal-box" style="max-width:540px">
+    <h3>👤 Foydalanuvchi ma'lumotlari</h3>
+    <div id="userdetail-body" style="font-size:12px;line-height:2.2;color:#888"></div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-green" style="padding:10px" onclick="closeModal('modal-userdetail')">✖ YOPISH</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Natija -->
+<div class="modal" id="modal-result">
+  <div class="modal-box" style="text-align:center">
+    <h3 id="result-title"></h3>
+    <div id="result-body" style="margin:16px 0;font-size:13px;line-height:2"></div>
+    <button class="btn-sm btn-green" style="padding:10px 24px" onclick="closeModal('modal-result')">OK</button>
+  </div>
+</div>
+
+<script>
+const token = sessionStorage.getItem('shats_token');
+const user = JSON.parse(sessionStorage.getItem('shats_user')||'{}');
+
+if(!token) window.location.href='/login.html';
+if(user.role !== 'superadmin') window.location.href='/dashboard.html';
+
+document.getElementById('adminName').textContent = user.username || 'admin';
+document.getElementById('adminRole').textContent = user.role;
+
+// Clock
+setInterval(()=>{
+  document.getElementById('clock').textContent = new Date().toLocaleString('uz-UZ');
+},1000);
+
+function headers(){return{Authorization:'Bearer '+token,'Content-Type':'application/json'}}
+
+// Navigation
+const pages = ['dashboard','requests','users','pro-users','monitor','blocked','telegram','logs','announce'];
+function showPage(name){
+  pages.forEach(p=>{
+    document.getElementById('page-'+p).classList.toggle('active',p===name);
+    document.querySelectorAll('.nav-item').forEach(el=>{
+      if(el.textContent.toLowerCase().includes(name)) el.classList.add('active');
+      else el.classList.remove('active');
+    });
+  });
+  document.getElementById('page-title').textContent = name.charAt(0).toUpperCase()+name.slice(1);
+  if(name==='dashboard') loadDashboard();
+  if(name==='requests') loadRequests();
+  if(name==='users') loadUsers();
+  if(name==='monitor') loadMonitor();
+  if(name==='pro-users') loadProUsers();
+  if(name==='blocked') loadBlocked();
+  if(name==='telegram') loadTelegram();
+  if(name==='logs') loadLogs();
+}
+
+// Dashboard
+async function loadDashboard(){
+  try{
+    const r = await fetch('/api/admin/stats-extended',{headers:headers()});
+    if(r.status===401||r.status===403){ sessionStorage.clear(); window.location.href='/login.html'; return; }
+    const d = await r.json();
+    document.getElementById('s-total').textContent = d.total_users;
+    document.getElementById('s-pro').textContent = d.pro_users;
+    document.getElementById('s-free').textContent = d.free_users;
+    document.getElementById('s-pending').textContent = d.pending_requests;
+    document.getElementById('s-logins').textContent = d.today_logins;
+    document.getElementById('s-blocked').textContent = d.blocked_ips + ' IP / ' + d.blocked_users + ' user';
+    document.getElementById('s-payments').textContent = d.total_payments;
+    document.getElementById('s-ai').textContent = d.total_ai_calls;
+    document.getElementById('req-badge').textContent = d.pending_requests;
+    document.getElementById('tg-badge').textContent = d.telegram_unread;
+  }catch(e){ console.error('Dashboard yuklashda xato:',e); }
+}
+
+// Requests
+async function loadRequests(){
+  const r = await fetch('/api/admin/requests',{headers:headers()});
+  const data = await r.json();
+  const tb = document.getElementById('requests-table');
+  tb.innerHTML = data.map(u=>`
+    <tr>
+      <td><strong style="color:#ccc">${u.first_name} ${u.last_name}</strong></td>
+      <td>${u.phone}</td>
+      <td style="color:#4a90e2">${u.telegram||'—'}</td>
+      <td>${u.specialization||'—'}</td>
+      <td>${u.experience||'—'}</td>
+      <td style="color:#444;font-size:10px">${u.created_at?.slice(0,16)}</td>
+      <td>
+        <div class="actions">
+          <button class="btn-sm btn-green" onclick="openApprove(${u.id},'${u.first_name} ${u.last_name}')">✅ Tasdiq</button>
+          <button class="btn-sm btn-red" onclick="openReject(${u.id})">❌ Rad</button>
+        </div>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="7" style="text-align:center;color:#333;padding:24px">So\'rovlar yo\'q</td></tr>';
+}
+
+// Users
+async function loadUsers(){
+  const r = await fetch('/api/admin/users',{headers:headers()});
+  const data = await r.json();
+  const tb = document.getElementById('users-table');
+  tb.innerHTML = data.map(u=>{
+    const sc = u.status==='approved_pro'?'pro':u.status==='approved_free'?'approved':u.status;
+    return`<tr>
+      <td style="color:#333">#${u.id}</td>
+      <td><strong style="color:#ccc">${u.first_name} ${u.last_name}</strong></td>
+      <td style="color:var(--green)">${u.username||'—'}</td>
+      <td style="color:#ffd700;font-size:11px">${u.password_given||'—'}</td>
+      <td><span class="status-badge ${sc}">${u.status}</span></td>
+      <td style="color:#444;font-size:10px">${u.created_at?.slice(0,10)}</td>
+      <td>
+        <div class="actions">
+          ${u.status==='approved_free'?`<button class="btn-sm btn-gold" onclick="openUpgradePro(${u.id},'${u.first_name} ${u.last_name}','${u.username}')">⭐ PRO</button>`:''}
+          ${u.status==='approved_pro'?`<button class="btn-sm btn-blue" onclick="downgradeFree(${u.id})">📉 FREE</button>`:''}
+          ${u.status!=='blocked'?`<button class="btn-sm btn-red" onclick="blockUser(${u.id})">🚫 Blok</button>`:''}
+          ${u.status==='blocked'?`<button class="btn-sm btn-green" onclick="unblockUser(${u.id})">🔓 Blokdan</button>`:''}
+          <button class="btn-sm" style="background:rgba(74,144,226,.1);color:#4a90e2;border:1px solid rgba(74,144,226,.2)" onclick="viewUser(${u.id})">👁</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:#333;padding:24px">Foydalanuvchilar yo\'q</td></tr>';
+}
+
+// PRO Users
+async function loadProUsers(){
+  const r = await fetch('/api/admin/pro-users',{headers:headers()});
+  const data = await r.json();
+  const tb = document.getElementById('pro-users-table');
+  tb.innerHTML = data.map(u=>{
+    const until = u.pro_until ? u.pro_until.slice(0,10) : 'Cheksiz';
+    const isExpiring = u.pro_until && new Date(u.pro_until) < new Date(Date.now()+7*24*3600*1000);
+    return`<tr>
+      <td style="color:#333">#${u.id}</td>
+      <td><strong style="color:#ccc">${u.first_name} ${u.last_name}</strong></td>
+      <td style="color:var(--green)">${u.username||'—'}</td>
+      <td style="color:${isExpiring?'var(--red)':'var(--gold)'}">📅 ${until} ${isExpiring?'⚠️ Tugayapti':''}</td>
+      <td><span class="status-badge pro">⭐ PRO</span></td>
+      <td>
+        <div class="actions">
+          <button class="btn-sm btn-gold" onclick="openUpgradePro(${u.id},'${u.first_name} ${u.last_name}','${u.username||''}')">➕ Uzaytirish</button>
+          <button class="btn-sm btn-blue" onclick="downgradeFree(${u.id})">📉 FREE</button>
+          <button class="btn-sm" style="background:rgba(74,144,226,.1);color:#4a90e2;border:1px solid rgba(74,144,226,.2)" onclick="viewUser(${u.id})">👁</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:#333;padding:24px">PRO foydalanuvchi yo\'q</td></tr>';
+}
+
+// Monitor
+async function loadMonitor(){
+  const r = await fetch('/api/admin/monitor',{headers:headers()});
+  const data = await r.json();
+  document.getElementById('monitor-list').innerHTML = data.map(l=>`
+    <div class="log-entry">
+      <span class="log-time">${l.created_at?.slice(0,19)}</span>
+      <span class="log-user">${l.username||'unknown'}</span>
+      <span class="log-action">${l.action}</span>
+      <span class="log-details">${l.ip_address||''}</span>
+    </div>
+  `).join('') || '<div style="padding:20px;text-align:center;color:#333">Log mavjud emas</div>';
+}
+
+// Blocked IPs
+async function loadBlocked(){
+  const r = await fetch('/api/admin/blocked-ips',{headers:headers()});
+  const data = await r.json();
+  document.getElementById('blocked-table').innerHTML = data.map(ip=>`
+    <tr>
+      <td style="color:var(--red)">${ip.ip_address}</td>
+      <td style="color:#555;font-size:11px">${ip.reason}</td>
+      <td style="color:#333;font-size:10px">${ip.blocked_at?.slice(0,19)}</td>
+      <td><button class="btn-sm btn-gold" onclick="unblockIp('${ip.ip_address}')">🔓 Blokdan chiqarish</button></td>
+    </tr>
+  `).join('') || '<tr><td colspan="4" style="text-align:center;color:#333;padding:24px">Bloklangan IP yo\'q</td></tr>';
+}
+
+// Logs
+async function loadLogs(){
+  const r = await fetch('/api/admin/logs',{headers:headers()});
+  const data = await r.json();
+  document.getElementById('logs-list').innerHTML = data.map(l=>`
+    <div class="log-entry">
+      <span class="log-time">${l.created_at?.slice(0,19)}</span>
+      <span class="log-user">${l.username||'system'}</span>
+      <span class="log-action">${l.action_type}</span>
+      <span class="log-details">${l.details||''}</span>
+    </div>
+  `).join('');
+}
+
+// Telegram
+async function loadTelegram(){
+  const r = await fetch('/api/admin/telegram-messages',{headers:headers()});
+  const data = await r.json();
+  const el = document.getElementById('telegram-list');
+  if(!data.length){
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:#333">Xabarlar yo\'q</div>';
+    return;
+  }
+  el.innerHTML = data.map(m=>{
+    const who = m.username ? '@'+m.username : (m.first_name || ('ID:'+m.chat_id));
+    if(m.direction==='out'){
+      return `<div class="tg-msg out">
+        <div class="tg-msg-head"><span class="tg-msg-from out">↩ ${m.first_name||'admin'} → ${who}</span><span>${(m.created_at||'').slice(0,19)}</span></div>
+        <div class="tg-msg-text">${escapeHtml(m.message)}</div>
+      </div>`;
+    }
+    return `<div class="tg-msg ${m.is_read?'':'unread'}">
+      <div class="tg-msg-head"><span class="tg-msg-from">${who}</span><span>${(m.created_at||'').slice(0,19)}</span></div>
+      <div class="tg-msg-text">${escapeHtml(m.message)}</div>
+      <div class="tg-reply">
+        <input type="text" placeholder="Javob yozish..." id="tg-reply-${m.id}">
+        <button class="btn-sm btn-green" onclick="replyTelegram('${m.chat_id}','tg-reply-${m.id}')">Yubor</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function replyTelegram(chatId, inputId){
+  const input = document.getElementById(inputId);
+  const message = input.value.trim();
+  if(!message) return;
+  const r = await fetch('/api/admin/telegram-reply',{method:'POST',headers:headers(),body:JSON.stringify({chat_id:chatId,message})});
+  const d = await r.json();
+  showToast(d.message || 'Yuborildi', d.sent?'green':'gold');
+  input.value='';
+  loadTelegram();
+}
+
+async function markTelegramRead(){
+  await fetch('/api/admin/telegram-mark-read',{method:'POST',headers:headers()});
+  loadTelegram(); loadDashboard();
+}
+
+
+function openApprove(id, name){
+  document.getElementById('approve-user-id').value = id;
+  document.getElementById('approve-user-info').textContent = name;
+  document.getElementById('modal-approve').classList.add('open');
+}
+async function confirmApprove(){
+  const id = document.getElementById('approve-user-id').value;
+  const ver = document.getElementById('approve-version').value;
+  const r = await fetch('/api/admin/approve',{method:'POST',headers:headers(),body:JSON.stringify({user_id:parseInt(id),version:ver})});
+  const d = await r.json();
+  closeModal('modal-approve');
+  document.getElementById('result-title').textContent = '✅ Tasdiqlandi!';
+  document.getElementById('result-body').innerHTML = `
+    <div style="color:#ccc">Login: <strong style="color:var(--green)">${d.login}</strong></div>
+    <div style="color:#ccc">Parol: <strong style="color:var(--gold)">${d.password}</strong></div>
+    <div style="font-size:11px;color:#555;margin-top:8px">Telegram orqali yuborildi ✓</div>
+  `;
+  document.getElementById('modal-result').classList.add('open');
+  loadRequests(); loadDashboard();
+}
+
+// Reject
+function openReject(id){ document.getElementById('reject-user-id').value=id; document.getElementById('modal-reject').classList.add('open'); }
+async function confirmReject(){
+  const id = document.getElementById('reject-user-id').value;
+  const reason = document.getElementById('reject-reason').value;
+  await fetch('/api/admin/reject',{method:'POST',headers:headers(),body:JSON.stringify({user_id:parseInt(id),reason})});
+  closeModal('modal-reject');
+  loadRequests();
+}
+
+// Block user
+async function blockUser(id){
+  if(!confirm('Foydalanuvchini bloklamoqchimisiz?')) return;
+  const r = await fetch('/api/admin/block-user',{method:'POST',headers:headers(),body:JSON.stringify({user_id:id})});
+  const d = await r.json();
+  showToast(d.message || 'Bloklandi', 'red');
+  loadUsers(); loadDashboard();
+}
+
+// Unblock user
+async function unblockUser(id){
+  if(!confirm('Foydalanuvchini blokdan chiqarasizmi?')) return;
+  const r = await fetch('/api/admin/unblock-user',{method:'POST',headers:headers(),body:JSON.stringify({user_id:id,status:'approved_free'})});
+  const d = await r.json();
+  showToast(d.message || 'Blokdan chiqarildi', 'green');
+  loadUsers(); loadDashboard();
+}
+
+// PRO modal ochish
+function openUpgradePro(id, name, username){
+  document.getElementById('upgrade-user-id').value = id;
+  document.getElementById('upgrade-user-info').textContent = name + ' (@' + username + ')';
+  document.getElementById('modal-upgrade').classList.add('open');
+}
+
+// PRO ga o'tkazishni tasdiqlash
+async function confirmUpgradePro(){
+  const id = document.getElementById('upgrade-user-id').value;
+  const months = parseInt(document.getElementById('upgrade-months').value);
+  const r = await fetch('/api/admin/upgrade-pro',{method:'POST',headers:headers(),body:JSON.stringify({user_id:parseInt(id),months})});
+  const d = await r.json();
+  closeModal('modal-upgrade');
+  if(d.success){
+    document.getElementById('result-title').textContent = '⭐ PRO ga o\'tkazildi!';
+    document.getElementById('result-body').innerHTML = `<div style="color:#ffd700">${d.message}</div><div style="font-size:11px;color:#555;margin-top:8px">Foydalanuvchiga Telegram orqali xabar yuborildi ✓</div>`;
+    document.getElementById('modal-result').classList.add('open');
+  } else {
+    showToast(d.error || 'Xato', 'red');
+  }
+  loadUsers(); loadDashboard();
+}
+
+// FREE ga tushirish
+async function downgradeFree(id){
+  if(!confirm('PRO dan FREE ga tushirasizmi?')) return;
+  const r = await fetch('/api/admin/downgrade-free',{method:'POST',headers:headers(),body:JSON.stringify({user_id:id})});
+  const d = await r.json();
+  showToast(d.message || 'FREE ga tushirildi', 'blue');
+  loadUsers(); loadDashboard();
+}
+
+// Foydalanuvchi detail ko'rish
+async function viewUser(id){
+  const r = await fetch('/api/admin/user-detail/'+id,{headers:headers()});
+  const d = await r.json();
+  if(!d.user){ showToast('Topilmadi', 'red'); return; }
+  const u = d.user;
+  const pro_until = u.pro_until ? u.pro_until.slice(0,10) : '—';
+  document.getElementById('userdetail-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 20px">
+      <span style="color:#444">Ism:</span><span style="color:#ccc">${u.first_name} ${u.last_name}</span>
+      <span style="color:#444">Login:</span><span style="color:var(--green)">${u.username||'—'}</span>
+      <span style="color:#444">Parol:</span><span style="color:#ffd700">${u.password_given||'—'}</span>
+      <span style="color:#444">Status:</span><span style="color:${u.status==='approved_pro'?'#ffd700':u.status==='approved_free'?'#00ff41':'#ff0033'}">${u.status}</span>
+      <span style="color:#444">PRO muddat:</span><span style="color:#4a90e2">${pro_until}</span>
+      <span style="color:#444">Telefon:</span><span>${u.phone||'—'}</span>
+      <span style="color:#444">Telegram:</span><span style="color:#4a90e2">${u.telegram||'—'}</span>
+      <span style="color:#444">Email:</span><span>${u.email||'—'}</span>
+      <span style="color:#444">Soha:</span><span>${u.specialization||'—'}</span>
+      <span style="color:#444">Tajriba:</span><span>${u.experience||'—'}</span>
+      <span style="color:#444">Skanlar:</span><span>${d.stats?.scans||0}</span>
+      <span style="color:#444">AI so'rovlar:</span><span>${d.stats?.ai_calls||0}</span>
+    </div>
+    <div style="margin-top:16px;color:#333;font-size:10px">SO'NGGI HARAKATLAR:</div>
+    ${(d.actions||[]).slice(0,5).map(a=>`<div style="font-size:10px;color:#444;border-bottom:1px solid #0a0a0a;padding:4px 0"><span style="color:#333">${a.created_at?.slice(0,16)}</span> → <span style="color:#00ff41">${a.action_type}</span></div>`).join('')}
+  `;
+  document.getElementById('modal-userdetail').classList.add('open');
+}
+
+// Toast xabar
+function showToast(msg, color='green'){
+  const t = document.createElement('div');
+  const c = color==='green'?'var(--green)':color==='red'?'var(--red)':color==='blue'?'var(--blue)':'var(--gold)';
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;background:#0d0d0d;border:1px solid ${c};border-radius:8px;padding:12px 20px;color:${c};font-family:'Fira Code',monospace;font-size:12px;z-index:9999;animation:fadeIn .2s`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+
+// Unblock IP
+async function unblockIp(ip){
+  await fetch('/api/admin/unblock-ip',{method:'POST',headers:headers(),body:JSON.stringify({ip})});
+  loadBlocked(); loadDashboard();
+}
+
+// Announce
+async function sendAnnounce(){
+  const title = document.getElementById('ann-title').value;
+  const content = document.getElementById('ann-content').value;
+  if(!title||!content) return alert('Sarlavha va matn kiriting!');
+  await fetch('/api/admin/announce',{method:'POST',headers:headers(),body:JSON.stringify({title,content})});
+  alert('✅ E\'lon yuborildi!');
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+// Auto-refresh
+loadDashboard();
+setInterval(()=>{ if(document.getElementById('page-monitor').classList.contains('active')) loadMonitor(); }, 10000);
+setInterval(loadDashboard, 30000);
+setInterval(()=>{ if(document.getElementById('page-telegram').classList.contains('active')) loadTelegram(); }, 15000);
+
+// Real-time Telegram xabarlari (WebSocket)
+try{
+  const socket = io({query:{token}});
+  socket.on('telegram_message', ()=>{
+    loadDashboard();
+    if(document.getElementById('page-telegram').classList.contains('active')) loadTelegram();
+  });
+}catch(e){ console.warn('Socket ulanmadi:', e); }
+
+async function logout(){
+  try {
+    const t = sessionStorage.getItem('shats_token');
+    if(t) await fetch('/api/logout',{method:'POST',headers:{'Authorization':'Bearer '+t}});
+  } catch(e){}
+  sessionStorage.clear();
+  window.location.href='/login.html';
+}
+</script>
+</body>
+</html>

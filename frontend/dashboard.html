@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHATS.KIBER — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--green:#00ff41;--red:#ff0033;--gold:#ffd700;--blue:#4a90e2;--bg:#060606;--card:#0d0d0d}
+body{background:var(--bg);color:#ccc;font-family:'Fira Code',monospace;display:flex;min-height:100vh}
+.sidebar{width:240px;background:#080808;border-right:1px solid #111;flex-shrink:0;display:flex;flex-direction:column}
+.sidebar-logo{padding:18px 20px;border-bottom:1px solid #111;text-align:center}
+.sidebar-logo h1{color:var(--green);font-size:15px;letter-spacing:3px}
+.version-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:2px;margin-top:6px}
+.version-free{background:rgba(255,255,255,.05);color:#444;border:1px solid #222}
+.version-pro{background:rgba(255,215,0,.15);color:var(--gold);border:1px solid rgba(255,215,0,.3)}
+.user-info{padding:14px 20px;border-bottom:1px solid #111}
+.user-info .name{color:#ccc;font-size:12px}
+.user-info .uname{color:#444;font-size:11px;margin-top:2px}
+nav{flex:1;padding:8px}
+.nav-group{margin-bottom:6px}
+.nav-label{font-size:9px;color:#2a2a2a;letter-spacing:2px;padding:8px 12px 4px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:6px;cursor:pointer;font-size:12px;color:#444;transition:.15s;margin-bottom:2px}
+.nav-item:hover{background:rgba(0,255,65,.05);color:#aaa}
+.nav-item.active{background:rgba(0,255,65,.08);color:var(--green)}
+.nav-item.pro-only{opacity:.4}
+.nav-item.pro-only:hover{opacity:.6}
+.pro-lock{margin-left:auto;font-size:10px}
+.sidebar-logout{padding:12px 20px;border-top:1px solid #111}
+.sidebar-logout button{width:100%;padding:8px;background:transparent;border:1px solid #1a1a1a;border-radius:6px;color:#333;font-family:'Fira Code',monospace;font-size:11px;cursor:pointer}
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.topbar{background:#080808;border-bottom:1px solid #111;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.topbar h2{font-size:13px;color:#444}
+.topbar h2 span{color:var(--green)}
+.content{flex:1;overflow-y:auto;padding:24px}
+.page{display:none}.page.active{display:block}
+/* Tool cards */
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.tool-card{background:var(--card);border:1px solid #111;border-radius:10px;padding:20px;transition:.2s}
+.tool-card:hover{border-color:rgba(0,255,65,.2)}
+.tool-card h3{font-size:13px;color:#ccc;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.tool-card p{font-size:11px;color:#333;margin-bottom:16px;line-height:1.6}
+.tool-card.pro-card{border-color:rgba(255,215,0,.1)}
+.tool-card.pro-card h3{color:var(--gold)}
+input.tool-input{width:100%;background:rgba(0,255,65,.03);border:1px solid #1a1a1a;border-radius:6px;padding:10px 12px;color:var(--green);font-family:'Fira Code',monospace;font-size:12px;outline:none;margin-bottom:10px}
+input.tool-input:focus{border-color:rgba(0,255,65,.3)}
+.btn-run{padding:8px 18px;background:rgba(0,255,65,.1);border:1px solid rgba(0,255,65,.3);color:var(--green);border-radius:6px;font-family:'Fira Code',monospace;font-size:11px;cursor:pointer;font-weight:600;transition:.15s}
+.btn-run:hover{background:rgba(0,255,65,.2)}
+.btn-pro{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.3);color:var(--gold)}
+.result-box{margin-top:12px;background:#080808;border:1px solid #111;border-radius:6px;padding:12px;font-size:11px;color:#888;white-space:pre-wrap;max-height:200px;overflow-y:auto;display:none}
+/* AI Chat */
+.chat-container{display:flex;flex-direction:column;height:calc(100vh - 120px);max-height:700px}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:80%;padding:12px 16px;border-radius:8px;font-size:12px;line-height:1.7}
+.msg.user{align-self:flex-end;background:rgba(0,255,65,.08);border:1px solid rgba(0,255,65,.2);color:var(--green)}
+.msg.ai{align-self:flex-start;background:#111;border:1px solid #1a1a1a;color:#aaa}
+.msg.ai .ai-label{font-size:10px;color:#333;margin-bottom:4px}
+.chat-input{display:flex;gap:10px;padding:16px;border-top:1px solid #111}
+.chat-input input{flex:1;background:rgba(0,255,65,.03);border:1px solid #1a1a1a;border-radius:6px;padding:12px;color:var(--green);font-family:'Fira Code',monospace;font-size:13px;outline:none}
+.chat-input input:focus{border-color:rgba(0,255,65,.3)}
+.chat-send{padding:12px 20px;background:var(--green);color:#0a0a0a;border:none;border-radius:6px;font-family:'Fira Code',monospace;font-size:12px;font-weight:700;cursor:pointer}
+/* Pro wall */
+.pro-wall{text-align:center;padding:60px 20px;border:1px solid rgba(255,215,0,.1);border-radius:12px;background:rgba(255,215,0,.02)}
+.pro-wall h2{color:var(--gold);font-size:20px;margin-bottom:12px}
+.pro-wall p{color:#444;font-size:12px;margin-bottom:24px;line-height:1.8}
+.upgrade-btn{padding:14px 32px;background:var(--gold);color:#0a0a0a;border:none;border-radius:6px;font-family:'Fira Code',monospace;font-size:13px;font-weight:700;cursor:pointer}
+/* Scan tabs */
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid #111;padding-bottom:0}
+.tab{padding:10px 16px;cursor:pointer;font-size:12px;color:#333;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:var(--green);border-bottom-color:var(--green)}
+.tab-content{display:none}.tab-content.active{display:block}
+.loading{color:#333;font-size:11px;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <h1>🛡 SHATS.KIBER</h1>
+    <div id="version-badge" class="version-badge version-free">FREE</div>
+  </div>
+  <div class="user-info">
+    <div class="name" id="user-name">Yuklanmoqda...</div>
+    <div class="uname" id="user-uname"></div>
+  </div>
+  <nav>
+    <div class="nav-group">
+      <div class="nav-label">Asosiy</div>
+      <div class="nav-item active" onclick="showPage('home')">🏠 Dashboard</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">FREE asboblar</div>
+      <div class="nav-item" onclick="showPage('network')">🌐 Network Tools</div>
+      <div class="nav-item" onclick="showPage('theory')">📚 Nazariya</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">PRO asboblar</div>
+      <div class="nav-item pro-only" onclick="showProPage('ai-cyber')">🤖 SHATS Cyber AI <span class="pro-lock">🔒</span></div>
+      <div class="nav-item pro-only" onclick="showProPage('ai-code')">💻 SHATS Code AI <span class="pro-lock">🔒</span></div>
+      <div class="nav-item pro-only" onclick="showProPage('pentesting')">🎯 Pentesting <span class="pro-lock">🔒</span></div>
+      <div class="nav-item pro-only" onclick="showProPage('crypto')">🔐 Kriptografiya <span class="pro-lock">🔒</span></div>
+      <div class="nav-item pro-only" onclick="showProPage('osint')">🔍 OSINT <span class="pro-lock">🔒</span></div>
+    </div>
+  </nav>
+  <div class="sidebar-logout">
+    <button onclick="logout()">[ CHIQISH ]</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <h2>SHATS.KIBER / <span id="page-title">Dashboard</span></h2>
+    <div style="font-size:11px;color:#333" id="clock"></div>
+  </div>
+  <div class="content">
+
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div style="margin-bottom:24px">
+        <h2 style="color:var(--green);font-size:18px;margin-bottom:8px">Xush kelibsiz! 👋</h2>
+        <p style="color:#333;font-size:12px">SHATS.KIBER — Kiberxavfsizlik o'quv platformasi</p>
+      </div>
+      <div class="tools-grid">
+        <div class="tool-card">
+          <h3>🌐 Network skanerlash</h3>
+          <p>Ping, DNS, traceroute va port scanner</p>
+          <button class="btn-run" onclick="showPage('network')">Ochish →</button>
+        </div>
+        <div class="tool-card">
+          <h3>📚 Nazariy darslar</h3>
+          <p>Xavfsizlik asoslari, viruslar, API va domenlar haqida</p>
+          <button class="btn-run" onclick="showPage('theory')">Ochish →</button>
+        </div>
+        <div class="tool-card pro-card">
+          <h3>🤖 SHATS AI (PRO)</h3>
+          <p>Kiberxavfsizlik va dasturlash bo'yicha sun'iy intellekt</p>
+          <button class="btn-run btn-pro" onclick="showProPage('ai-cyber')">PRO →</button>
+        </div>
+        <div class="tool-card pro-card">
+          <h3>🎯 Pentesting (PRO)</h3>
+          <p>SQLi, XSS, subdomain scanner va boshqa zaiflik tekshiruvlari</p>
+          <button class="btn-run btn-pro" onclick="showProPage('pentesting')">PRO →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NETWORK TOOLS (FREE) -->
+    <div class="page" id="page-network">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('ping')">Ping</div>
+        <div class="tab" onclick="switchTab('dns')">DNS Lookup</div>
+        <div class="tab" onclick="switchTab('ports')">Port Scanner</div>
+      </div>
+      
+      <div class="tab-content active" id="tab-ping">
+        <div class="tool-card" style="max-width:500px">
+          <h3>📡 Ping Test</h3>
+          <input class="tool-input" id="ping-host" placeholder="8.8.8.8 yoki google.com">
+          <button class="btn-run" onclick="runPing()">▶ PING</button>
+          <div class="result-box" id="ping-result"></div>
+        </div>
+      </div>
+      
+      <div class="tab-content" id="tab-dns">
+        <div class="tool-card" style="max-width:500px">
+          <h3>🔎 DNS Lookup</h3>
+          <input class="tool-input" id="dns-host" placeholder="google.com">
+          <button class="btn-run" onclick="runDns()">▶ DNS LOOKUP</button>
+          <div class="result-box" id="dns-result"></div>
+        </div>
+      </div>
+      
+      <div class="tab-content" id="tab-ports">
+        <div class="tool-card" style="max-width:500px">
+          <h3>🔌 Port Scanner</h3>
+          <p style="font-size:11px;color:#333;margin-bottom:10px">FREE: 1-20 portlar | PRO: 1-65535</p>
+          <input class="tool-input" id="port-host" placeholder="192.168.1.1">
+          <button class="btn-run" onclick="runPortScan()">▶ SKANERLASH</button>
+          <div class="result-box" id="port-result"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- THEORY (FREE) -->
+    <div class="page" id="page-theory">
+      <div class="tools-grid">
+        <div class="tool-card">
+          <h3>🔒 Xavfsizlik asoslari</h3>
+          <p style="color:#666">CIA Triad: Maxfiylik (Confidentiality), Yaxlitlik (Integrity), Mavjudlik (Availability).<br><br>Xavfsizlikda eng muhim 3 tamoyil. Har bir tizim shu 3 mezon bo'yicha baholanadi.</p>
+        </div>
+        <div class="tool-card">
+          <h3>🦠 Viruslar haqida</h3>
+          <p style="color:#666">Malware turlari: Virus, Worm, Trojan, Ransomware, Spyware, Adware, Rootkit.<br><br>Har bir tur tizimga turli yo'l bilan kiradi va turli zarar yetkazadi.</p>
+        </div>
+        <div class="tool-card">
+          <h3>🌐 API xavfsizligi</h3>
+          <p style="color:#666">REST API da: Authentication (JWT, OAuth), Rate limiting, Input validation, HTTPS majburiy.<br><br>OWASP API Top 10: Broken Auth, Excessive Data Exposure, Injection...</p>
+        </div>
+        <div class="tool-card">
+          <h3>🖥 Operatsion tizimlar</h3>
+          <p style="color:#666">Linux: Kali, Ubuntu, Debian — kiberxavfsizlik uchun eng ko'p ishlatiladi.<br><br>Windows: NTFS, Registry, Event Log — forensics uchun muhim.<br><br>MacOS: XNU kernel, Unix-based.</p>
+        </div>
+        <div class="tool-card">
+          <h3>📡 WiFi xavfsizligi</h3>
+          <p style="color:#666">WEP — eskirgan, zaif. WPA2 — kuchli, ammo zaifliklar bor. WPA3 — yangi standart.<br><br>Faqat o'z tarmog'ingizni skanerlang! Boshqalarning tarmog'iga kirishga urinish qonunbuzarlik.</p>
+        </div>
+        <div class="tool-card">
+          <h3>🔑 Parol xavfsizligi</h3>
+          <p style="color:#666">Kuchli parol: 12+ belgi, katta/kichik harf, raqam, belgilar.<br><br>Hashing: bcrypt, Argon2 — to'g'ri algoritmlar. MD5, SHA1 — parol uchun yaroqsiz.<br><br>2FA yoqing!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI CYBER (PRO) -->
+    <div class="page" id="page-ai-cyber">
+      <div id="ai-cyber-wall" class="pro-wall" style="display:none">
+        <h2>🤖 SHATS Cyber AI</h2>
+        <p>Bu funksiya faqat PRO foydalanuvchilar uchun.<br>Oyiga 150,000 so'm evaziga cheksiz AI yordamiga ega bo'ling.</p>
+        <button class="upgrade-btn" onclick="openPayment()">⭐ PRO ga o'tish — 150,000 so'm/oy</button>
+      </div>
+      <div id="ai-cyber-chat" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 style="color:var(--green);font-size:14px">🤖 SHATS Cyber AI — Kiberxavfsizlik Mutaxassisi</h2>
+          <span style="font-size:10px;color:#333">AI memory yoqilgan ✓</span>
+        </div>
+        <div class="chat-container" style="background:var(--card);border:1px solid #111;border-radius:10px;overflow:hidden">
+          <div class="chat-messages" id="cyber-messages">
+            <div class="msg ai">
+              <div class="ai-label">SHATS Cyber</div>
+              Salom! Men SHATS Cyber — kiberxavfsizlik bo'yicha AI assistantingizman. CTF, pentesting, zaifliklar, OSINT va boshqa xavfsizlik mavzularida yordam bera olaman. Savolingizni yozing!
+            </div>
+          </div>
+          <div class="chat-input">
+            <input type="text" id="cyber-input" placeholder="Savolingizni yozing... (masalan: SQL injection nima?)">
+            <button class="chat-send" onclick="sendCyberMsg()">▶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI CODE (PRO) -->
+    <div class="page" id="page-ai-code">
+      <div id="ai-code-wall" class="pro-wall" style="display:none">
+        <h2>💻 SHATS Code AI</h2>
+        <p>Bu funksiya faqat PRO foydalanuvchilar uchun.</p>
+        <button class="upgrade-btn" onclick="openPayment()">⭐ PRO ga o'tish</button>
+      </div>
+      <div id="ai-code-chat" style="display:none">
+        <h2 style="color:var(--blue);font-size:14px;margin-bottom:16px">💻 SHATS Code AI — Dasturlash Mutaxassisi</h2>
+        <div class="chat-container" style="background:var(--card);border:1px solid #111;border-radius:10px;overflow:hidden">
+          <div class="chat-messages" id="code-messages">
+            <div class="msg ai">
+              <div class="ai-label">SHATS Code</div>
+              Salom! Men SHATS Code — dasturlash bo'yicha AI assistantingizman. Python, JavaScript, PHP, Java va boshqa tillarda yordam bera olaman!
+            </div>
+          </div>
+          <div class="chat-input">
+            <input type="text" id="code-input" placeholder="Savol yozing... (masalan: Python da API qanday yoziladi?)">
+            <button class="chat-send" onclick="sendCodeMsg()">▶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PENTESTING (PRO) -->
+    <div class="page" id="page-pentesting">
+      <div id="pent-wall" class="pro-wall" style="display:none">
+        <h2>🎯 Pentesting Tools</h2>
+        <p>Bu funksiya faqat PRO foydalanuvchilar uchun.</p>
+        <button class="upgrade-btn" onclick="openPayment()">⭐ PRO ga o'tish</button>
+      </div>
+      <div id="pent-tools" style="display:none">
+        <div class="tools-grid">
+          <div class="tool-card pro-card">
+            <h3>💉 XSS Payloadlar</h3>
+            <p>100+ tayyor XSS payload ro'yxati</p>
+            <button class="btn-run btn-pro" onclick="getXssPayloads()">▶ Olish</button>
+            <div class="result-box" id="xss-result"></div>
+          </div>
+          <div class="tool-card pro-card">
+            <h3>🔍 Subdomain Scanner</h3>
+            <p>Domen uchun subdomenlarni topish</p>
+            <input class="tool-input" id="sub-domain" placeholder="example.com">
+            <button class="btn-run btn-pro" onclick="runSubdomain()">▶ SKANERLASH</button>
+            <div class="result-box" id="sub-result"></div>
+          </div>
+          <div class="tool-card pro-card">
+            <h3>🔑 JWT Analyzer</h3>
+            <p>JWT tokenni tahlil qilish</p>
+            <input class="tool-input" id="jwt-token" placeholder="eyJhbGciOiJIUzI1NiJ9...">
+            <button class="btn-run btn-pro" onclick="analyzeJWT()">▶ TAHLIL</button>
+            <div class="result-box" id="jwt-result"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CRYPTO (PRO) -->
+    <div class="page" id="page-crypto">
+      <div id="crypto-wall" class="pro-wall" style="display:none">
+        <h2>🔐 Kriptografiya Pro</h2>
+        <button class="upgrade-btn" onclick="openPayment()">⭐ PRO ga o'tish</button>
+      </div>
+      <div id="crypto-tools" style="display:none">
+        <div class="tools-grid">
+          <div class="tool-card pro-card">
+            <h3>🔢 Hash Generatsiya</h3>
+            <input class="tool-input" id="hash-text" placeholder="Matn kiriting...">
+            <button class="btn-run btn-pro" onclick="generateHash()">▶ GENERATE</button>
+            <div class="result-box" id="hash-result"></div>
+          </div>
+          <div class="tool-card pro-card">
+            <h3>🔓 Hash Cracker</h3>
+            <select class="tool-input" id="crack-type" style="margin-bottom:10px">
+              <option value="md5">MD5</option>
+              <option value="sha1">SHA1</option>
+              <option value="sha256">SHA256</option>
+            </select>
+            <input class="tool-input" id="crack-hash" placeholder="Hash kiriting...">
+            <button class="btn-run btn-pro" onclick="crackHash()">▶ CRACK</button>
+            <div class="result-box" id="crack-result"></div>
+          </div>
+          <div class="tool-card pro-card">
+            <h3>🔑 RSA Key Generator</h3>
+            <select class="tool-input" id="rsa-bits" style="margin-bottom:10px">
+              <option value="2048">2048 bit</option>
+              <option value="4096">4096 bit</option>
+            </select>
+            <button class="btn-run btn-pro" onclick="generateRSA()">▶ GENERATE</button>
+            <div class="result-box" id="rsa-result"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OSINT (PRO) -->
+    <div class="page" id="page-osint">
+      <div id="osint-wall" class="pro-wall" style="display:none">
+        <h2>🔍 OSINT Pro</h2>
+        <button class="upgrade-btn" onclick="openPayment()">⭐ PRO ga o'tish</button>
+      </div>
+      <div id="osint-tools" style="display:none">
+        <div class="tools-grid">
+          <div class="tool-card pro-card">
+            <h3>📧 Email Breach Check</h3>
+            <input class="tool-input" id="osint-email" placeholder="email@example.com">
+            <button class="btn-run btn-pro" onclick="checkEmail()">▶ TEKSHIRISH</button>
+            <div class="result-box" id="email-result"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const token = sessionStorage.getItem('shats_token');
+if(!token) window.location.href='/login.html';
+
+let isPro = false;
+
+async function loadMe(){
+  const r = await fetch('/api/me',{headers:{Authorization:'Bearer '+token}});
+  const d = await r.json();
+  const u = d.user;
+  isPro = d.is_pro || ['admin','superadmin'].includes(u.role);
+  document.getElementById('user-name').textContent = u.first_name+' '+u.last_name;
+  document.getElementById('user-uname').textContent = '@'+u.username;
+  const badge = document.getElementById('version-badge');
+  if(isPro){
+    badge.className='version-badge version-pro';badge.textContent='⭐ PRO';
+  }
+  // Nav items
+  document.querySelectorAll('.nav-item.pro-only').forEach(el=>{
+    if(isPro){el.classList.remove('pro-only');el.querySelector('.pro-lock')?.remove();}
+  });
+}
+loadMe();
+
+setInterval(()=>{ document.getElementById('clock').textContent=new Date().toLocaleString('uz-UZ'); },1000);
+
+function headers(){ return {Authorization:'Bearer '+token,'Content-Type':'application/json'}; }
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name)?.classList.add('active');
+  document.getElementById('page-title').textContent = name;
+}
+
+function showProPage(name){
+  showPage(name);
+  // Show wall or tools based on pro status
+  const walls = ['ai-cyber-wall','ai-code-wall','pent-wall','crypto-wall','osint-wall'];
+  const tools = ['ai-cyber-chat','ai-code-chat','pent-tools','crypto-tools','osint-tools'];
+  walls.forEach(w=>{ const el=document.getElementById(w); if(el) el.style.display='none'; });
+  tools.forEach(t=>{ const el=document.getElementById(t); if(el) el.style.display='none'; });
+  
+  const wallMap={'ai-cyber':'ai-cyber-wall','ai-code':'ai-code-wall','pentesting':'pent-wall','crypto':'crypto-wall','osint':'osint-wall'};
+  const toolMap={'ai-cyber':'ai-cyber-chat','ai-code':'ai-code-chat','pentesting':'pent-tools','crypto':'crypto-tools','osint':'osint-tools'};
+  
+  if(isPro){ const el=document.getElementById(toolMap[name]); if(el) el.style.display='block'; }
+  else { const el=document.getElementById(wallMap[name]); if(el) el.style.display='block'; }
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name)?.classList.add('active');
+  event.target.classList.add('active');
+}
+
+// Network Tools
+async function runPing(){
+  const host=document.getElementById('ping-host').value.trim();
+  if(!host) return;
+  const box=document.getElementById('ping-result');
+  box.textContent='⏳ Ping yuborilmoqda...';box.style.display='block';
+  const r=await fetch('/api/scan/ping',{method:'POST',headers:headers(),body:JSON.stringify({host})});
+  const d=await r.json();
+  box.textContent=d.result||d.error;
+}
+
+async function runDns(){
+  const host=document.getElementById('dns-host').value.trim();
+  const box=document.getElementById('dns-result');
+  box.textContent='⏳ DNS so\'ralmoqda...';box.style.display='block';
+  const r=await fetch('/api/scan/dns',{method:'POST',headers:headers(),body:JSON.stringify({host})});
+  const d=await r.json();
+  box.textContent=d.error||`IP: ${d.ip}\n\n${d.details}`;
+}
+
+async function runPortScan(){
+  const host=document.getElementById('port-host').value.trim();
+  const box=document.getElementById('port-result');
+  box.textContent='⏳ Portlar skanerlanyapti...';box.style.display='block';
+  const ports=[21,22,23,25,53,80,110,143,443,465,587,993,995,3306,3389,5432,6379,8080,8443,27017];
+  const r=await fetch('/api/scan/ports',{method:'POST',headers:headers(),body:JSON.stringify({host,ports})});
+  const d=await r.json();
+  if(d.open_ports?.length){
+    box.textContent=`✅ Ochiq portlar (${d.open_ports.length}):\n\n`+d.open_ports.map(p=>`  ${p.port}/tcp  ${p.service}`).join('\n');
+  } else {
+    box.textContent='Ochiq portlar topilmadi.';
+  }
+}
+
+// AI Chat
+async function sendCyberMsg(){
+  const input=document.getElementById('cyber-input');
+  const q=input.value.trim();
+  if(!q) return;
+  addMsg('cyber-messages',q,'user');
+  input.value='';
+  addMsg('cyber-messages','⏳ SHATS Cyber javob bermoqda...','ai');
+  
+  const r=await fetch('/api/ai/cyber',{method:'POST',headers:headers(),body:JSON.stringify({question:q})});
+  const d=await r.json();
+  const msgs=document.getElementById('cyber-messages');
+  msgs.lastChild.remove();
+  addMsg('cyber-messages',d.answer||d.error,'ai','SHATS Cyber');
+}
+
+async function sendCodeMsg(){
+  const input=document.getElementById('code-input');
+  const q=input.value.trim();
+  if(!q) return;
+  addMsg('code-messages',q,'user');
+  input.value='';
+  addMsg('code-messages','⏳ SHATS Code javob bermoqda...','ai');
+  
+  const r=await fetch('/api/ai/code',{method:'POST',headers:headers(),body:JSON.stringify({question:q})});
+  const d=await r.json();
+  document.getElementById('code-messages').lastChild.remove();
+  addMsg('code-messages',d.answer||d.error,'ai','SHATS Code');
+}
+
+function addMsg(containerId, text, type, label=''){
+  const container=document.getElementById(containerId);
+  const div=document.createElement('div');
+  div.className='msg '+type;
+  if(type==='ai'&&label) div.innerHTML=`<div class="ai-label">${label}</div>${text.replace(/\n/g,'<br>')}`;
+  else div.textContent=text;
+  container.appendChild(div);
+  container.scrollTop=container.scrollHeight;
+}
+
+// Pro tools
+async function getXssPayloads(){
+  const box=document.getElementById('xss-result');
+  box.style.display='block';box.textContent='⏳ Yuklanmoqda...';
+  const r=await fetch('/api/pro/xss-payloads',{headers:headers()});
+  const d=await r.json();
+  box.textContent=d.payloads?.join('\n');
+}
+
+async function runSubdomain(){
+  const domain=document.getElementById('sub-domain').value.trim();
+  const box=document.getElementById('sub-result');
+  box.style.display='block';box.textContent='⏳ Skanerlanyapti...';
+  const r=await fetch('/api/pro/subdomain-scan',{method:'POST',headers:headers(),body:JSON.stringify({domain})});
+  const d=await r.json();
+  box.textContent=d.found?.map(f=>`${f.subdomain} → ${f.ip}`).join('\n')||'Topilmadi';
+}
+
+async function analyzeJWT(){
+  const token_val=document.getElementById('jwt-token').value.trim();
+  const box=document.getElementById('jwt-result');
+  box.style.display='block';
+  const r=await fetch('/api/pro/jwt-analyze',{method:'POST',headers:headers(),body:JSON.stringify({token:token_val})});
+  const d=await r.json();
+  box.textContent=d.error||JSON.stringify({header:d.header,payload:d.payload,vulnerable:d.vulnerable},null,2);
+}
+
+async function generateHash(){
+  const text=document.getElementById('hash-text').value;
+  const box=document.getElementById('hash-result');
+  box.style.display='block';
+  const r=await fetch('/api/pro/generate-hash',{method:'POST',headers:headers(),body:JSON.stringify({text})});
+  const d=await r.json();
+  box.textContent=Object.entries(d).map(([k,v])=>`${k}: ${v}`).join('\n');
+}
+
+async function crackHash(){
+  const hash=document.getElementById('crack-hash').value.trim();
+  const type=document.getElementById('crack-type').value;
+  const box=document.getElementById('crack-result');
+  box.style.display='block';box.textContent='⏳ Tekshirilmoqda...';
+  const r=await fetch('/api/pro/hash-crack',{method:'POST',headers:headers(),body:JSON.stringify({hash,type})});
+  const d=await r.json();
+  box.textContent=d.found?`✅ Topildi: ${d.password}`:'❌ Topilmadi (wordlist kichik)';
+}
+
+async function generateRSA(){
+  const bits=document.getElementById('rsa-bits').value;
+  const box=document.getElementById('rsa-result');
+  box.style.display='block';box.textContent='⏳ Generatsiya...';
+  const r=await fetch('/api/pro/rsa-generate',{method:'POST',headers:headers(),body:JSON.stringify({bits:parseInt(bits)})});
+  const d=await r.json();
+  box.textContent=d.private_key+'\n'+d.public_key;
+}
+
+async function checkEmail(){
+  const email=document.getElementById('osint-email').value.trim();
+  const box=document.getElementById('email-result');
+  box.style.display='block';box.textContent='⏳ Tekshirilmoqda...';
+  const r=await fetch('/api/pro/osint/email',{method:'POST',headers:headers(),body:JSON.stringify({email})});
+  const d=await r.json();
+  box.textContent=`Email: ${d.email}\nNashrdagi ma'lumotlar: ${d.breaches?.join(', ')}\nPaste count: ${d.paste_count}\n\n${d.note}`;
+}
+
+function openPayment(){
+  alert('To\'lov tizimi:\nClick: 150,000 so\'m/oy\nPayme: 150,000 so\'m/oy\n\nAdmin bilan bog\'laning: @shats_support');
+}
+
+async function logout(){
+  try {
+    const t = sessionStorage.getItem('shats_token');
+    if(t) await fetch('/api/logout',{method:'POST',headers:{'Authorization':'Bearer '+t}});
+  } catch(e){}
+  sessionStorage.clear();
+  window.location.href='/login.html';
+}
+
+// Enter key
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    if(document.getElementById('cyber-input')===document.activeElement) sendCyberMsg();
+    if(document.getElementById('code-input')===document.activeElement) sendCodeMsg();
+  }
+});
+</script>
+</body>
+</html>
