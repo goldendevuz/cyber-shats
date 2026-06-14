@@ -51,7 +51,7 @@ if __name__ == '__main__':
     print("=" * 50)
     init_db()
     start_bot(socketio)
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get("PORT", 8080))
     debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
     print(f"\n✅ Server tayyor!")
     print(f"🌐 Asosiy:      http://localhost:{port}")
@@ -59,4 +59,9 @@ if __name__ == '__main__':
     print(f"🔐 Admin login: superadmin")
     print(f"🔑 Admin parol: SUPERADMIN_PASSWORD (.env faylidan)")
     print(f"\n⚠️  To'xtatish uchun: Ctrl+C\n")
-    socketio.run(app, host='0.0.0.0', port=port, debug=debug)
+    socketio.run(
+      app,
+      host="0.0.0.0",
+      port=port,
+      allow_unsafe_werkzeug=True
+  )

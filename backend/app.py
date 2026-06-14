@@ -1161,7 +1161,7 @@ if __name__ == '__main__':
     init_db()
     start_bot(socketio)
     debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get("PORT", 8080))
     print(f"🚀 SHATS.KIBER server ishga tushdi: http://localhost:{port}")
     print(f"👑 Admin panel: http://localhost:{port}/admin.html")
     print(f"🔐 Admin login: superadmin / (SUPERADMIN_PASSWORD .env dan)")
