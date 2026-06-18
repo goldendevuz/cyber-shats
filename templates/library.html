@@ -1,0 +1,25 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}E-kutubxona — CYBER SHATS{% endblock %}
+{% block app_content %}
+<h1 style="font-size:20px; margin-bottom:6px;">{{ icon('book',18) }} E-kutubxona</h1>
+<p class="muted" style="font-size:12.5px; margin-bottom:20px;">Kitoblar, cheat sheet va roadmap'lar — bepul yuklab olish uchun</p>
+
+<div class="cs-tabs">
+    <a href="{{ url_for('library') }}" class="cs-tab {{ 'active' if not active_cat }}">Barchasi</a>
+    {% for cat in ['cyber-security','python','networking','devops','ai-ml','javascript','cpp','cloud','mobile-dev'] %}
+    <a href="{{ url_for('library', cat=cat) }}" class="cs-tab {{ 'active' if active_cat==cat }}">{{ cat }}</a>
+    {% endfor %}
+</div>
+
+<div class="grid grid-4">
+    {% for b in books %}
+    <div class="cs-card">
+        <div class="hex-icon" style="margin-bottom:10px;">{{ icon('file-text', 22) }}</div>
+        <h4 style="font-size:12.5px; color:var(--cs-text-white);">{{ b.title }}</h4>
+        <div class="stats-line" style="margin-top:8px;"><span class="cs-chip">{{ b.type }}</span><span>{{ b.size_label }}</span></div>
+        <button class="cs-btn cs-btn-sm cs-btn-block" style="margin-top:12px;" onclick="alert('Demo rejim: bu material namuna sifatida ko\'rsatilgan.')">{{ icon('download',12) }} Yuklab olish</button>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

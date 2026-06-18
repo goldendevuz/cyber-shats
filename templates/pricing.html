@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Narxlar — CYBER SHATS{% endblock %}
+{% block content %}
+{% include 'partials/public_nav.html' %}
+<section class="section">
+    <div class="container">
+        <div class="section-head">
+            <div class="eyebrow">NARXLAR</div>
+            <h2>O'zingizga mos rejani tanlang</h2>
+            <p>Barcha rejalarda asosiy xavfsizlik va qo'llab-quvvatlash kiritilgan</p>
+        </div>
+        <div class="grid grid-3">
+            <div class="cs-card price-card">
+                <div class="cs-tag-level">FREE</div>
+                <div class="price">$0</div>
+                <ul>
+                    <li>{{ icon('check',14) }} Asosiy kurslarga kirish</li>
+                    <li>{{ icon('check',14) }} Forum va community</li>
+                    <li>{{ icon('check',14) }} Cheklangan AI suhbat (kuniga 5 ta)</li>
+                    <li>{{ icon('check',14) }} E-kutubxonaga kirish</li>
+                </ul>
+                <a href="{{ url_for('register') }}" class="cs-btn cs-btn-block">Boshlash</a>
+            </div>
+            <div class="cs-card price-card featured">
+                <div class="ribbon">ENG POPULAR</div>
+                <div class="cs-tag-level cyan">PRO</div>
+                <div class="price">$9.99<small>/oy</small></div>
+                <ul>
+                    <li>{{ icon('check',14) }} Barcha kurslarga to'liq kirish</li>
+                    <li>{{ icon('check',14) }} Cheksiz AI suhbat</li>
+                    <li>{{ icon('check',14) }} Sertifikatlar (PDF + QR)</li>
+                    <li>{{ icon('check',14) }} Amaliyot laboratoriyasi</li>
+                    <li>{{ icon('check',14) }} Reklamasiz interfeys</li>
+                </ul>
+                <a href="{{ url_for('register') }}" class="cs-btn cs-btn-primary cs-btn-block">Tanlash</a>
+            </div>
+            <div class="cs-card price-card">
+                <div class="cs-tag-level">ENTERPRISE</div>
+                <div class="price">$29.99<small>/oy</small></div>
+                <ul>
+                    <li>{{ icon('check',14) }} PRO rejaning barchasi</li>
+                    <li>{{ icon('check',14) }} Shaxsiy mentor</li>
+                    <li>{{ icon('check',14) }} Jamoa uchun boshqaruv paneli</li>
+                    <li>{{ icon('check',14) }} Maxsus hisobot va tahlillar</li>
+                </ul>
+                <a href="{{ url_for('register') }}" class="cs-btn cs-btn-block">Bog'lanish</a>
+            </div>
+        </div>
+        <div class="flex-center gap-16" style="margin-top:30px; opacity:.6; font-size:11px;">
+            VISA · MASTERCARD · UZCARD · HUMO · PAYME · CLICK
+        </div>
+        <p class="muted" style="text-align:center; font-size:11px; margin-top:10px;">
+            Eslatma: to'lov tizimlari (Payme/Click) demo holatda — real integratsiya uchun o'z hisob ma'lumotlaringiz kerak bo'ladi.
+        </p>
+    </div>
+</section>
+<footer class="site-footer">
+    <div class="container f-bottom">
+        <div>© 2026 CYBER SHATS</div>
+        <a href="{{ url_for('index') }}" class="cyan">Bosh sahifa</a>
+    </div>
+</footer>
+{% endblock %}

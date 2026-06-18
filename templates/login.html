@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Kirish — CYBER SHATS{% endblock %}
+{% block content %}
+{% include 'partials/public_nav.html' %}
+<div class="auth-page">
+    <div class="container auth-grid">
+        <div class="hero-copy fade-in-up">
+            <div class="tag">// XAVFSIZ KIRISH</div>
+            <h1>QAYTGANINGIZ BILAN, <span class="accent">HACKER!</span></h1>
+            <p class="lead">Hisobingizga kiring va o'rganishni davom ettiring. Progressingiz, sertifikatlaringiz va XP balingiz saqlanib qolgan.</p>
+            <div id="globe-mini-container-login" data-globe style="height:280px; position:relative; margin-top:20px;"></div>
+        </div>
+        <div class="auth-card fade-in-up">
+            <h2>KIRISH</h2>
+            <p class="sub">Email va parolingizni kiriting</p>
+            <form method="post" action="{{ url_for('login') }}">
+                <div class="cs-field">
+                    <label>Email</label>
+                    <div class="cs-input-icon">
+                        <span class="ic">{{ icon('mail',16) }}</span>
+                        <input class="cs-input" type="email" name="email" placeholder="email@misol.com" required>
+                    </div>
+                </div>
+                <div class="cs-field">
+                    <label>Parol</label>
+                    <div class="cs-input-icon">
+                        <span class="ic">{{ icon('lock',16) }}</span>
+                        <input class="cs-input" type="password" name="password" id="login-password" placeholder="••••••••" required>
+                        <button type="button" class="toggle-eye" data-toggle-pw="login-password">{{ icon('eye',16) }}</button>
+                    </div>
+                </div>
+                <div class="flex-between" style="margin-bottom:18px;">
+                    <label class="cs-checkbox"><input type="checkbox" name="remember"> Eslab qolish</label>
+                    <a href="#" class="cyan" style="font-size:11.5px;">Parolni unutdingizmi?</a>
+                </div>
+                <button type="submit" class="cs-btn cs-btn-primary cs-btn-block">{{ icon('zap',14) }} KIRISH</button>
+            </form>
+            <div class="auth-divider">YOKI</div>
+            <div class="oauth-row">
+                <button type="button" title="Google orqali (tez kunda)">{{ icon('globe',16) }} Google</button>
+                <button type="button" title="GitHub orqali (tez kunda)">{{ icon('github',16) }} GitHub</button>
+            </div>
+            <p class="muted" style="text-align:center; font-size:12px; margin-top:18px;">Hisobingiz yo'qmi? <a href="{{ url_for('register') }}" class="cyan">Ro'yxatdan o'ting</a></p>
+        </div>
+    </div>
+    <div class="container">
+        <div class="direction-strip">
+            {% for icon_name in ['code','terminal','shield','smartphone','database','cloud','bot','wifi','cpu','git-branch','trending-up'] %}
+            <div class="ds-item"><div class="hex-icon sm">{{ icon(icon_name,18) }}</div></div>
+            {% endfor %}
+        </div>
+        <div class="status-bar">
+            <div><span class="dot-live"></span> FAOL FOYDALANUVCHILAR: <span class="green">{{ hud_online }}</span></div>
+            <div>SERVER HOLATI: <span class="green">BARQAROR</span></div>
+            <div>{{ hud_version }}</div>
+            <div>UPTIME: {{ uptime_days }} KUN</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

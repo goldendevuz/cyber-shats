@@ -1,0 +1,65 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}{{ lesson.title }} — {{ course.title }}{% endblock %}
+{% block app_content %}
+<div class="muted" style="font-size:11px; margin-bottom:14px;"><a href="{{ url_for('course_detail', slug=course.slug) }}" class="muted">{{ course.title }}</a> / {{ lesson.title }}</div>
+<div class="grid" style="grid-template-columns: 1fr 300px; gap:22px; align-items:flex-start;">
+    <div>
+        <div class="browser-mock" style="margin-bottom:18px;">
+            <div class="bm-bar"><div class="bm-dot" style="width:9px;height:9px;border-radius:50%;background:#333;"></div><div class="bm-url">cyber.shats.uz/video/{{ lesson.id }}</div></div>
+            <div class="bm-body flex-center" style="min-height:340px; flex-direction:column; gap:14px;">
+                <div class="hex-icon lg pulse-glow" style="cursor:pointer;">{{ icon('play', 30) }}</div>
+                <div class="muted" style="font-size:12px;">VIDEO DARS · {{ fmt_duration(lesson.duration_seconds) }}</div>
+            </div>
+        </div>
+        <h1 style="font-size:19px;">{{ lesson.title }}</h1>
+        <div class="cs-card" style="margin-top:14px; font-size:13.5px; line-height:1.8;">
+            {{ lesson.content_html|safe }}
+        </div>
+        <div class="flex-between" style="margin-top:20px; flex-wrap:wrap; gap:10px;">
+            <div class="flex gap-12">
+                {% if prev_lesson %}<a href="{{ url_for('lesson', slug=course.slug, lesson_id=prev_lesson.id) }}" class="cs-btn cs-btn-sm">{{ icon('chevron-left',13) }} Oldingi</a>{% endif %}
+                <a href="{{ url_for('lesson_materials', slug=course.slug, lesson_id=lesson.id) }}" class="cs-btn cs-btn-sm">{{ icon('download',13) }} Materiallar</a>
+                {% if lesson.has_practice %}<a href="{{ url_for('practice', slug=course.slug, lesson_id=lesson.id) }}" class="cs-btn cs-btn-sm">{{ icon('terminal',13) }} Amaliyot</a>{% endif %}
+            </div>
+            <div class="flex gap-12">
+                <button id="mark-done-btn" class="cs-btn cs-btn-primary cs-btn-sm" data-complete-url="{{ url_for('complete_lesson', slug=course.slug, lesson_id=lesson.id) }}" {{ 'disabled' if lesson.id in done_ids }}>
+                    {{ icon('check',13) }} {{ 'Bajarildi' if lesson.id in done_ids else "Tugatdim" }}
+                </button>
+                {% if next_lesson %}<a href="{{ url_for('lesson', slug=course.slug, lesson_id=next_lesson.id) }}" class="cs-btn cs-btn-sm">Keyingi {{ icon('chevron-right',13) }}</a>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="cs-card" style="max-height:560px; overflow-y:auto;">
+        <h3 style="font-size:12px; margin-bottom:12px;">{{ icon('layers',14) }} DARSLAR ({{ all_lessons|length }})</h3>
+        {% for l in all_lessons %}
+        <a href="{{ url_for('lesson', slug=course.slug, lesson_id=l.id) }}" class="cs-nav-item" style="padding:9px 6px; {{ 'active' if l.id==lesson.id }}">
+            {% if l.id in done_ids %}{{ icon('check',14) }}{% else %}{{ icon('play',14) }}{% endif %}
+            <span style="font-size:11.5px; text-transform:none; letter-spacing:0;">{{ l.title }}</span>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+    var btn = document.getElementById('mark-done-btn');
+    if (!btn) return;
+    btn.addEventListener('click', function(){
+        if (btn.disabled) return;
+        fetch(btn.dataset.completeUrl, { method: 'POST' })
+            .then(function(r){ return r.json(); })
+            .then(function(res){
+                if (res.success) {
+                    btn.disabled = true;
+                    btn.innerHTML = '{{ icon("check",13)|safe }} Bajarildi';
+                    {% if next_lesson %}
+                    setTimeout(function(){ window.location.href = "{{ url_for('lesson', slug=course.slug, lesson_id=next_lesson.id) }}"; }, 900);
+                    {% endif %}
+                }
+            });
+    });
+})();
+</script>
+{% endblock %}

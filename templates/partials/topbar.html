@@ -1,0 +1,23 @@
+{% from 'partials/icons.html' import icon %}
+<div class="mobile-topbar">
+    <button class="mobile-toggle" data-toggle="sidebar">{{ icon('menu', 16) }}</button>
+    <div class="logo">CYBER SHATS</div>
+    <a href="{{ url_for('notifications') }}" class="icon-btn" style="position:relative;">{{ icon('bell', 16) }}</a>
+</div>
+<div class="app-topbar">
+    <form class="search-box" action="{{ url_for('courses') }}" method="get">
+        {{ icon('search', 14) }}
+        <input type="text" name="q" placeholder="Kurslar, darslar, mavzular bo'yicha qidirish..." value="{{ request.args.get('q','') }}">
+    </form>
+    <div class="flex gap-12" style="align-items:center;">
+        <a href="{{ url_for('notifications') }}" class="icon-btn" title="Bildirishnomalar">
+            {{ icon('bell', 16) }}
+            {% if notif_count %}<span class="badge-dot">{{ notif_count }}</span>{% endif %}
+        </a>
+        <a href="{{ url_for('ai_assistant') }}" class="icon-btn" title="AI Yordamchi">{{ icon('bot', 16) }}</a>
+        <a href="{{ url_for('profile') }}" class="user-chip" style="text-decoration:none;">
+            <div class="avatar-fallback flex-center" style="width:32px;height:32px;border-radius:50%;background:rgba(0,255,65,.1); color:var(--cs-text-primary); font-family:var(--cs-font-display); display:flex; border:1px solid var(--cs-border-active);">{{ current_user.ism[0]|upper if current_user else '?' }}</div>
+            <span class="cs-tag-level">LVL {{ current_user.level if current_user else 1 }}</span>
+        </a>
+    </div>
+</div>

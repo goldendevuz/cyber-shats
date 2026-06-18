@@ -1,0 +1,53 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Forum — CYBER SHATS{% endblock %}
+{% block app_content %}
+<div class="grid" style="grid-template-columns: 220px 1fr; gap:22px; align-items:flex-start;">
+    <div class="cs-card" style="position:sticky; top:80px;">
+        <h3 style="font-size:12px; margin-bottom:12px;">{{ icon('grid',14) }} KATEGORIYALAR</h3>
+        <a href="{{ url_for('forum') }}" class="cs-nav-item" style="padding:8px 6px; {{ 'active' if not active_cat }}">Barchasi</a>
+        {% for c in categories %}
+        <a href="{{ url_for('forum', cat=c.category) }}" class="cs-nav-item" style="padding:8px 6px; {{ 'active' if active_cat==c.category }}">{{ c.category }} ({{ c.c }})</a>
+        {% endfor %}
+    </div>
+    <div>
+        <div class="cs-card" style="margin-bottom:20px;">
+            <h3 style="font-size:13px; margin-bottom:12px;">{{ icon('plus',14) }} YANGI MAVZU</h3>
+            <form method="post" action="{{ url_for('forum_new') }}">
+                <div class="grid grid-2 gap-12">
+                    <input class="cs-input" type="text" name="title" placeholder="Sarlavha" required>
+                    <select class="cs-select" name="category">
+                        <option value="umumiy">Umumiy</option>
+                        <option value="cyber-security">Cyber Security</option>
+                        <option value="python">Python</option>
+                        <option value="web-dev">Web Dev</option>
+                        <option value="networking">Networking</option>
+                        <option value="devops">DevOps</option>
+                        <option value="ai-ml">AI/ML</option>
+                    </select>
+                </div>
+                <textarea class="cs-textarea" name="body" rows="3" placeholder="Savolingiz yoki fikringizni yozing..." required style="margin-top:12px;"></textarea>
+                <button type="submit" class="cs-btn cs-btn-primary" style="margin-top:12px;">{{ icon('send',13) }} Joylash</button>
+            </form>
+        </div>
+        {% for p in posts %}
+        <a href="{{ url_for('forum_post', post_id=p.id) }}" class="course-row" style="margin-bottom:12px; text-decoration:none;">
+            <div class="hex-icon sm">{{ icon('message', 16) }}</div>
+            <div class="meta">
+                <h4>{{ p.title }}</h4>
+                <div class="stats-line">
+                    <span class="cs-chip">{{ p.category }}</span>
+                    <span>{{ p.ism }} {{ p.familiya }}</span>
+                    <span>{{ time_ago_uz(p.created_at) }}</span>
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div style="color:var(--cs-text-primary); font-size:13px;">{{ p.replies_count }}</div>
+                <div class="muted" style="font-size:10px;">javob</div>
+            </div>
+        </a>
+        {% endfor %}
+        {% if not posts %}<div class="cs-alert">Hozircha mavzular yo'q. Birinchi bo'lib yozing!</div>{% endif %}
+    </div>
+</div>
+{% endblock %}

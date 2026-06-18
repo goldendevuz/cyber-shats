@@ -1,0 +1,41 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Reyting — CYBER SHATS{% endblock %}
+{% block app_content %}
+<h1 style="font-size:20px; margin-bottom:6px;">{{ icon('award',18) }} Reyting va Yutuqlar</h1>
+<p class="muted" style="font-size:12.5px; margin-bottom:20px;">Sizning o'rningiz: <span class="cyan">#{{ my_rank }}</span></p>
+
+<div class="grid" style="grid-template-columns: 1fr 320px; gap:22px; align-items:flex-start;">
+    <div class="cs-card">
+        <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('trending-up',14) }} TOP 20 — XP REYTINGI</h3>
+        {% for u in leaderboard %}
+        <div class="lb-row {{ 'no-hover' if u.id==current_user.id }}" style="{{ 'background: rgba(0,255,65,.08); border-radius:4px;' if u.id==current_user.id }}">
+            <div class="lb-rank {{ 'top1' if loop.index==1 }}{{ 'top2' if loop.index==2 }}{{ 'top3' if loop.index==3 }}">{{ loop.index }}</div>
+            <div class="avatar-fallback flex-center" style="width:28px;height:28px;border-radius:50%;background:rgba(0,255,65,.1); color:var(--cs-text-primary); font-family:var(--cs-font-display); font-size:11px; display:flex; border:1px solid var(--cs-border-active);">{{ u.ism[0]|upper }}</div>
+            <div class="lb-name">{{ u.ism }} {{ u.familiya }} {% if u.id==current_user.id %}<span class="cyan">(siz)</span>{% endif %}</div>
+            <div class="cs-tag-level">LVL {{ u.level }}</div>
+            <div class="lb-xp">{{ u.xp }} XP</div>
+        </div>
+        {% endfor %}
+    </div>
+    <div>
+        <div class="cs-card" style="margin-bottom:18px;">
+            <h3 style="font-size:12.5px; margin-bottom:10px;">{{ icon('zap',14) }} SIZNING DARAJANGIZ</h3>
+            <div class="flex-center" style="font-family:var(--cs-font-display); font-size:30px; color:var(--cs-text-primary);">LVL {{ current_user.level }}</div>
+            <div class="cs-progress" style="margin-top:14px;"><span style="width:{{ (current_user.xp % 500) / 500 * 100 }}%;"></span></div>
+            <div class="muted flex-between" style="font-size:10.5px; margin-top:6px;"><span>{{ current_user.xp }} XP</span><span>{{ next_level_xp }} XP</span></div>
+        </div>
+        <div class="cs-card">
+            <h3 style="font-size:12.5px; margin-bottom:14px;">{{ icon('award',14) }} BARCHA YUTUQLAR</h3>
+            <div class="grid grid-3">
+                {% for b in all_badges %}
+                <div class="flex-center" style="flex-direction:column;">
+                    <div class="badge-icon {{ 'locked' if b.id not in earned_ids }}">{{ icon(b.icon, 20) }}</div>
+                    <div style="font-size:9.5px; text-align:center; color:var(--cs-text-muted);">{{ b.name }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

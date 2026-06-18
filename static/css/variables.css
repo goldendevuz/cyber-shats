@@ -1,0 +1,45 @@
+/* ============================================================
+   CYBER SHATS — DIZAYN TOKENLARI ("HACKER DARK" TEMA)
+   Ranglar va o'lchamlar — o'zgartirmang, butun loyiha shu asosda
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+:root {
+    /* Asosiy ranglar */
+    --cs-bg-primary: #000010;
+    --cs-bg-secondary: #000a00;
+    --cs-bg-card: #001a0a;
+    --cs-bg-glass: rgba(0, 20, 5, 0.7);
+    --cs-bg-sidebar: #000d05;
+    --cs-bg-input: #00120a;
+
+    /* Tekst ranglar */
+    --cs-text-primary: #00ff41;
+    --cs-text-secondary: #00cc34;
+    --cs-text-muted: #007a20;
+    --cs-text-cyan: #00ccff;
+    --cs-text-white: #e0ffe8;
+    --cs-text-dark: #000000;
+    --cs-text-red: #ff4444;
+    --cs-text-yellow: #ffd23f;
+
+    /* Chegara va effektlar */
+    --cs-border: rgba(0, 255, 65, 0.2);
+    --cs-border-active: rgba(0, 255, 65, 0.7);
+    --cs-glow: 0 0 10px rgba(0, 255, 65, 0.3);
+    --cs-glow-strong: 0 0 20px rgba(0, 255, 65, 0.6);
+    --cs-glow-red: 0 0 15px rgba(255, 0, 0, 0.4);
+    --cs-glow-cyan: 0 0 15px rgba(0, 204, 255, 0.4);
+
+    /* Gradientlar */
+    --cs-grad-main: linear-gradient(135deg, #000010 0%, #001a05 50%, #000a00 100%);
+    --cs-grad-card: linear-gradient(135deg, #001a0a 0%, #000e05 100%);
+    --cs-grad-btn: linear-gradient(135deg, #00ff41 0%, #00cc34 100%);
+    --cs-grad-sidebar: linear-gradient(180deg, #000d05 0%, #000a00 100%);
+
+    /* O'lchamlar */
+    --cs-sidebar-w: 220px;
+    --cs-radius: 4px;
+    --cs-font-mono: 'Share Tech Mono', 'Courier New', 'Lucida Console', monospace;
+    --cs-font-display: 'Orbitron', monospace;
+}

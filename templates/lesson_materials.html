@@ -1,0 +1,29 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Materiallar — {{ lesson.title }}{% endblock %}
+{% block app_content %}
+<div class="muted" style="font-size:11px; margin-bottom:14px;">
+    <a href="{{ url_for('lesson', slug=course.slug, lesson_id=lesson.id) }}" class="muted">← {{ lesson.title }}</a>
+</div>
+<h1 style="font-size:19px; margin-bottom:6px;">{{ icon('folder',18) }} Dars materiallari</h1>
+<p class="muted" style="font-size:12.5px; margin-bottom:20px;">«{{ lesson.title }}» darsiga tegishli qo'shimcha resurslar</p>
+
+<div class="grid grid-2">
+    {% for fname, ftype, fsize in [
+        (lesson.title ~ ' — Slaydlar', 'PPTX', '2.1 MB'),
+        (lesson.title ~ ' — Konspekt', 'PDF', '850 KB'),
+        (lesson.title ~ ' — Kod namunalari', 'ZIP', '410 KB'),
+        (lesson.title ~ ' — Cheat Sheet', 'PDF', '320 KB')
+    ] %}
+    <div class="course-row">
+        <div class="hex-icon sm">{{ icon('file-text', 18) }}</div>
+        <div class="meta">
+            <h4>{{ fname }}</h4>
+            <div class="stats-line"><span>{{ ftype }}</span><span>{{ fsize }}</span></div>
+        </div>
+        <button class="cs-btn cs-btn-sm" onclick="alert('Demo rejim: bu material hozircha faqat namuna sifatida ko\'rsatilgan.')">{{ icon('download',13) }}</button>
+    </div>
+    {% endfor %}
+</div>
+<div class="cs-alert" style="margin-top:20px;">{{ icon('help-circle',16) }} Eslatma: bu sahifadagi materiallar demo namuna sifatida ko'rsatilgan.</div>
+{% endblock %}

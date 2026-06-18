@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}500 — Server xatosi{% endblock %}
+{% block content %}
+{% include 'partials/public_nav.html' %}
+<div class="section flex-center" style="min-height:60vh; flex-direction:column; text-align:center;">
+    <div class="glitch red" style="font-family:var(--cs-font-display); font-size:clamp(60px,14vw,140px); color:var(--cs-text-red);">500</div>
+    <h2 class="red">SERVER XATOSI</h2>
+    <p class="muted" style="max-width:380px; margin-bottom:20px;">Kutilmagan xatolik yuz berdi. Bizning jamoamiz allaqachon bu haqida xabardor qilindi. Birozdan so'ng qayta urinib ko'ring.</p>
+    <a href="{{ url_for('index') }}" class="cs-btn cs-btn-primary">Bosh sahifaga qaytish</a>
+</div>
+{% endblock %}

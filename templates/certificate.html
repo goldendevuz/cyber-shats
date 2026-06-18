@@ -1,0 +1,20 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Sertifikat — {{ cert.course_title }}{% endblock %}
+{% block app_content %}
+<div class="certificate">
+    <div class="cert-logo">{{ icon('shield',18) }} CYBER SHATS</div>
+    <div class="cert-title">SERTIFIKAT</div>
+    <p class="muted">Mazkur sertifikat quyidagi shaxsga taqdim etiladi:</p>
+    <div class="cert-name">{{ cert.ism }} {{ cert.familiya }}</div>
+    <div class="cert-course">« {{ cert.course_title }} »</div>
+    <p class="muted" style="font-size:12px;">kursini muvaffaqiyatli yakunlagani uchun ({{ cert.duration_weeks }} haftalik dastur)</p>
+    <div class="cert-foot">
+        <div>Sertifikat kodi: {{ cert.cert_code }}</div>
+        <div>Sana: {{ cert.issued_at[:10] }}</div>
+    </div>
+</div>
+<div class="flex-center" style="margin-top:24px;">
+    <a href="{{ url_for('certificate_download', cert_code=cert.cert_code) }}" class="cs-btn cs-btn-primary">{{ icon('download',14) }} PDF yuklab olish</a>
+</div>
+{% endblock %}

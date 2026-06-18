@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}CYBER SHATS — Barcha IT yo'nalishlari bir joyda{% endblock %}
+{% block content %}
+
+<div id="intro-overlay">
+    <div class="boot-lines"></div>
+    <button class="skip-intro">O'TKAZIB YUBORISH →</button>
+    <div id="globe-container"></div>
+    <div class="intro-text">
+        <div class="intro-logo glitch" style="font-family: var(--cs-font-display); color: var(--cs-text-primary); font-size: clamp(28px, 8vw, 64px); letter-spacing: 6px;">CYBER SHATS</div>
+        <p class="cyan" style="letter-spacing:3px; font-size:12px; margin-top:6px;">BARCHA IT YO'NALISHLARI BIR JOYDA</p>
+        <div class="stage-final-content" style="margin-top:34px; display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
+            <button id="intro-enter-btn" class="cs-btn cs-btn-primary pulse-glow">{{ icon('zap',14) }} ENTER</button>
+            <a href="{{ url_for('register') }}" class="cs-btn">RO'YXATDAN O'TISH</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.intro-text .stage-final-content { opacity:0; transition: opacity .6s ease; pointer-events: none; }
+#intro-overlay.stage-final .stage-final-content { opacity:1; pointer-events: auto; }
+</style>
+
+{% include 'partials/public_nav.html' %}
+
+<section class="hero-section">
+    <div class="container hero-grid">
+        <div class="hero-copy fade-in-up">
+            <div class="tag">// IT TA'LIM PLATFORMASI O'ZBEKISTON</div>
+            <h1>BARCHA IT YO'NALISHLARI <span class="accent">BIR JOYDA</span></h1>
+            <p class="lead">Web dasturlash, Python, Cyber Security, Mobil dasturlash va yana 8 ta yo'nalish bo'yicha amaliy kurslar, AI yordamchi, real loyihalar va sertifikatlar — bir platformada.</p>
+            <div class="cmd-box code-text">$ cyber-shats --start<br><span class="muted">// {{ total_courses }}+ kurs, 12 yo'nalish, cheksiz imkoniyat</span></div>
+            <div class="flex gap-16">
+                <a href="{{ url_for('register') }}" class="cs-btn cs-btn-primary">{{ icon('zap',14) }} Bepul boshlash</a>
+                <a href="#yonalishlar" class="cs-btn">Yo'nalishlarni ko'rish</a>
+            </div>
+            <div class="hero-stats">
+                <div class="hs"><div class="n">{{ total_students }}+</div><div class="l">O'quvchilar</div></div>
+                <div class="hs"><div class="n">{{ total_courses }}+</div><div class="l">Kurslar</div></div>
+                <div class="hs"><div class="n">12</div><div class="l">Yo'nalish</div></div>
+                <div class="hs"><div class="n">4.8</div><div class="l">O'rtacha baho</div></div>
+            </div>
+        </div>
+        <div class="hero-globe">
+            <div id="globe-mini-container" data-globe data-speed="0.0018"></div>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="yonalishlar">
+    <div class="container">
+        <div class="section-head">
+            <div class="eyebrow">12 YO'NALISH</div>
+            <h2>O'zingizga mos yo'nalishni tanlang</h2>
+            <p>Har bir yo'nalish bo'yicha boshlang'ichdan yuqori darajagacha kurslar mavjud</p>
+        </div>
+        <div class="grid grid-6">
+            {% for d in directions %}
+            <a href="{{ url_for('register') }}" class="direction-card fade-in-up">
+                <div class="hex-icon {{ 'cyan' if loop.index is even }}">{{ icon(d.icon, 24) }}</div>
+                <div class="name">{{ d.name_uz }}</div>
+                <div class="count">{{ d.course_count }} kurs</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section" id="kurslar" style="background: rgba(0,255,65,0.02);">
+    <div class="container">
+        <div class="section-head">
+            <div class="eyebrow">MASHHUR KURSLAR</div>
+            <h2>Eng ko'p tanlangan kurslar</h2>
+        </div>
+        <div class="grid grid-3">
+            {% for c in courses %}
+            <div class="cs-card fade-in-up">
+                <div class="hex-icon sm" style="margin-bottom:12px;">{{ icon(c.icon, 20) }}</div>
+                <span class="cs-tag-level">{{ c.direction_name }}</span>
+                <h3 style="margin-top:10px; text-transform:none; letter-spacing:0; font-size:15px; color: var(--cs-text-white);">{{ c.title }}</h3>
+                <div class="course-row stats-line" style="padding:0; background:none; border:none; margin-top:10px;">
+                    <span>{{ icon('users',12) }} {{ c.students_count }}</span>
+                    <span class="rating">{{ icon('star',12) }} {{ c.rating }}</span>
+                    <span>{{ icon('clock',12) }} {{ c.duration_weeks }} hafta</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="flex-center" style="margin-top:30px;">
+            <a href="{{ url_for('register') }}" class="cs-btn">Barcha kurslarni ko'rish {{ icon('chevron-right',14) }}</a>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="yangiliklar">
+    <div class="container">
+        <div class="section-head">
+            <div class="eyebrow">CYBER YANGILIKLAR</div>
+            <h2>IT olamidagi so'nggi voqealar</h2>
+        </div>
+        <div class="grid grid-4">
+            {% for n in news %}
+            <div class="cs-card fade-in-up">
+                <span class="cs-chip">{{ n.category }}</span>
+                <h3 style="font-size:13px; text-transform:none; letter-spacing:0; margin-top:10px; color:var(--cs-text-white);">{{ n.title }}</h3>
+                <p class="muted" style="font-size:11.5px;">{{ n.summary[:90] }}...</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section" style="background: rgba(0,255,65,0.02);">
+    <div class="container grid grid-2" style="align-items:center;">
+        <div>
+            <div class="eyebrow cyan" style="font-size:11px; letter-spacing:4px; margin-bottom:10px;">AI YORDAMCHI</div>
+            <h2>6 turdagi AI assistent — har doim yordamga tayyor</h2>
+            <p class="muted">Kod yozuvchi, Cyber Security, Design, Cloud, Umumiy va Tarix AI yordamchilari sizning savollaringizga 24/7 javob beradi.</p>
+            <a href="{{ url_for('register') }}" class="cs-btn cs-btn-primary" style="margin-top:14px;">{{ icon('bot',14) }} AI bilan suhbatlashish</a>
+        </div>
+        <div class="grid grid-2 gap-12">
+            {% for t in [('kod','Kod Yozuvchi'),('cyber','Cyber Security'),('design','Design AI'),('cloud','Cloud AI')] %}
+            <div class="cs-card no-hover" style="text-align:center; padding:18px 12px;">
+                <div class="hex-icon sm" style="margin:0 auto 8px;">{{ icon('bot',18) }}</div>
+                <div style="font-size:11px; color:var(--cs-text-white);">{{ t[1] }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="section-head">
+            <div class="eyebrow">E-KUTUBXONA</div>
+            <h2>Kitoblar, cheat sheet va roadmap'lar</h2>
+            <p>Barcha yo'nalishlar bo'yicha yuzlab bepul resurslar bir joyda</p>
+        </div>
+        <div class="flex-center">
+            <a href="{{ url_for('register') }}" class="cs-btn">{{ icon('book',14) }} Kutubxonaga kirish</a>
+        </div>
+    </div>
+</section>
+
+<section class="section" style="background: rgba(0,255,65,0.02);">
+    <div class="container">
+        <div class="section-head">
+            <div class="eyebrow">NARXLAR</div>
+            <h2>O'zingizga mos rejani tanlang</h2>
+        </div>
+        <div class="grid grid-3">
+            <div class="cs-card price-card">
+                <div class="cs-tag-level">FREE</div>
+                <div class="price">$0</div>
+                <ul><li>{{ icon('check',14) }} Asosiy kurslarga kirish</li><li>{{ icon('check',14) }} Forum va community</li><li>{{ icon('check',14) }} Cheklangan AI suhbat</li></ul>
+                <a href="{{ url_for('register') }}" class="cs-btn cs-btn-block">Boshlash</a>
+            </div>
+            <div class="cs-card price-card featured">
+                <div class="ribbon">ENG POPULAR</div>
+                <div class="cs-tag-level cyan">PRO</div>
+                <div class="price">$9.99<small>/oy</small></div>
+                <ul><li>{{ icon('check',14) }} Barcha kurslarga to'liq kirish</li><li>{{ icon('check',14) }} Cheksiz AI suhbat</li><li>{{ icon('check',14) }} Sertifikatlar</li><li>{{ icon('check',14) }} Amaliyot laboratoriyasi</li></ul>
+                <a href="{{ url_for('register') }}" class="cs-btn cs-btn-primary cs-btn-block">Tanlash</a>
+            </div>
+            <div class="cs-card price-card">
+                <div class="cs-tag-level">ENTERPRISE</div>
+                <div class="price">$29.99<small>/oy</small></div>
+                <ul><li>{{ icon('check',14) }} PRO rejaning barchasi</li><li>{{ icon('check',14) }} Shaxsiy mentor</li><li>{{ icon('check',14) }} Jamoa uchun boshqaruv paneli</li></ul>
+                <a href="{{ url_for('register') }}" class="cs-btn cs-btn-block">Bog'lanish</a>
+            </div>
+        </div>
+        <div class="flex-center gap-16" style="margin-top:24px; opacity:.6; font-size:11px;">VISA · MASTERCARD · UZCARD · HUMO · PAYME · CLICK</div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="section-head">
+            <div class="eyebrow">GUVOHLIKLAR</div>
+            <h2>O'quvchilarimiz fikri</h2>
+        </div>
+        <div class="grid grid-3">
+            {% for name, role, text in [
+                ('Aziz Rustamov','Web dasturchi','Cyber Shats orqali 4 oyda frontend dasturchi bo\'ldim, hozir frilanserlik qilaman.'),
+                ('Nilufar Saidova','Cyber Security mutaxassisi','Ethical Hacker kursi juda amaliy edi, real loyihalar ustida ishladim.'),
+                ('Otabek Yoldoshev','Python dasturchi','AI yordamchi har doim yordam berdi, kodimni tushunishga ko\'p yordam berdi.')
+            ] %}
+            <div class="cs-card no-hover">
+                <p style="font-size:13px; color:var(--cs-text-white);">"{{ text }}"</p>
+                <div class="flex gap-12" style="margin-top:14px; align-items:center;">
+                    <div class="avatar-fallback flex-center" style="width:36px;height:36px;border-radius:50%;background:rgba(0,255,65,.1); color:var(--cs-text-primary); font-family:var(--cs-font-display); display:flex; border:1px solid var(--cs-border-active);">{{ name[0] }}</div>
+                    <div><div style="font-size:12px; color:var(--cs-text-white);">{{ name }}</div><div class="muted" style="font-size:11px;">{{ role }}</div></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section" style="text-align:center;">
+    <div class="container">
+        <h2 style="font-size:30px;">Bugun o'rganishni boshlang</h2>
+        <p class="muted" style="max-width:480px; margin:0 auto 24px;">Ro'yxatdan o'tish bepul va 2 daqiqadan kam vaqt oladi.</p>
+        <a href="{{ url_for('register') }}" class="cs-btn cs-btn-primary pulse-glow">{{ icon('zap',14) }} Hoziroq boshlash</a>
+    </div>
+</section>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="f-grid">
+            <div>
+                <div class="logo" style="margin-bottom:10px;">CYBER SHATS</div>
+                <p class="muted" style="font-size:12px; max-width:280px;">O'zbekistondagi eng yirik IT ta'lim platformasi. 12 yo'nalish, AI yordamchi va real loyihalar bir joyda.</p>
+            </div>
+            <div>
+                <h4>PLATFORMA</h4>
+                <a class="f-link" href="{{ url_for('index') }}#yonalishlar">Yo'nalishlar</a>
+                <a class="f-link" href="{{ url_for('index') }}#kurslar">Kurslar</a>
+                <a class="f-link" href="{{ url_for('pricing') }}">Narxlar</a>
+            </div>
+            <div>
+                <h4>HUJJATLAR</h4>
+                <a class="f-link" href="#">Maxfiylik siyosati</a>
+                <a class="f-link" href="#">Foydalanish shartlari</a>
+                <a class="f-link" href="#">Aloqa</a>
+            </div>
+            <div>
+                <h4>IJTIMOIY TARMOQLAR</h4>
+                <a class="f-link" href="#">{{ icon('telegram',12) }} Telegram</a>
+                <a class="f-link" href="#">{{ icon('github',12) }} GitHub</a>
+                <a class="f-link" href="#">{{ icon('youtube',12) }} YouTube</a>
+            </div>
+        </div>
+        <div class="f-bottom">
+            <div>© 2026 CYBER SHATS. Barcha huquqlar himoyalangan.</div>
+            <div class="dot-live"></div>
+        </div>
+    </div>
+</footer>
+
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/globe-intro.js') }}"></script>
+{% endblock %}

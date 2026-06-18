@@ -1,0 +1,27 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Mentor Paneli — CYBER SHATS{% endblock %}
+{% block app_content %}
+<h1 style="font-size:20px; margin-bottom:6px;">{{ icon('users',18) }} Mentor Paneli</h1>
+<p class="muted" style="font-size:12.5px; margin-bottom:20px;">O'quvchilar progressi va faolligini kuzatib boring</p>
+
+<div class="cs-card">
+    <table class="cs-table">
+        <thead><tr><th>O'quvchi</th><th>Email</th><th>Daraja</th><th>XP</th><th>Kurslar</th><th>O'rtacha progress</th></tr></thead>
+        <tbody>
+        {% for s in students %}
+        <tr>
+            <td>{{ s.ism }} {{ s.familiya }}</td>
+            <td class="muted">{{ s.email }}</td>
+            <td><span class="cs-tag-level cyan">LVL {{ s.level }}</span></td>
+            <td>{{ s.xp }}</td>
+            <td>{{ s.course_count }}</td>
+            <td style="min-width:120px;">
+                <div class="cs-progress"><span style="width:{{ s.avg_progress|round|int if s.avg_progress else 0 }}%;"></span></div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

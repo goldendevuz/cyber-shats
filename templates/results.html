@@ -1,0 +1,69 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Natijalar — CYBER SHATS{% endblock %}
+{% block app_content %}
+{% set r = 60 %}
+{% set circ = (2 * 3.14159 * r)|round(1) %}
+{% set dash = (avg_progress / 100 * circ)|round(1) %}
+<h1 style="font-size:20px; margin-bottom:18px;">{{ icon('folder',18) }} Mening Loyihalarim</h1>
+
+<div class="grid grid-3" style="margin-bottom:26px;">
+    <div class="cs-card flex-center" style="flex-direction:column;">
+        <div class="donut-wrap">
+            <svg width="140" height="140" viewBox="0 0 140 140">
+                <circle cx="70" cy="70" r="{{ r }}" fill="none" stroke="rgba(0,255,65,.1)" stroke-width="12"></circle>
+                <circle cx="70" cy="70" r="{{ r }}" fill="none" stroke="#00ff41" stroke-width="12" stroke-dasharray="{{ dash }} {{ circ }}" stroke-linecap="round"></circle>
+            </svg>
+            <div class="donut-center"><div class="pct">{{ avg_progress }}%</div><div class="lbl">O'rtacha</div></div>
+        </div>
+        <div class="muted" style="font-size:11.5px; margin-top:10px;">{{ enrollments|length }} kursga yozilgan</div>
+    </div>
+    <div class="stat-card flex-center" style="flex-direction:column;"><div class="num">{{ certificates|length }}</div><div class="label">Sertifikat</div></div>
+    <div class="stat-card flex-center" style="flex-direction:column;"><div class="num">{{ badges|length }}</div><div class="label">Yutuq (badge)</div></div>
+</div>
+
+<h2 style="font-size:15px; margin-bottom:12px;">{{ icon('book',15) }} KURSLARIM</h2>
+<div class="grid grid-2" style="margin-bottom:26px;">
+    {% for e in enrollments %}
+    <a href="{{ url_for('course_detail', slug=e.slug) }}" class="course-row" style="text-decoration:none;">
+        <div class="hex-icon sm">{{ icon(e.icon, 16) }}</div>
+        <div class="meta"><h4>{{ e.title }}</h4><div class="cs-progress"><span style="width:{{ e.progress_percent }}%;"></span></div></div>
+        <div class="muted" style="font-size:11px;">{{ e.progress_percent }}%</div>
+    </a>
+    {% endfor %}
+    {% if not enrollments %}<p class="muted">Hali hech qaysi kursga yozilmagansiz.</p>{% endif %}
+</div>
+
+<h2 style="font-size:15px; margin-bottom:12px;">{{ icon('award',15) }} SERTIFIKATLAR</h2>
+<div class="grid grid-3" style="margin-bottom:26px;">
+    {% for c in certificates %}
+    <div class="cs-card">
+        <div class="hex-icon" style="margin-bottom:10px;">{{ icon('award', 22) }}</div>
+        <h4 style="font-size:12.5px; color:var(--cs-text-white);">{{ c.course_title }}</h4>
+        <div class="muted" style="font-size:11px; margin:8px 0;">{{ c.cert_code }}</div>
+        <a href="{{ url_for('certificate', cert_code=c.cert_code) }}" class="cs-btn cs-btn-sm cs-btn-block">Ko'rish</a>
+    </div>
+    {% endfor %}
+    {% if not certificates %}<p class="muted">Hali sertifikat yo'q — kursni 100% tugatib sertifikat oling.</p>{% endif %}
+</div>
+
+<h2 style="font-size:15px; margin-bottom:12px;">{{ icon('award',15) }} YUTUQLAR (BADGE)</h2>
+<div class="grid grid-6" style="margin-bottom:26px;">
+    {% for b in badges %}
+    <div class="cs-card no-hover flex-center" style="flex-direction:column;">
+        <div class="badge-icon">{{ icon(b.icon, 24) }}</div>
+        <div style="font-size:11px; text-align:center; color:var(--cs-text-white);">{{ b.name }}</div>
+    </div>
+    {% endfor %}
+</div>
+
+<h2 style="font-size:15px; margin-bottom:12px;">{{ icon('file-text',15) }} TEST URINISHLARI</h2>
+<table class="cs-table">
+    <thead><tr><th>Test</th><th>Natija</th><th>Sana</th></tr></thead>
+    <tbody>
+    {% for a in attempts %}
+    <tr><td>{{ a.test_title }}</td><td>{{ a.score }}/{{ a.total }}</td><td>{{ time_ago_uz(a.completed_at) }}</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

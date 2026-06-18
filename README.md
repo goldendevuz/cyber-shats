@@ -1,191 +1,130 @@
-# 🛡 SHATS.KIBER v3.0 — To'liq O'rnatish Qo'llanmasi
+# CYBER SHATS
 
-**"O'rgan, Amaliyot Qil, Professional Bo'l"**
+**CYBER SHATS** — 12 IT yo'nalishi bo'yicha onlayn ta'lim platformasi (Flask + SQLite). Hacker-uslubidagi "Dark Green/Cyan" dizayn, AI yordamchi, amaliyot laboratoriyasi, testlar, forum, sertifikatlar va to'liq admin/mentor boshqaruv paneli bilan.
 
----
+## 1. Talablar
 
-## ⚡ Tezkor Ishga Tushirish (PyCharm)
+- Python 3.10+
+- pip
 
-### 1-qadam: Paketlarni o'rnatish
+## 2. O'rnatish
+
 ```bash
+# 1) Loyiha papkasiga kiring
+cd cyber_shats
+
+# 2) (tavsiya etiladi) Virtual muhit yarating
+python3 -m venv venv
+source venv/bin/activate          # Windows: venv\Scripts\activate
+
+# 3) Kerakli paketlarni o'rnating
 pip install -r requirements.txt
-```
 
-### 2-qadam: .env faylini sozlash
-```bash
+# 4) Muhit o'zgaruvchilarini sozlang
 cp .env.example .env
-```
-Keyin `.env` faylini oching va quyidagilarni to'ldiring:
-- `SECRET_KEY` — kamida 32 ta tasodifiy belgi
-- `SUPERADMIN_PASSWORD` — kuchli parol
-- `ANTHROPIC_API_KEY` — https://console.anthropic.com dan oling (AI uchun)
-- `TELEGRAM_BOT_TOKEN` — @BotFather dan yarating (ixtiyoriy)
+# .env faylini ochib SECRET_KEY ni o'zgartiring (ixtiyoriy: ANTHROPIC_API_KEY qo'shing)
 
-### 3-qadam: Ishga tushirish
-**PyCharm da:** `run.py` → ▶ Run
+# 5) Ma'lumotlar bazasini yarating va namunaviy ma'lumotlar bilan to'ldiring
+python3 database/seed.py
 
-**Terminalda:**
-```bash
-python run.py
+# 6) Serverni ishga tushiring
+python3 app.py
 ```
 
-### 4-qadam: Brauzerda ochish
-- 🌐 Sayt: http://localhost:5000
-- 👑 Admin: http://localhost:5000/admin.html
-- 🔐 Login: `superadmin` | Parol: `.env`dagi `SUPERADMIN_PASSWORD`
+Brauzerda oching: **http://127.0.0.1:5000**
 
----
+## 3. Tayyor kirish ma'lumotlari (demo hisoblar)
 
-## 📁 Loyiha Tuzilmasi
+| Rol | Email | Parol |
+|---|---|---|
+| Administrator | admin@cybershats.uz | admin123 |
+| Mentor | mentor@cybershats.uz | mentor123 |
+| O'quvchi | jasur@example.com | demo1234 |
+| O'quvchi | dilnoza@example.com | demo1234 |
+| O'quvchi | sardor@example.com | demo1234 |
+
+Yangi hisob yaratish uchun `/register` sahifasidan ham foydalanishingiz mumkin.
+
+## 4. Loyiha tarkibi
 
 ```
-shats_kiber/
-├── run.py                ← PyCharm da bu faylni ishga tushiring
-├── .env                  ← .env.example dan nusxa oling (GITga yuklamang!)
-├── .env.example          ← Muhit o'zgaruvchilari namunasi
-├── requirements.txt      ← Python paketlari
-├── README.md
-│
-├── backend/
-│   ├── app.py            ← Asosiy Flask server (barcha API endpointlar)
-│   ├── auth.py           ← Login, JWT, IP bloklash
-│   ├── database.py       ← SQLite, 19 jadval
-│   ├── telegram_bot.py   ← Telegram bot integratsiyasi
-│   └── knowledge_base.md ← AI uchun bilim bazasi (o'zgartirish mumkin)
-│
-├── frontend/
-│   ├── login.html        ← Kirish sahifasi
-│   ├── register.html     ← Ro'yxatdan o'tish
-│   ├── dashboard.html    ← Foydalanuvchi paneli
-│   └── admin.html        ← Superadmin paneli
-│
-└── database/
-    └── shats.db          ← Avtomatik yaratiladi (GITga yuklamang!)
+cyber_shats/
+├── app.py                 # Barcha Flask route'lar
+├── config.py               # Sozlamalar (.env dan o'qiydi)
+├── db.py                   # SQLite ulanish yordamchilari
+├── auth.py                  # Login talab qiluvchi decorator'lar
+├── ai.py                    # AI Yordamchi backend logikasi
+├── utils.py                  # Umumiy yordamchi funksiyalar
+├── database/
+│   ├── schema.sql            # Baza sxemasi (jadval ta'riflari)
+│   ├── seed.py                # Namunaviy ma'lumotlarni yaratish skripti
+│   └── cyber_shats.db          # SQLite baza fayli (seed.py ishga tushgach yaratiladi)
+├── templates/                # Jinja2 HTML shablonlari (27+ sahifa)
+├── static/
+│   ├── css/                   # Dizayn tizimi (o'zgartirilmasligi tavsiya etiladi)
+│   ├── js/                     # Interaktivlik skriptlari
+│   └── generated/               # Avtomatik yaratilgan sertifikat PDF fayllari
+└── requirements.txt
 ```
 
----
+## 5. Nima HAQIQIY ishlaydi, nima DEMO/NAMUNA — to'liq shaffoflik
 
-## 🔌 API Endpointlar
+Ushbu platforma haqiqiy ishlovchi Flask + SQLite ilovasi. Quyida har bir funksiya qaysi toifaga tegishli ekanligi aniq ko'rsatilgan:
 
-### Auth
-| Method | URL | Tavsif |
-|--------|-----|--------|
-| POST | `/api/login` | Kirish (JWT token olish) |
-| POST | `/api/logout` | Chiqish (token bekor qilish) |
-| POST | `/api/register` | Ro'yxatdan o'tish so'rovi |
-| GET | `/api/me` | Joriy foydalanuvchi ma'lumotlari |
+### ✅ To'liq HAQIQIY ishlaydigan funksiyalar
+- Ro'yxatdan o'tish / kirish — parollar `werkzeug.security` orqali xashlanadi, sessiyalar Flask session orqali boshqariladi.
+- Kurslarga yozilish, darslarni "tugatdim" deb belgilash, progress foizi avtomatik hisoblanadi.
+- Test topshirish — savollar bazada saqlanadi, javoblar avtomatik tekshiriladi va ball hisoblanadi.
+- Sertifikat — kursni 100% tugatganda avtomatik yaratiladi, **haqiqiy PDF fayl** (QR kod bilan) `reportlab` yordamida generatsiya qilinadi va yuklab olish mumkin.
+- Forum — mavzu ochish, javob yozish, ko'rishlar soni — barchasi bazada saqlanadi.
+- XP/Daraja/Reyting tizimi — har bir amal (dars tugatish, test topshirish, forumga yozish) uchun XP beriladi.
+- Bildirishnomalar, profil tahrirlash, parol o'zgartirish.
+- Admin/Mentor panellari — bazadan olingan **haqiqiy statistika** (foydalanuvchilar, kurslar, log'lar) ko'rsatiladi.
+- AI Yordamchi — agar siz `.env` fayliga o'zingizning `ANTHROPIC_API_KEY` kalitingizni qo'shsangiz, **haqiqiy Claude API** orqali javob beradi (model: `claude-sonnet-4-6`).
 
-### FREE asboblar
-| Method | URL | Tavsif |
-|--------|-----|--------|
-| POST | `/api/scan/ping` | Ping test |
-| POST | `/api/scan/dns` | DNS lookup |
-| POST | `/api/scan/ports` | Port scanner (FREE: 20 port) |
+### ⚠️ DEMO REJIMDA ishlaydigan funksiyalar (kalit yo'q bo'lsa)
+- **AI Yordamchi** — agar `ANTHROPIC_API_KEY` sozlanmagan bo'lsa, oldindan tayyorlangan namunaviy javoblar ko'rsatiladi (interfeys to'liq ishlaydi, faqat javoblar statik).
 
-### PRO asboblar
-| Method | URL | Tavsif |
-|--------|-----|--------|
-| POST | `/api/ai/cyber` | SHATS Cyber AI |
-| POST | `/api/ai/code` | SHATS Code AI |
-| POST | `/api/pro/generate-hash` | Hash generatsiya |
-| POST | `/api/pro/hash-crack` | Hash crack (wordlist) |
-| POST | `/api/pro/jwt-analyze` | JWT tahlil |
-| POST | `/api/pro/rsa-generate` | RSA kalit yaratish |
-| POST | `/api/pro/subdomain-scan` | Subdomain scanner |
-| GET | `/api/pro/xss-payloads` | XSS payloadlar |
-| POST | `/api/pro/osint/email` | Email OSINT |
+### 🎭 FAQAT VIZUAL SIMULYATSIYA (haqiqiy emas — xavfsizlik sababli ataylab)
+- **"Amaliyot" va "Hacker Lab" bo'limlari** (SQL Injection demo, Burp Suite mock, terminal/sqlmap chiqishi, HackTheBox-uslubidagi mashina ro'yxati) — bularning barchasi **faqat frontend JavaScript orqali ko'rsatiladigan, oldindan yozilgan matnli simulyatsiya**. Hech qanday haqiqiy tarmoq so'rovi, server skanerlash yoki ekspluatatsiya kodi mavjud emas. Bu ataylab shunday qilingan: real pentest vositalarini taqdim etish xavfsizlik siyosatiga zid bo'lardi. Maqsad — interfeys va o'quv tajribasini ko'rsatish.
+- E-kutubxona va dars materiallari bo'limidagi "yuklab olish" tugmalari — fayllar haqiqatda mavjud emas, bosilganda buni tushuntiruvchi xabar chiqadi.
 
-### Admin (superadmin only)
-| Method | URL | Tavsif |
-|--------|-----|--------|
-| GET | `/api/admin/dashboard` | Statistika |
-| GET | `/api/admin/users` | Barcha foydalanuvchilar |
-| GET | `/api/admin/requests` | Kutayotgan so'rovlar |
-| POST | `/api/admin/approve` | Tasdiqlash + login/parol berish |
-| POST | `/api/admin/reject` | Rad etish |
-| POST | `/api/admin/block-user` | Bloklash |
-| POST | `/api/admin/unblock-user` | Blokdan chiqarish |
-| POST | `/api/admin/upgrade-pro` | PRO ga o'tkazish |
-| POST | `/api/admin/downgrade-free` | FREE ga tushirish |
-| GET | `/api/admin/pro-users` | PRO foydalanuvchilar |
-| GET | `/api/admin/blocked-ips` | Bloklangan IP lar |
-| POST | `/api/admin/unblock-ip` | IP blokdan chiqarish |
-| GET | `/api/admin/logs` | Audit loglar |
-| GET | `/api/admin/monitor` | Real vaqt monitoring |
-| POST | `/api/admin/announce` | E'lon yuborish (WebSocket) |
-| GET | `/api/admin/telegram-messages` | Telegram xabarlar |
-| POST | `/api/admin/telegram-reply` | Telegram javob |
+### 🔌 ULANMAGAN (sizning shaxsiy kalitlaringiz/hisoblaringiz kerak bo'ladigan) funksiyalar
+- Google orqali kirish (OAuth) — login/register sahifalaridagi tugmalar dekorativ, hozircha bosilganda hech narsa sodir bo'lmaydi.
+- Telegram bot integratsiyasi — ulanmagan.
+- Click / Payme to'lov tizimlari — narxlar sahifasidagi to'lov tugmalari ro'yxatdan o'tish sahifasiga yo'naltiradi, haqiqiy to'lov amalga oshmaydi.
+- "Mobil ilova" — bu native iOS/Android ilova emas, balki to'liq **responsive (mobilga moslashgan) veb-sayt**. Telefon brauzerida ochilganda interfeys mobilga moslashadi.
 
----
+### 🌐 Internet ulanishi talab qilinadigan elementlar
+Quyidagi 3 ta resurs tashqi CDN orqali yuklanadi (loyihaning o'zi internetga muhtoj emas, lekin to'liq vizual tajriba uchun internet kerak):
+- **Google Fonts** (Orbitron, Share Tech Mono shriftlari) — internet bo'lmasa, brauzerning standart monospace shriftiga tushadi.
+- **Three.js** (kirish animatsiyasidagi 3D aylanuvchi globus) — internet bo'lmasa, globus ko'rinmaydi, ammo qolgan animatsiya (matn, tugmalar) ishlайdi.
+- **Chart.js** (Boshqaruv panelidagi grafiklar) — internet bo'lmasa, grafik joylari bo'sh ko'rinadi, ammo raqamli statistika (stat-kartalar, jadvallar) baribir to'g'ri ko'rsatiladi.
 
-## 💰 Versiyalar
+## 6. AI Yordamchini yoqish
 
-| | FREE | PRO (150,000 so'm/oy) |
-|--|------|----------------------|
-| Ping, DNS, Port scanner | ✅ 20 port | ✅ 65535 port |
-| Nazariy darslar | ✅ | ✅ |
-| SHATS Cyber AI | ❌ | ✅ |
-| SHATS Code AI | ❌ | ✅ |
-| AI xotira (8 ta savol) | ❌ | ✅ |
-| Hash yaratish/crack | ❌ | ✅ |
-| JWT tahlil | ❌ | ✅ |
-| RSA kalit yaratish | ❌ | ✅ |
-| Subdomain scanner | ❌ | ✅ |
-| XSS payloadlar | ❌ | ✅ |
-| OSINT email | ❌ | ✅ |
+1. https://console.anthropic.com saytidan API kalit oling.
+2. `.env` faylini ochib, quyidagi qatorni to'ldiring:
+   ```
+   ANTHROPIC_API_KEY=sk-ant-...
+   ```
+3. Serverni qayta ishga tushiring (`python3 app.py`).
+4. AI Yordamchi sahifasida endi "LIVE — Claude API faol" yozuvi ko'rinadi.
 
----
+## 7. Bazani qayta tiklash
 
-## 🔐 Xavfsizlik Xususiyatlari
-
-- **JWT + revoke:** Logout qilganda token bekor qilinadi
-- **bcrypt:** Parollar bcrypt bilan hash qilingan
-- **IP bloklash:** 3 marta xato → avtomatik blok
-- **Input sanitizatsiya:** bleach orqali XSS himoya
-- **CORS:** Faqat `ALLOWED_ORIGINS` ga ruxsat
-- **Security headers:** CSP, X-Frame-Options, HSTS, Referrer-Policy
-- **SQLite WAL + Foreign Keys:** Ma'lumotlar yaxlitligi
-- **Host injection himoya:** Regex bilan xavfli belgilar bloklash
-
----
-
-## 📱 Telegram Bot Sozlash
-
-1. @BotFather ga `/newbot` yozing → token oling
-2. `.env` faylida `TELEGRAM_BOT_TOKEN` ga token yozing
-3. Sizning Telegram ID ni bilib oling: @userinfobot → `/start`
-4. `TELEGRAM_ADMIN_ID` ga ID yozing
-5. Serverni qayta ishga tushiring
-
----
-
-## ⚠️ Tuzatilgan Xatolar (v3.0)
-
-1. **`admin_pro_users()`** — `@app.route` dekoratori yo'q edi → qo'shildi
-2. **eventlet monkey_patch** — WebSocket to'g'ri ishlashi uchun birinchi qo'shildi
-3. **`async_mode='threading'` → `'eventlet'`** — eventlet bilan mos keltirildi
-4. **`connect-src wss: ws:`** — CSP headerda ws: qo'shildi (lokal WebSocket uchun)
-5. **`run.py`** — PyCharm uchun alohida ishga tushirish fayli
-6. **`python-dotenv`** — `.env` fayli avtomatik yuklanadi
-
----
-
-## 🚀 Deploy (Ishlab Chiqarish)
+Agar ma'lumotlar bazasini boshidan boshlash kerak bo'lsa (barcha foydalanuvchilar, progresslar va h.k. o'chadi):
 
 ```bash
-# .env ni sozlang
-SECRET_KEY=<32+ tasodifiy belgi>
-SUPERADMIN_PASSWORD=<kuchli parol>
-FLASK_DEBUG=false
-ALLOWED_ORIGINS=https://yourdomain.com
-
-# Gunicorn + eventlet
-pip install gunicorn
-gunicorn --worker-class eventlet -w 1 -b 0.0.0.0:5000 backend.app:app
+python3 database/seed.py
 ```
 
-> ⚠️ Ishlab chiqarishda HTTPS (TLS/SSL) SHART. Let's Encrypt bepul sertifikat beradi.
+Bu buyruq eski `database/cyber_shats.db` faylini o'chirib, yangisini namunaviy ma'lumotlar bilan yaratadi.
 
----
+## 8. Texnologiyalar
 
-*SHATS.KIBER © 2026 — O'zbekiston kiberxavfsizlik platformasi*
+Flask 3, SQLite3 (standart kutubxona, ORM ishlatilmagan — toza SQL so'rovlar), Jinja2, vanilla JavaScript, Three.js r128 (CDN), Chart.js (CDN), reportlab + qrcode (sertifikat PDF generatsiyasi), Anthropic Python SDK (AI Yordamchi).
+
+## 9. Lisensiya va eslatma
+
+Bu loyiha ta'lim/portfolio maqsadida yaratilgan namuna platformadir. Productionga chiqarishdan oldin `SECRET_KEY`ni albatta o'zgartiring, `FLASK_DEBUG=0` qilib qo'yganingizga ishonch hosil qiling va SQLite o'rniga production-grade bazaga (PostgreSQL kabi) o'tishni ko'rib chiqing.

@@ -1,0 +1,53 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Kurslar — CYBER SHATS{% endblock %}
+{% block app_content %}
+<div class="grid" style="grid-template-columns: 220px 1fr; gap:24px; align-items:flex-start;">
+    <div class="cs-card" style="position:sticky; top:80px;">
+        <h3 style="font-size:12px; margin-bottom:14px;">{{ icon('grid',14) }} YO'NALISHLAR</h3>
+        <a href="{{ url_for('courses') }}" class="cs-nav-item" style="padding:8px 6px; {{ 'active' if not active_d }}">Barchasi</a>
+        {% for d in directions %}
+        <a href="{{ url_for('courses', d=d.slug) }}" class="cs-nav-item" style="padding:8px 6px; {{ 'active' if active_d==d.slug }}">{{ icon(d.icon,14) }} {{ d.name_uz }}</a>
+        {% endfor %}
+        <h3 style="font-size:12px; margin:18px 0 10px;">{{ icon('star',14) }} DARAJA</h3>
+        {% for lvl in ["Boshlang'ich","O'rta","Yuqori"] %}
+        <a href="{{ url_for('courses', d=active_d, level=lvl) }}" class="cs-nav-item" style="padding:8px 6px; {{ 'active' if active_level==lvl }}">{{ lvl }}</a>
+        {% endfor %}
+    </div>
+    <div>
+        <div class="flex-between" style="margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+            <h1 style="font-size:20px;">{{ courses|length }} ta kurs topildi{% if search %} — "{{ search }}"{% endif %}</h1>
+            <form method="get" class="search-box" style="max-width:280px; width:100%;">
+                {% if active_d %}<input type="hidden" name="d" value="{{ active_d }}">{% endif %}
+                {{ icon('search',14) }}
+                <input type="text" name="q" value="{{ search }}" placeholder="Kurs nomi bo'yicha qidirish...">
+            </form>
+        </div>
+        {% if courses %}
+        <div class="grid" style="gap:14px;">
+            {% for c in courses %}
+            <a href="{{ url_for('course_detail', slug=c.slug) }}" class="course-row" style="text-decoration:none;">
+                <div class="hex-icon">{{ icon(c.icon, 22) }}</div>
+                <div class="meta">
+                    <h4>{{ c.title }}</h4>
+                    <div class="stats-line">
+                        <span class="cs-tag-level">{{ c.direction_name }}</span>
+                        <span>{{ icon('users',12) }} {{ c.students_count }}</span>
+                        <span class="rating">{{ icon('star',12) }} {{ c.rating }}</span>
+                        <span>{{ icon('clock',12) }} {{ c.duration_weeks }} hafta</span>
+                        <span>{{ icon('layers',12) }} {{ c.lessons_count }} dars</span>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="cs-tag-level">{{ c.level }}</div>
+                    <div style="font-size:13px; color:var(--cs-text-primary); margin-top:6px;">{{ 'Bepul' if c.price==0 else c.price|string + " so'm" }}</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="cs-alert">Hech qanday kurs topilmadi. Boshqa filtr bilan urinib ko'ring.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

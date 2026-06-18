@@ -1,0 +1,42 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}{{ post.title }} — Forum{% endblock %}
+{% block app_content %}
+<a href="{{ url_for('forum') }}" class="muted" style="font-size:11px;">← Forumga qaytish</a>
+<div class="cs-card" style="margin:14px 0 20px;">
+    <div class="flex gap-12" style="align-items:flex-start;">
+        <div class="hex-icon sm">{{ icon('message',16) }}</div>
+        <div style="flex:1;">
+            <span class="cs-chip">{{ post.category }}</span>
+            <h1 style="font-size:18px; margin-top:10px;">{{ post.title }}</h1>
+            <div class="muted" style="font-size:11.5px; margin-bottom:14px;">{{ post.ism }} {{ post.familiya }} · {{ time_ago_uz(post.created_at) }} · {{ post.views }} ko'rishlar</div>
+            <p style="font-size:13.5px;">{{ post.body }}</p>
+        </div>
+    </div>
+</div>
+
+<h3 style="font-size:13px; margin-bottom:14px;">{{ icon('message',14) }} JAVOBLAR ({{ replies|length }})</h3>
+{% for r in replies %}
+<div class="cs-card no-hover" style="margin-bottom:12px;">
+    <div class="flex gap-12">
+        <div class="avatar-fallback flex-center" style="width:32px;height:32px;border-radius:50%;background:rgba(0,255,65,.1); color:var(--cs-text-primary); font-family:var(--cs-font-display); display:flex; border:1px solid var(--cs-border-active); flex-shrink:0;">{{ r.ism[0]|upper }}</div>
+        <div style="flex:1;">
+            <div class="flex gap-12" style="align-items:center;">
+                <span style="font-size:12px; color:var(--cs-text-white);">{{ r.ism }} {{ r.familiya }}</span>
+                {% if r.role in ['admin','mentor'] %}<span class="cs-tag-level cyan">{{ r.role|upper }}</span>{% endif %}
+                <span class="muted" style="font-size:10.5px;">{{ time_ago_uz(r.created_at) }}</span>
+            </div>
+            <p style="font-size:13px; margin-top:6px;">{{ r.body }}</p>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<div class="cs-card" style="margin-top:20px;">
+    <h3 style="font-size:12.5px; margin-bottom:12px;">{{ icon('send',14) }} JAVOB YOZISH</h3>
+    <form method="post" action="{{ url_for('forum_reply', post_id=post.id) }}">
+        <textarea class="cs-textarea" name="body" rows="3" placeholder="Javobingizni yozing..." required></textarea>
+        <button type="submit" class="cs-btn cs-btn-primary" style="margin-top:12px;">{{ icon('send',13) }} Yuborish</button>
+    </form>
+</div>
+{% endblock %}

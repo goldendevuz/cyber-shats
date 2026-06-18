@@ -1,0 +1,44 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}AI Yordamchi — CYBER SHATS{% endblock %}
+{% block app_content %}
+<div class="flex-between" style="margin-bottom:14px;">
+    <h1 style="font-size:19px;">{{ icon('bot',18) }} AI Yordamchi</h1>
+    {% if not ai_configured %}
+    <span class="cs-chip" style="border-color: rgba(255,210,63,.4); color: var(--cs-text-yellow);">{{ icon('help-circle',12) }} DEMO REJIM — ANTHROPIC_API_KEY o'rnatilmagan</span>
+    {% else %}
+    <span class="cs-chip solid">{{ icon('zap',12) }} LIVE — Claude API faol</span>
+    {% endif %}
+</div>
+<div class="chat-shell">
+    <div class="chat-side">
+        {% for t in ai_types %}
+        <a href="{{ url_for('ai_assistant', type=t.id) }}" class="ai-item {{ 'active' if t.id==active_type }}">{{ icon(t.icon,15) }} {{ t.name }}</a>
+        {% endfor %}
+    </div>
+    <div class="chat-main">
+        <div class="chat-msgs" data-chat-msgs>
+            {% if not history %}
+            <div class="msg bot">Salom! Men {{ ai_types|selectattr('id','equalto',active_type)|map(attribute='name')|first }} man. Sizga qanday yordam bera olaman?</div>
+            {% endif %}
+            {% for m in history %}
+            <div class="msg {{ 'user' if m.role=='user' else 'bot' }}">{{ m.content }}</div>
+            {% endfor %}
+        </div>
+        <form class="chat-input-row" data-chat-form>
+            <input type="hidden" data-chat-type value="{{ active_type }}">
+            <input type="text" data-chat-input placeholder="Savolingizni yozing..." autocomplete="off">
+            <button type="submit">{{ icon('send',16) }}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/ai-chat.js') }}"></script>
+<script>
+(function(){
+    var box = document.querySelector('[data-chat-msgs]');
+    if (box) box.scrollTop = box.scrollHeight;
+})();
+</script>
+{% endblock %}

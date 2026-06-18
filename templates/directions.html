@@ -1,0 +1,19 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Yo'nalishlar — CYBER SHATS{% endblock %}
+{% block app_content %}
+<div class="section-head" style="margin-bottom:28px; text-align:left; max-width:none;">
+    <div class="eyebrow">12 YO'NALISH</div>
+    <h1 style="font-size:24px;">O'zingizga mos IT yo'nalishini tanlang</h1>
+    <p class="muted">Har bir yo'nalish bo'yicha boshlang'ichdan yuqori darajagacha kurslar mavjud</p>
+</div>
+<div class="grid grid-4">
+    {% for d in directions %}
+    <a href="{{ url_for('courses', d=d.slug) }}" class="direction-card fade-in-up">
+        <div class="hex-icon lg {{ 'cyan' if loop.index is even }}">{{ icon(d.icon, 30) }}</div>
+        <div class="name" style="font-size:14px;">{{ d.name_uz }}</div>
+        <div class="count">{{ d.course_count }} kurs mavjud</div>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

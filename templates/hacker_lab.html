@@ -1,0 +1,92 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Amaliyot Laboratoriyasi — CYBER SHATS{% endblock %}
+{% block app_content %}
+<div class="cs-alert warn" style="margin-bottom:18px;">
+    {{ icon('shield',16) }} <span>MUHIM: bu bo'lim faqat vizual/o'quv maqsadli simulyatsiya. Haqiqiy tarmoq so'rovlari yoki ekspluatatsiya kodi mavjud emas.</span>
+</div>
+<h1 style="font-size:20px; margin-bottom:18px;">{{ icon('terminal',18) }} Amaliyot Laboratoriyasi</h1>
+
+<div class="cs-tabs" data-tabs="hlab">
+    <button class="cs-tab active" data-panel="kali">Kali Terminal</button>
+    <button class="cs-tab" data-panel="vm">Virtual Mashina</button>
+    <button class="cs-tab" data-panel="ctf">CTF Challenges</button>
+    <button class="cs-tab" data-panel="htb">HackTheBox Uslubida</button>
+</div>
+
+<div data-tab-panel="hlab" data-panel="kali">
+    <div class="grid" style="grid-template-columns: 1fr 1fr; gap:20px;">
+        <div class="terminal-box">
+            <div class="term-head"><span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span> root@kali: ~</div>
+            <div class="term-body" data-term-body>
+                <div class="line-cmd">$ whoami</div>
+                <div class="line-ok">root</div>
+                <div class="line-cmd">$ nmap -sV demo-lab.local</div>
+                <div class="line-dim">Starting Nmap demo scan...</div>
+                <div class="line-ok">22/tcp open ssh, 80/tcp open http (demo)</div>
+                <div class="line-dim">Pastdagi tugma orqali to'liq SQLi simulyatsiyasini ko'ring.</div>
+            </div>
+        </div>
+        <div class="cs-card">
+            <h3 style="font-size:12.5px; margin-bottom:10px;">{{ icon('lightbulb',14) }} Kali Linux haqida</h3>
+            <p style="font-size:13px;">Kali Linux — penetration testing va xavfsizlik tadqiqotlari uchun maxsus tayyorlangan Linux distributivi. Ushbu terminal — interfeysni tanishtirish uchun statik simulyatsiya.</p>
+            <button class="cs-btn cs-btn-block" data-run-attack style="margin-top:14px;">{{ icon('play',13) }} Demo skanerlashni ishga tushirish</button>
+        </div>
+    </div>
+</div>
+
+<div data-tab-panel="hlab" data-panel="vm" style="display:none;">
+    <div class="cs-card">
+        <h3 style="font-size:12.5px; margin-bottom:14px;">{{ icon('server',14) }} Virtual Mashina (demo desktop)</h3>
+        <div class="grid grid-4">
+            {% for label, ic in [('Kali Linux','terminal'),('Burp Suite','bug'),('Wireshark','wifi'),('Metasploit','zap')] %}
+            <div class="cs-card no-hover flex-center" style="flex-direction:column; gap:8px; padding:22px 10px; cursor:pointer;" onclick="alert('Demo rejim: {{ label }} ochilmoqda (faqat vizual namuna)')">
+                <div class="hex-icon">{{ icon(ic, 22) }}</div>
+                <div style="font-size:11px; color:var(--cs-text-white);">{{ label }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="muted" style="font-size:11.5px; margin-top:14px;">Haqiqiy virtual mashina ishga tushirish uchun o'z infratuzilmangiz (masalan, mahalliy VirtualBox yoki cloud VM) kerak bo'ladi.</p>
+    </div>
+</div>
+
+<div data-tab-panel="hlab" data-panel="ctf" style="display:none;">
+    <div class="grid grid-3">
+        {% for title, cat, diff, pts in [
+            ('Web-1: Login Bypass','Web','Oson','100'),
+            ('Crypto-1: Caesar Sirini Ochish','Crypto','Oson','100'),
+            ('Forensics-1: Pcap Tahlili','Forensics',"O'rta",'250'),
+            ('Pwn-1: Buffer Overflow Asoslari',"Pwn","Qiyin",'400'),
+            ('Web-2: IDOR Zaifligi','Web',"O'rta",'200'),
+            ('Crypto-2: RSA Hujumi','Crypto',"Qiyin",'350'),
+        ] %}
+        <div class="cs-card">
+            <span class="cs-chip">{{ cat }}</span>
+            <h4 style="font-size:13px; margin-top:10px; color:var(--cs-text-white);">{{ title }}</h4>
+            <div class="stats-line" style="margin-top:8px;"><span>{{ icon('zap',12) }} {{ pts }} ball</span><span>{{ diff }}</span></div>
+            <a href="{{ url_for('hacker_lab') }}" class="cs-btn cs-btn-sm cs-btn-block" style="margin-top:12px;">{{ icon('play',12) }} Boshlash</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div data-tab-panel="hlab" data-panel="htb" style="display:none;">
+    <table class="cs-table">
+        <thead><tr><th>Machine</th><th>OS</th><th>Daraja</th><th>Ball</th><th></th></tr></thead>
+        <tbody>
+        {% for name, os, diff, pts in [
+            ('Spectre','Linux',"Oson",'20'),('Nightfall','Windows',"O'rta",'30'),
+            ('Obsidian','Linux',"Qiyin",'40'),('Wraith','Linux',"O'rta",'30')
+        ] %}
+        <tr>
+            <td>{{ icon('server',14) }} {{ name }}</td><td>{{ os }}</td><td>{{ diff }}</td><td>{{ pts }}</td>
+            <td><button class="cs-btn cs-btn-sm" onclick="alert('Demo rejim: ulanish simulyatsiyasi')">Ulanish</button></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/lab-sim.js') }}"></script>
+{% endblock %}

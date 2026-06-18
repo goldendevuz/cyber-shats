@@ -1,0 +1,32 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Sozlamalar — CYBER SHATS{% endblock %}
+{% block app_content %}
+<h1 style="font-size:20px; margin-bottom:20px;">{{ icon('settings',18) }} Sozlamalar</h1>
+
+<div class="cs-card" style="margin-bottom:20px; max-width:560px;">
+    <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('lock',14) }} PAROLNI O'ZGARTIRISH</h3>
+    <form method="post">
+        <input type="hidden" name="action" value="change_password">
+        <div class="cs-field"><label>Joriy parol</label><input class="cs-input" type="password" name="old_password" required></div>
+        <div class="cs-field"><label>Yangi parol</label><input class="cs-input" type="password" name="new_password" minlength="6" required></div>
+        <button type="submit" class="cs-btn cs-btn-primary">{{ icon('check',14) }} Yangilash</button>
+    </form>
+</div>
+
+<div class="cs-card" style="margin-bottom:20px; max-width:560px;">
+    <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('bell',14) }} BILDIRISHNOMA SOZLAMALARI</h3>
+    <label class="cs-checkbox" style="margin-bottom:10px;"><input type="checkbox" checked> Yangi darslar haqida xabar</label>
+    <label class="cs-checkbox" style="margin-bottom:10px;"><input type="checkbox" checked> Forum javoblari haqida xabar</label>
+    <label class="cs-checkbox"><input type="checkbox"> Email orqali bildirishnomalar</label>
+</div>
+
+<div class="cs-card" style="max-width:560px; border-color: rgba(255,68,68,.3);">
+    <h3 style="font-size:13px; margin-bottom:10px; color: var(--cs-text-red);">{{ icon('x',14) }} XAVFLI HUDUD</h3>
+    <p class="muted" style="font-size:12px; margin-bottom:14px;">Hisobingizni o'chirish qaytarib bo'lmaydigan amal. Barcha progress, sertifikat va ma'lumotlar yo'qoladi.</p>
+    <form method="post" onsubmit="return confirm('Hisobingizni rostdan ham o\'chirmoqchimisiz?');">
+        <input type="hidden" name="action" value="delete_account">
+        <button type="submit" class="cs-btn cs-btn-danger">{{ icon('x',14) }} Hisobni o'chirish</button>
+    </form>
+</div>
+{% endblock %}

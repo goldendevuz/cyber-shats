@@ -1,0 +1,46 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}{{ test.title }} — Test{% endblock %}
+{% block app_content %}
+<div class="grid" style="grid-template-columns: 1fr 220px; gap:22px; align-items:flex-start;">
+    <div>
+        <div class="flex-between" style="margin-bottom:18px;">
+            <h1 style="font-size:18px;">{{ test.title }}</h1>
+            <span class="cs-chip">{{ icon('clock',12) }} {{ test.duration_minutes }} daqiqa</span>
+        </div>
+        <form method="post" action="{{ url_for('test_submit', test_id=test.id) }}" id="test-form">
+            {% for q in questions %}
+            <div class="cs-card" id="q-{{ loop.index }}" style="margin-bottom:16px;">
+                <div class="muted" style="font-size:11px; margin-bottom:8px;">SAVOL {{ loop.index }}/{{ questions|length }}</div>
+                <h3 style="font-size:14px; text-transform:none; letter-spacing:0; color:var(--cs-text-white); margin-bottom:14px;">{{ q.question_text }}</h3>
+                {% for opt_letter, opt_text in [('a', q.option_a), ('b', q.option_b), ('c', q.option_c), ('d', q.option_d)] %}
+                <label class="cs-checkbox" style="padding:10px 12px; border:1px solid var(--cs-border); border-radius:var(--cs-radius); margin-bottom:8px; cursor:pointer;">
+                    <input type="radio" name="q_{{ q.id }}" value="{{ opt_letter }}" class="q-radio" data-qidx="{{ loop.index0 }}">
+                    <span style="color:var(--cs-text-white);">{{ opt_text }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="cs-btn cs-btn-primary cs-btn-block">{{ icon('check',14) }} Testni yakunlash</button>
+        </form>
+    </div>
+    <div class="cs-card" style="position:sticky; top:80px;">
+        <h3 style="font-size:11px; margin-bottom:12px;">SAVOLLAR</h3>
+        <div class="q-grid">
+            {% for q in questions %}
+            <a href="#q-{{ loop.index }}" class="q-num" id="qnum-{{ loop.index0 }}">{{ loop.index }}</a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.q-radio').forEach(function(r){
+    r.addEventListener('change', function(){
+        var el = document.getElementById('qnum-' + r.dataset.qidx);
+        if (el) el.classList.add('answered');
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Yangiliklar — CYBER SHATS{% endblock %}
+{% block app_content %}
+<h1 style="font-size:20px; margin-bottom:6px;">{{ icon('zap',18) }} Cyber Yangiliklar</h1>
+<p class="muted" style="font-size:12.5px; margin-bottom:20px;">IT va kiberxavfsizlik olamidagi so'nggi voqealar</p>
+
+<div class="cs-tabs">
+    <a href="{{ url_for('news') }}" class="cs-tab {{ 'active' if not active_cat }}">Barchasi</a>
+    {% for cat in ['cyber-security','python','web-dev','devops','ai-ml','javascript','networking','cloud','data-science'] %}
+    <a href="{{ url_for('news', cat=cat) }}" class="cs-tab {{ 'active' if active_cat==cat }}">{{ cat }}</a>
+    {% endfor %}
+</div>
+
+<div class="grid grid-3">
+    {% for n in items %}
+    <div class="cs-card">
+        <span class="cs-chip">{{ n.category }}</span>
+        <h3 style="font-size:14px; text-transform:none; letter-spacing:0; margin-top:10px; color:var(--cs-text-white);">{{ n.title }}</h3>
+        <p class="muted" style="font-size:12px;">{{ n.summary }}</p>
+        <div class="stats-line" style="margin-top:10px;"><span>{{ n.source }}</span><span>{{ time_ago_uz(n.published_at) }}</span></div>
+    </div>
+    {% endfor %}
+    {% if not items %}<div class="cs-alert">Bu kategoriyada yangiliklar topilmadi.</div>{% endif %}
+</div>
+{% endblock %}

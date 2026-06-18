@@ -1,0 +1,23 @@
+{# CYBER SHATS — 4 burchakli HUD ko'rinishi (barcha sahifalarda doimiy) #}
+<div class="hud-overlay">
+    <div class="hud-tl">
+        <div class="hud-line">IP: <span class="green">{{ hud_ip }}</span></div>
+        <div class="hud-line">JOYLASHUV: <span class="green">Toshkent, UZ</span></div>
+        <div class="hud-line">HOLAT: <span class="dot-live"></span> <span class="green">ONLINE</span></div>
+    </div>
+    <div class="hud-tr">
+        <div class="hud-line">THREAT LEVEL: <span class="green">LOW</span></div>
+        <div class="hud-line">FIREWALL: <span class="green">FAOL</span></div>
+        <div class="hud-line">SHIFRLASH: <span class="green">AES-256</span></div>
+    </div>
+    <div class="hud-bl">
+        <div class="hud-line" id="hud-online" data-base="{{ hud_online }}">{{ hud_online }}</div>
+        <div class="hud-line">BUGUN: <span class="green">+{{ hud_today }}</span></div>
+        <div class="hud-line">JAMI: <span class="green">{{ hud_total }}</span></div>
+    </div>
+    <div class="hud-br">
+        <div class="hud-line">{{ hud_version }}</div>
+        <div class="hud-line" id="hud-time">VAQT: --:--:--</div>
+        <div class="hud-line" id="hud-uptime">UPTIME: {{ uptime_days }}D</div>
+    </div>
+</div>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{% block title %}CYBER SHATS — Barcha IT yo'nalishlari bir joyda{% endblock %}</title>
+<meta name="description" content="{% block meta_description %}CYBER SHATS — Web dasturlash, Python, Cyber Security, Mobil dasturlash va boshqa 12 IT yo'nalishi bo'yicha onlayn ta'lim platformasi.{% endblock %}">
+<meta name="keywords" content="IT ta'lim, dasturlash kurslari, cyber security, python, web dasturlash, o'zbekiston IT, cyber shats">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://{{ site_domain }}{{ request.path }}">
+<meta property="og:title" content="{{ self.title() }}">
+<meta property="og:description" content="{{ self.meta_description() }}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CYBER SHATS">
+<meta property="og:url" content="https://{{ site_domain }}{{ request.path }}">
+<meta name="theme-color" content="#000010">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 fill=%22%23000010%22/><text x=%2212%22 y=%2217%22 font-size=%2214%22 text-anchor=%22middle%22 fill=%22%2300ff41%22>C</text></svg>">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+{% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+<canvas id="matrix-canvas"></canvas>
+<div class="scanline"></div>
+<div class="crt-overlay"></div>
+
+{% include 'partials/hud.html' %}
+{% include 'partials/flash.html' %}
+
+{% block content %}{% endblock %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="{{ url_for('static', filename='js/globe-core.js') }}"></script>
+<script src="{{ url_for('static', filename='js/globe-mini.js') }}"></script>
+<script src="{{ url_for('static', filename='js/matrix-rain.js') }}"></script>
+<script src="{{ url_for('static', filename='js/hud.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

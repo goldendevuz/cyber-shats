@@ -1,0 +1,78 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Bosh sahifa — CYBER SHATS{% endblock %}
+{% block app_content %}
+{% set positions = [(0,-210),(148,-148),(210,0),(148,148),(0,210),(-148,148),(-210,0),(-148,-148)] %}
+
+<div class="flex-between" style="margin-bottom:6px; flex-wrap:wrap; gap:10px;">
+    <div>
+        <h1 style="font-size:22px;">XUSH KELIBSIZ, {{ current_user.ism.upper() }}</h1>
+        <p class="muted" style="font-size:12.5px;">LVL {{ current_user.level }} · {{ current_user.xp }} XP · Bugungi maqsadlarga erishish vaqti keldi</p>
+    </div>
+    <div class="flex gap-12">
+        <a href="{{ url_for('ai_assistant') }}" class="cs-btn cs-btn-sm">{{ icon('bot',14) }} AI Yordamchi</a>
+        <a href="{{ url_for('courses') }}" class="cs-btn cs-btn-primary cs-btn-sm">{{ icon('book',14) }} Kurslarga o'tish</a>
+    </div>
+</div>
+
+<div class="orbit-stage">
+    <div class="orbit-globe-bg"></div>
+    <div class="orbit-title">
+        <div class="big">{{ icon('shield',34) }}</div>
+        <div class="muted" style="font-size:10px; letter-spacing:3px; margin-top:6px;">CYBER SHATS HUB</div>
+    </div>
+    {% for d, pos in zip(directions[:8], positions) %}
+    <a href="{{ url_for('courses', d=d.slug) }}" class="orbit-node" style="top:calc(50% + {{ pos[1] }}px); left:calc(50% + {{ pos[0] }}px); transform:translate(-50%,-50%);">
+        <div class="hex-icon {{ 'cyan' if loop.index is even }}">{{ icon(d.icon, 22) }}</div>
+        <div class="name">{{ d.name_uz }}</div>
+    </a>
+    {% endfor %}
+</div>
+
+<div class="directions-fallback grid grid-3" style="margin-bottom:30px;">
+    {% for d in directions[:8] %}
+    <a href="{{ url_for('courses', d=d.slug) }}" class="direction-card">
+        <div class="hex-icon {{ 'cyan' if loop.index is even }}">{{ icon(d.icon, 22) }}</div>
+        <div class="name">{{ d.name_uz }}</div>
+        <div class="count">{{ d.course_count }} kurs</div>
+    </a>
+    {% endfor %}
+</div>
+
+<div class="grid grid-2">
+    <div class="cs-card">
+        <div class="cs-card-title"><h3>{{ icon('book',16) }} DAVOM ETING</h3><a href="{{ url_for('results') }}" class="cyan" style="font-size:11px;">Barchasi →</a></div>
+        {% if enrollments %}
+        {% for e in enrollments %}
+        <a href="{{ url_for('course_detail', slug=e.slug) }}" class="course-row" style="margin-bottom:10px; text-decoration:none;">
+            <div class="hex-icon sm">{{ icon(e.icon, 18) }}</div>
+            <div class="meta">
+                <h4>{{ e.title }}</h4>
+                <div class="cs-progress"><span style="width:{{ e.progress_percent }}%;"></span></div>
+            </div>
+            <div class="muted" style="font-size:11px;">{{ e.progress_percent }}%</div>
+        </a>
+        {% endfor %}
+        {% else %}
+        <p class="muted" style="font-size:12.5px;">Hali hech qaysi kursga yozilmagansiz. <a href="{{ url_for('courses') }}" class="cyan">Kurslarni ko'ring →</a></p>
+        {% endif %}
+    </div>
+    <div class="cs-card">
+        <div class="cs-card-title"><h3>{{ icon('zap',16) }} CYBER YANGILIKLAR</h3><a href="{{ url_for('news') }}" class="cyan" style="font-size:11px;">Barchasi →</a></div>
+        {% for n in recent_news %}
+        <a href="{{ url_for('news') }}" style="display:block; padding:10px 0; border-bottom:1px solid rgba(0,255,65,.08); text-decoration:none;">
+            <span class="cs-chip" style="margin-bottom:6px;">{{ n.category }}</span>
+            <div style="font-size:12.5px; color:var(--cs-text-white); margin-top:6px;">{{ n.title }}</div>
+            <div class="muted" style="font-size:10.5px; margin-top:4px;">{{ time_ago_uz(n.published_at) }}</div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="grid grid-4" style="margin-top:20px;">
+    <div class="stat-card"><div class="top">{{ icon('award',16) }}</div><div class="num">{{ current_user.level }}</div><div class="label">Daraja</div></div>
+    <div class="stat-card"><div class="top">{{ icon('zap',16) }}</div><div class="num">{{ current_user.xp }}</div><div class="label">XP ball</div></div>
+    <div class="stat-card"><div class="top">{{ icon('bell',16) }}</div><div class="num">{{ notif_count }}</div><div class="label">Yangi bildirishnoma</div></div>
+    <div class="stat-card"><div class="top">{{ icon('users',16) }}</div><div class="num">{{ hud_online }}</div><div class="label">Hozir onlayn</div></div>
+</div>
+{% endblock %}

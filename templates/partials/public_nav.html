@@ -1,0 +1,21 @@
+{% from 'partials/icons.html' import icon %}
+<div class="container">
+<div class="public-topbar">
+    <a href="{{ url_for('index') }}" class="logo">CYBER SHATS</a>
+    <nav>
+        <a href="{{ url_for('index') }}#yonalishlar">Yo'nalishlar</a>
+        <a href="{{ url_for('index') }}#kurslar">Kurslar</a>
+        <a href="{{ url_for('pricing') }}" class="{{ 'active' if request.endpoint=='pricing' }}">Narxlar</a>
+        <a href="{{ url_for('index') }}#yangiliklar">Yangiliklar</a>
+    </nav>
+    <div class="actions">
+        {% if current_user %}
+        <a href="{{ url_for('dashboard') }}" class="cs-btn cs-btn-sm">{{ icon('home', 14) }} Kabinet</a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="cs-btn cs-btn-sm {{ 'cs-btn-primary' if request.endpoint=='login' }}">Kirish</a>
+        <a href="{{ url_for('register') }}" class="cs-btn cs-btn-sm {{ 'cs-btn-primary' if request.endpoint=='register' }}">Ro'yxatdan o'tish</a>
+        {% endif %}
+    </div>
+    <button class="public-mobile-toggle cs-btn cs-btn-sm" data-toggle="sidebar">{{ icon('menu', 14) }}</button>
+</div>
+</div>

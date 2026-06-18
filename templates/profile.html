@@ -1,0 +1,49 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Profil — CYBER SHATS{% endblock %}
+{% block app_content %}
+<div class="grid" style="grid-template-columns: 280px 1fr; gap:22px; align-items:flex-start;">
+    <div class="cs-card flex-center" style="flex-direction:column; text-align:center;">
+        <div class="avatar-fallback flex-center" style="width:84px;height:84px;border-radius:50%;background:rgba(0,255,65,.1); color:var(--cs-text-primary); font-family:var(--cs-font-display); font-size:30px; display:flex; border:2px solid var(--cs-border-active); margin-bottom:14px;">{{ current_user.ism[0]|upper }}</div>
+        <h2 style="font-size:16px;">{{ current_user.ism }} {{ current_user.familiya }}</h2>
+        <p class="muted" style="font-size:12px;">{{ current_user.email }}</p>
+        <div class="cs-tag-level cyan" style="margin-top:8px;">{{ current_user.role|upper }} · {{ current_user.plan|upper }}</div>
+        <div class="grid grid-2 gap-8" style="width:100%; margin-top:18px;">
+            <div class="stat-card"><div class="num" style="font-size:18px;">{{ current_user.level }}</div><div class="label">Daraja</div></div>
+            <div class="stat-card"><div class="num" style="font-size:18px;">{{ current_user.xp }}</div><div class="label">XP</div></div>
+        </div>
+        <div class="cs-progress" style="margin-top:14px;"><span style="width:{{ (current_user.xp % 500) / 500 * 100 }}%;"></span></div>
+        <div class="muted" style="font-size:10.5px; margin-top:6px;">{{ current_user.level * 500 - current_user.xp }} XP keyingi darajagacha</div>
+    </div>
+    <div>
+        <div class="cs-card" style="margin-bottom:20px;">
+            <h3 style="font-size:13px; margin-bottom:16px;">{{ icon('edit',14) }} PROFILNI TAHRIRLASH</h3>
+            <form method="post">
+                <div class="grid grid-2 gap-12">
+                    <div class="cs-field"><label>Ism</label><input class="cs-input" type="text" name="ism" value="{{ current_user.ism }}"></div>
+                    <div class="cs-field"><label>Familiya</label><input class="cs-input" type="text" name="familiya" value="{{ current_user.familiya }}"></div>
+                </div>
+                <div class="cs-field"><label>Bio</label><textarea class="cs-textarea" name="bio" rows="3" placeholder="O'zingiz haqingizda qisqacha...">{{ current_user.bio }}</textarea></div>
+                <button type="submit" class="cs-btn cs-btn-primary">{{ icon('check',14) }} Saqlash</button>
+            </form>
+        </div>
+        <div class="cs-card" style="margin-bottom:20px;">
+            <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('book',14) }} KURSLARIM ({{ enrollments|length }})</h3>
+            {% for e in enrollments %}
+            <a href="{{ url_for('course_detail', slug=e.slug) }}" class="course-row" style="margin-bottom:8px; text-decoration:none;">
+                <div class="meta"><h4>{{ e.title }}</h4><div class="cs-progress"><span style="width:{{ e.progress_percent }}%;"></span></div></div>
+                <div class="muted" style="font-size:11px;">{{ e.progress_percent }}%</div>
+            </a>
+            {% endfor %}
+        </div>
+        <div class="cs-card">
+            <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('award',14) }} YUTUQLAR</h3>
+            <div class="grid grid-4">
+                {% for b in badges %}
+                <div class="flex-center" style="flex-direction:column;"><div class="badge-icon">{{ icon(b.icon,20) }}</div><div style="font-size:10px; text-align:center;">{{ b.name }}</div></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

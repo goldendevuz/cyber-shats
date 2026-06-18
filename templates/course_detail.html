@@ -1,0 +1,67 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}{{ course.title }} — CYBER SHATS{% endblock %}
+{% block app_content %}
+{% set total_lessons = modules|sum(attribute='lessons_count') %}
+<div class="cs-card" style="margin-bottom:24px;">
+    <div class="flex gap-16" style="flex-wrap:wrap; align-items:flex-start;">
+        <div class="hex-icon lg">{{ icon(course.icon, 32) }}</div>
+        <div style="flex:1; min-width:240px;">
+            <span class="cs-tag-level cyan">{{ course.direction_name }}</span>
+            <h1 style="font-size:24px; margin-top:8px;">{{ course.title }}</h1>
+            <p class="muted">{{ course.subtitle }}</p>
+            <div class="stats-line" style="font-size:12px;">
+                <span class="cs-tag-level">{{ course.level }}</span>
+                <span>{{ icon('clock',13) }} {{ course.duration_weeks }} hafta</span>
+                <span>{{ icon('layers',13) }} {{ total_lessons or course.lessons_count }} dars</span>
+                <span>{{ icon('users',13) }} {{ course.students_count }} o'quvchi</span>
+                <span class="rating">{{ icon('star',13) }} {{ course.rating }}</span>
+            </div>
+        </div>
+        <div style="text-align:right; min-width:160px;">
+            {% if enrollment %}
+                <div class="cs-progress" style="margin-bottom:10px;"><span style="width:{{ enrollment.progress_percent }}%;"></span></div>
+                <div class="muted" style="font-size:11px; margin-bottom:10px;">{{ enrollment.progress_percent }}% bajarildi</div>
+                {% if modules and modules[0].lessons %}
+                <a href="{{ url_for('lesson', slug=course.slug, lesson_id=modules[0].lessons[0].id) }}" class="cs-btn cs-btn-primary cs-btn-block">{{ icon('play',14) }} Davom ettirish</a>
+                {% endif %}
+            {% else %}
+                <form method="post" action="{{ url_for('enroll_course', slug=course.slug) }}">
+                    <button type="submit" class="cs-btn cs-btn-primary cs-btn-block">{{ icon('zap',14) }} Kursga yozilish</button>
+                </form>
+            {% endif %}
+            {% if test %}
+            <a href="{{ url_for('test_take', test_id=test.id) }}" class="cs-btn cs-btn-block" style="margin-top:8px;">{{ icon('file-text',14) }} Yakuniy test</a>
+            {% endif %}
+        </div>
+    </div>
+    <p style="margin-top:18px; font-size:13px;">{{ course.description }}</p>
+</div>
+
+<h2 style="font-size:16px; margin-bottom:14px;">{{ icon('layers',16) }} O'QUV DASTURI</h2>
+<div class="curr-grid" style="margin-bottom:30px;">
+    {% for m in modules %}
+    <div class="curr-item">
+        <div class="num">MODUL {{ loop.index }}/{{ modules|length }}</div>
+        <div class="hex-icon sm" style="margin:8px 0;">{{ icon(m.icon, 18) }}</div>
+        <h4>{{ m.title }}</h4>
+        <div class="muted" style="font-size:11px;">{{ m.lessons_count }} dars</div>
+        <div class="bar cs-progress"><span style="width: {{ (loop.index / modules|length * 100)|round|int if enrollment and enrollment.progress_percent==100 else 0 }}%;"></span></div>
+    </div>
+    {% endfor %}
+</div>
+
+<h2 style="font-size:16px; margin-bottom:14px;">{{ icon('play',16) }} DARSLAR RO'YXATI</h2>
+{% for m in modules %}
+<div class="cs-card" style="margin-bottom:14px;">
+    <div class="cs-card-title"><h3>{{ loop.index }}. {{ m.title }}</h3><span class="muted" style="font-size:11px;">{{ m.lessons|length }} dars</span></div>
+    {% for l in m.lessons %}
+    <a href="{{ url_for('lesson', slug=course.slug, lesson_id=l.id) }}" class="course-row" style="margin-bottom:8px; padding:12px 14px; text-decoration:none;">
+        <div class="hex-icon sm">{{ icon('play', 14) }}</div>
+        <div class="meta"><h4 style="font-size:12.5px;">{{ l.title }}</h4></div>
+        <div class="muted" style="font-size:11px;">{{ fmt_duration(l.duration_seconds) }}</div>
+    </a>
+    {% endfor %}
+</div>
+{% endfor %}
+{% endblock %}

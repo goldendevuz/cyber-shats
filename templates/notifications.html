@@ -1,0 +1,21 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Bildirishnomalar — CYBER SHATS{% endblock %}
+{% block app_content %}
+<h1 style="font-size:20px; margin-bottom:18px;">{{ icon('bell',18) }} Bildirishnomalar</h1>
+<div class="cs-card" style="padding:0;">
+    {% for n in items %}
+    <div class="notif-item {{ 'unread' if not n.is_read }}">
+        <div class="av">{{ icon('zap' if n.type=='info' else ('check' if n.type=='success' else 'bell'), 16) }}</div>
+        <div class="body">
+            <div style="color:var(--cs-text-white);">{{ n.title }}</div>
+            <div class="muted">{{ n.body }}</div>
+        </div>
+        <div class="time">{{ time_ago_uz(n.created_at) }}</div>
+    </div>
+    {% endfor %}
+    {% if not items %}
+    <div class="cs-alert" style="margin:16px;">{{ icon('bell',16) }} Hozircha bildirishnomalar yo'q.</div>
+    {% endif %}
+</div>
+{% endblock %}

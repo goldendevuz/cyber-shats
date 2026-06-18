@@ -1,0 +1,126 @@
+/* ============================================================
+   CYBER SHATS — SAHIFAGA XOS STILLAR
+   ============================================================ */
+
+/* ----- KIRISH ANIMATSIYASI (intro overlay) ----- */
+#intro-overlay {
+    position: fixed; inset:0; background:#000010; z-index: 10000;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+    transition: opacity .8s ease;
+}
+#intro-overlay.hide { opacity:0; pointer-events:none; }
+#globe-container { position:absolute; inset:0; }
+#intro-overlay .intro-text {
+    position:relative; z-index:2; text-align:center; opacity:0; transition: opacity .6s ease;
+}
+#intro-overlay .intro-text.show { opacity:1; }
+#intro-overlay .intro-logo { font-size: 13vw; max-font-size:64px; }
+#intro-overlay .skip-intro { position:absolute; bottom:24px; right:24px; z-index:5; font-size:11px; color: var(--cs-text-muted); border:1px solid var(--cs-border); padding:8px 16px; border-radius:4px; cursor:pointer; background:none;}
+#intro-overlay .skip-intro:hover { color: var(--cs-text-primary); border-color: var(--cs-border-active);}
+#intro-overlay .boot-lines { position:absolute; top:22px; left:22px; font-size:11px; color: var(--cs-text-muted); z-index:3; line-height:1.8;}
+
+/* ----- PUBLIC TOPBAR ----- */
+.public-topbar { display:flex; align-items:center; justify-content:space-between; padding: 18px 0; position:relative; z-index:5;}
+.public-topbar .logo { font-family: var(--cs-font-display); font-size:20px; color: var(--cs-text-primary); }
+.public-topbar nav { display:flex; gap: 26px; }
+.public-topbar nav a { color: var(--cs-text-muted); font-size:12px; letter-spacing:1px; text-transform:uppercase; }
+.public-topbar nav a:hover, .public-topbar nav a.active { color: var(--cs-text-primary); }
+.public-topbar .actions { display:flex; gap:12px; }
+.public-mobile-toggle { display:none; }
+@media (max-width: 860px) {
+    .public-topbar nav { display:none; }
+    .public-mobile-toggle { display:block; }
+}
+
+/* ----- HERO (landing) ----- */
+.hero-section { position:relative; padding: 60px 0 40px; overflow:hidden; min-height: 70vh; display:flex; align-items:center;}
+.hero-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items:center; position:relative; z-index:2; width:100%; }
+.hero-copy .tag { color: var(--cs-text-cyan); font-size:11px; letter-spacing:4px; margin-bottom:14px; }
+.hero-copy h1 { font-size: 46px; line-height:1.15; margin-bottom: 14px; }
+.hero-copy h1 .accent { color: var(--cs-text-white); }
+.hero-copy p.lead { color: var(--cs-text-muted); font-size:14px; max-width: 460px; margin-bottom: 22px; }
+.hero-copy .cmd-box { border:1px solid var(--cs-border); border-radius: var(--cs-radius); padding: 14px 16px; font-size:12px; color: var(--cs-text-primary); margin: 22px 0; max-width: 420px; background: rgba(0,255,65,.03);}
+.hero-stats { display:flex; gap: 30px; margin-top: 28px; flex-wrap:wrap;}
+.hero-stats .hs { text-align:left; }
+.hero-stats .hs .n { font-family: var(--cs-font-display); font-size:22px; color: var(--cs-text-primary); }
+.hero-stats .hs .l { font-size:10px; color: var(--cs-text-muted); text-transform:uppercase; letter-spacing:1px;}
+.hero-globe { position:relative; height: 420px; }
+#globe-mini-container { position:absolute; inset:0; }
+@media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .hero-globe { height: 280px; order:-1; }
+    .hero-copy h1 { font-size: 32px; }
+}
+
+/* ----- Split kirish/ro'yxat sahifasi ----- */
+.auth-page { min-height:100vh; display:flex; flex-direction:column; position:relative; z-index:1; }
+.auth-grid { flex:1; display:grid; grid-template-columns: 1.3fr 1fr; gap: 50px; align-items:center; padding: 30px 0 50px;}
+.auth-card { background: var(--cs-bg-glass); border:1px solid var(--cs-border); border-radius: 8px; padding: 36px; backdrop-filter: blur(12px); position:relative;}
+.auth-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background: linear-gradient(90deg, transparent, #00ff41, transparent);}
+.auth-card h2 { font-size:24px; }
+.auth-card .sub { color: var(--cs-text-muted); font-size:12.5px; margin-bottom: 22px; }
+.auth-divider { display:flex; align-items:center; gap:10px; color: var(--cs-text-muted); font-size:11px; margin: 16px 0; text-transform:uppercase;}
+.auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background: var(--cs-border); }
+.oauth-row { display:flex; gap:10px; }
+.oauth-row button { flex:1; padding:10px; border:1px solid var(--cs-border); background:transparent; border-radius:4px; color: var(--cs-text-muted); cursor:pointer; display:flex; align-items:center; justify-content:center;}
+.oauth-row button:hover { border-color: var(--cs-border-active); color: var(--cs-text-primary); }
+.direction-strip { display:flex; gap: 14px; overflow-x:auto; padding: 18px 0; justify-content:center; }
+.direction-strip .ds-item { display:flex; flex-direction:column; align-items:center; gap:8px; min-width: 84px; }
+.direction-strip .ds-item .name { font-size:9.5px; color: var(--cs-text-muted); text-transform:uppercase; letter-spacing:.5px; text-align:center;}
+.status-bar { display:flex; justify-content:space-between; padding: 14px 0; border-top: 1px solid var(--cs-border); font-size:11px; color: var(--cs-text-muted); flex-wrap:wrap; gap:10px;}
+@media (max-width: 900px) {
+    .auth-grid { grid-template-columns: 1fr; }
+    .status-bar { justify-content:center; text-align:center; }
+}
+
+/* ----- Dashboard orbit (asosiy interfeys) ----- */
+.orbit-stage { position:relative; height: 520px; display:flex; align-items:center; justify-content:center; margin: 10px 0 30px;}
+.orbit-globe-bg { position:absolute; width:300px; height:300px; border-radius:50%; background: radial-gradient(circle, rgba(0,255,65,.18), rgba(0,255,65,.02) 60%, transparent 75%); }
+.orbit-globe-bg::before, .orbit-globe-bg::after { content:''; position:absolute; inset:-40px; border:1px solid rgba(0,255,65,.18); border-radius:50%; }
+.orbit-globe-bg::after { inset:-90px; border-color: rgba(0,255,65,.1);}
+.orbit-title { position:absolute; text-align:center; z-index:3; }
+.orbit-title .big { font-size:30px; letter-spacing:6px; }
+.orbit-node { position:absolute; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:4; text-decoration:none; }
+.orbit-node .hex-icon { background: var(--cs-bg-card); }
+.orbit-node:hover .hex-icon { border-color: var(--cs-text-primary); box-shadow: var(--cs-glow-strong); }
+.orbit-node .name { font-size:10px; color: var(--cs-text-muted); text-transform:uppercase; white-space:nowrap;}
+.orbit-node:hover .name { color: var(--cs-text-primary); }
+@media (max-width: 900px) {
+    .orbit-stage { display:none; }
+}
+.directions-fallback { display:none; }
+@media (max-width: 900px) { .directions-fallback { display:grid; } }
+
+/* ----- Admin charts ----- */
+.chart-box { background: var(--cs-bg-card); border:1px solid var(--cs-border); border-radius: var(--cs-radius); padding: 16px; }
+.chart-box canvas { max-width:100%; }
+.server-meter { margin-bottom: 14px; }
+.server-meter .top { display:flex; justify-content:space-between; font-size:11px; color: var(--cs-text-muted); margin-bottom:5px;}
+.world-mini { position:relative; height:180px; border-radius: var(--cs-radius); overflow:hidden; border:1px solid var(--cs-border); background: radial-gradient(circle at 50% 40%, rgba(0,255,65,.12), transparent 70%); }
+
+/* ----- Pricing ----- */
+.price-card { text-align:center; padding: 30px 24px; position:relative; }
+.price-card.featured { border-color: var(--cs-text-primary); box-shadow: var(--cs-glow-strong); transform: scale(1.02); }
+.price-card .ribbon { position:absolute; top:-1px; left:50%; transform:translateX(-50%); background: var(--cs-grad-btn); color:#000; font-size:10px; padding:4px 14px; border-radius:0 0 6px 6px; letter-spacing:1px;}
+.price-card .price { font-family: var(--cs-font-display); font-size:36px; color: var(--cs-text-primary); margin: 14px 0 2px;}
+.price-card .price small { font-size:13px; color: var(--cs-text-muted); }
+.price-card ul { list-style:none; padding:0; margin: 20px 0; text-align:left; font-size:12.5px; }
+.price-card ul li { padding: 7px 0; display:flex; gap:8px; align-items:flex-start; color: var(--cs-text-white); }
+
+/* ----- Footer ----- */
+footer.site-footer { border-top: 1px solid var(--cs-border); padding: 40px 0 24px; position:relative; z-index:1; margin-top: 40px;}
+footer.site-footer .f-grid { display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 30px; margin-bottom: 30px;}
+footer.site-footer h4 { font-size:11px; color: var(--cs-text-muted); letter-spacing:1px; }
+footer.site-footer a.f-link { display:block; color: var(--cs-text-muted); font-size:12px; padding: 5px 0; }
+footer.site-footer a.f-link:hover { color: var(--cs-text-primary); }
+.f-bottom { display:flex; justify-content:space-between; border-top:1px solid var(--cs-border); padding-top:18px; font-size:11px; color: var(--cs-text-muted); flex-wrap:wrap; gap:10px;}
+@media (max-width: 768px) { footer.site-footer .f-grid { grid-template-columns: 1fr 1fr; } }
+
+/* ----- Curriculum grid (course detail) ----- */
+.curr-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.curr-item { background: var(--cs-bg-card); border:1px solid var(--cs-border); border-radius: var(--cs-radius); padding: 16px; position:relative;}
+.curr-item .num { color: var(--cs-text-muted); font-size:11px; }
+.curr-item h4 { font-size:12.5px; margin: 6px 0; text-transform:none; letter-spacing:0; color: var(--cs-text-white);}
+.curr-item .bar { margin-top:10px; }
+@media (max-width: 900px) { .curr-grid { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 480px) { .curr-grid { grid-template-columns: 1fr; } }

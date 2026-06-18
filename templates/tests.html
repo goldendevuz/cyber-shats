@@ -1,0 +1,23 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Testlar — CYBER SHATS{% endblock %}
+{% block app_content %}
+<h1 style="font-size:20px; margin-bottom:6px;">{{ icon('file-text',18) }} Testlar</h1>
+<p class="muted" style="font-size:12.5px; margin-bottom:22px;">Bilimingizni tekshiring va XP to'plang</p>
+<div class="grid grid-3">
+    {% for t in tests %}
+    <div class="cs-card">
+        <span class="cs-tag-level">{{ t.course_title or 'Umumiy' }}</span>
+        <h3 style="font-size:14px; margin-top:10px; text-transform:none; letter-spacing:0; color:var(--cs-text-white);">{{ t.title }}</h3>
+        <div class="stats-line" style="margin-top:8px;">
+            <span>{{ icon('file-text',12) }} {{ t.q_count }} savol</span>
+            <span>{{ icon('clock',12) }} {{ t.duration_minutes }} daqiqa</span>
+        </div>
+        {% if t.id in attempted %}
+        <div class="cs-chip solid" style="margin-top:12px;">{{ icon('award',12) }} Eng yaxshi: {{ attempted[t.id].best_score }}/{{ attempted[t.id].total }}</div>
+        {% endif %}
+        <a href="{{ url_for('test_take', test_id=t.id) }}" class="cs-btn cs-btn-block" style="margin-top:14px;">{{ icon('play',13) }} {{ 'Qayta topshirish' if t.id in attempted else 'Boshlash' }}</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

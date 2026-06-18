@@ -1,0 +1,116 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Boshqaruv Paneli — CYBER SHATS{% endblock %}
+{% block app_content %}
+<div class="flex-between" style="margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+    <h1 style="font-size:20px;">{{ icon('cpu',18) }} Boshqaruv Paneli</h1>
+    <span class="cs-chip solid">{{ icon('check',12) }} TIZIM BARQAROR</span>
+</div>
+
+<div class="grid grid-6" style="margin-bottom:24px;">
+    <div class="stat-card"><div class="top">{{ icon('users',16) }}<span class="delta">+{{ hud_today }}</span></div><div class="num">{{ stats.users }}</div><div class="label">Foydalanuvchilar</div></div>
+    <div class="stat-card"><div class="top">{{ icon('book',16) }}</div><div class="num">{{ stats.courses }}</div><div class="label">Kurslar</div></div>
+    <div class="stat-card"><div class="top">{{ icon('grid',16) }}</div><div class="num">{{ stats.directions }}</div><div class="label">Yo'nalishlar</div></div>
+    <div class="stat-card"><div class="top">{{ icon('layers',16) }}</div><div class="num">{{ stats.lessons }}</div><div class="label">Darslar</div></div>
+    <div class="stat-card"><div class="top">{{ icon('file-text',16) }}</div><div class="num">{{ stats.tests }}</div><div class="label">Test urinishlari</div></div>
+    <div class="stat-card"><div class="top">{{ icon('zap',16) }}</div><div class="num">{{ stats.active_today }}</div><div class="label">Bugun faol</div></div>
+</div>
+
+<div class="grid" style="grid-template-columns: 2fr 1fr; gap:20px; margin-bottom:24px;">
+    <div class="chart-box">
+        <h3 style="font-size:12.5px; margin-bottom:14px;">{{ icon('trending-up',14) }} 7 KUNLIK FAOLLIK</h3>
+        <canvas id="activityChart" height="110"></canvas>
+    </div>
+    <div class="chart-box">
+        <h3 style="font-size:12.5px; margin-bottom:14px;">{{ icon('grid',14) }} TRAFIK MANBALARI</h3>
+        <canvas id="sourceDonut" height="180"></canvas>
+    </div>
+</div>
+
+<div class="grid" style="grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:24px;">
+    <div class="cs-card">
+        <h3 style="font-size:12.5px; margin-bottom:14px;">{{ icon('server',14) }} SERVER HOLATI</h3>
+        <div class="server-meter"><div class="top"><span>CPU</span><span>42%</span></div><div class="cs-progress"><span style="width:42%;"></span></div></div>
+        <div class="server-meter"><div class="top"><span>RAM</span><span>61%</span></div><div class="cs-progress"><span style="width:61%;"></span></div></div>
+        <div class="server-meter"><div class="top"><span>Disk</span><span>28%</span></div><div class="cs-progress"><span style="width:28%;"></span></div></div>
+        <div class="server-meter"><div class="top"><span>Tarmoq</span><span>17%</span></div><div class="cs-progress"><span style="width:17%;"></span></div></div>
+    </div>
+    <div class="cs-card">
+        <h3 style="font-size:12.5px; margin-bottom:14px;">{{ icon('globe',14) }} FOYDALANUVCHILAR XARITASI</h3>
+        <div class="world-mini flex-center">
+            <div style="text-align:center;">
+                {{ icon('globe', 40) }}
+                <div class="muted" style="font-size:10.5px; margin-top:8px;">Asosiy mintaqa: O'zbekiston, Markaziy Osiyo</div>
+            </div>
+        </div>
+        <div class="grid grid-2 gap-8" style="margin-top:14px;">
+            {% for plan in plan_counts %}
+            <div class="cs-chip">{{ plan.plan|upper }}: {{ plan.c }}</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="grid" style="grid-template-columns: 1.4fr 1fr; gap:20px; margin-bottom:24px;">
+    <div class="cs-card">
+        <div class="cs-card-title"><h3>{{ icon('users',14) }} YANGI FOYDALANUVCHILAR</h3></div>
+        <table class="cs-table">
+            <thead><tr><th>Ism</th><th>Email</th><th>Rol</th><th>Holat</th><th></th></tr></thead>
+            <tbody>
+            {% for u in recent_users %}
+            <tr>
+                <td>{{ u.ism }} {{ u.familiya }}</td>
+                <td class="muted">{{ u.email }}</td>
+                <td><span class="status-pill {{ 'pro' if u.role=='admin' or u.role=='mentor' else '' }}">{{ u.role }}</span></td>
+                <td><span class="status-pill {{ 'online' if not u.is_blocked else '' }}">{{ 'Bloklangan' if u.is_blocked else 'Faol' }}</span></td>
+                <td>
+                    <form method="post" action="{{ url_for('admin_toggle_block', user_id=u.id) }}">
+                        <button type="submit" class="cs-btn cs-btn-sm {{ 'cs-btn-danger' if not u.is_blocked }}">{{ 'Blokdan chiqarish' if u.is_blocked else 'Bloklash' }}</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="cs-card">
+        <div class="cs-card-title"><h3>{{ icon('clock',14) }} OXIRGI AMALLAR (LOG)</h3></div>
+        <div style="max-height:340px; overflow-y:auto;">
+        {% for l in recent_logs %}
+        <div class="notif-item">
+            <div class="av">{{ icon('zap',13) }}</div>
+            <div class="body">
+                <span style="color:var(--cs-text-white);">{{ l.ism or 'Tizim' }}</span> — <span class="muted">{{ l.action }}</span>
+                {% if l.details %}<div class="muted" style="font-size:10.5px;">{{ l.details }}</div>{% endif %}
+            </div>
+            <div class="time">{{ time_ago_uz(l.created_at) }}</div>
+        </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="cs-card">
+    <div class="cs-card-title"><h3>{{ icon('star',14) }} ENG MASHHUR KURSLAR</h3></div>
+    <table class="cs-table">
+        <thead><tr><th>Kurs</th><th>Yo'nalish</th><th>O'quvchilar</th></tr></thead>
+        <tbody>
+        {% for c in top_courses %}
+        <tr><td>{{ c.title }}</td><td class="muted">{{ c.direction_name }}</td><td>{{ c.students_count }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+window.CS_ADMIN_DATA = {
+    dayLabels: {{ day_labels|tojson }},
+    activitySeries: {{ activity_series|tojson }},
+    sourceLabels: {{ source_labels|tojson }},
+    sourceSeries: {{ source_series|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Amaliyot — {{ lesson.title }}{% endblock %}
+{% block app_content %}
+<div class="cs-alert warn" style="margin-bottom:18px;">
+    {{ icon('shield',16) }} <span>Bu — faqat o'quv maqsadli SIMULYATSIYA. Hech qanday haqiqiy tarmoq yoki serverga hujum amalga oshirilmaydi.</span>
+</div>
+<h1 style="font-size:19px; margin-bottom:4px;">{{ icon('bug',18) }} Amaliy topshiriq: SQL Injection</h1>
+<p class="muted" style="font-size:12.5px; margin-bottom:20px;">«{{ lesson.title }}» darsi bo'yicha amaliyot — «{{ course.title }}»</p>
+
+<div class="grid" style="grid-template-columns: 1fr 1fr; gap:20px; align-items:flex-start;">
+    <div>
+        <div class="cs-card" style="margin-bottom:18px;">
+            <h3 style="font-size:12.5px; margin-bottom:10px;">{{ icon('flag',14) }} TOPSHIRIQ</h3>
+            <p style="font-size:13px;">Quyidagi demo login formasiga SQL Injection orqali kirishga harakat qiling. Klassik <code>' OR '1'='1</code> payloadidan foydalaning, so'ngra terminalda «hujumni ishga tushirish» tugmasi orqali sqlmap simulyatsiyasini ko'ring va flag'ni toping.</p>
+        </div>
+        <div class="browser-mock">
+            <div class="bm-bar"><div class="bm-url">demo-lab.local/login</div></div>
+            <div class="bm-body">
+                <form class="fake-login-form" data-fake-login>
+                    <input type="text" name="demo_user" placeholder="Foydalanuvchi nomi">
+                    <input type="password" name="demo_pass" placeholder="Parol">
+                    <button type="submit">Kirish</button>
+                    <div data-fake-msg style="margin-top:10px; font-size:12px;"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div>
+        <div class="terminal-box" style="margin-bottom:18px;">
+            <div class="term-head"><span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span> demo@cybershats: ~/lab</div>
+            <div class="term-body" data-term-body>
+                <div class="line-dim">$ Hujumni boshlash uchun pastdagi tugmani bosing...</div>
+            </div>
+        </div>
+        <button class="cs-btn cs-btn-primary cs-btn-block" data-run-attack style="margin-bottom:18px;">{{ icon('terminal',14) }} sqlmap simulyatsiyasini ishga tushirish</button>
+        <div class="cs-card">
+            <h3 style="font-size:12.5px; margin-bottom:10px;">{{ icon('flag',14) }} FLAG'NI KIRITING</h3>
+            <form data-flag-form>
+                <div class="cs-field">
+                    <input class="cs-input" type="text" data-flag-input placeholder="FLAG{...}">
+                </div>
+                <button type="submit" class="cs-btn cs-btn-block">Topshirish</button>
+            </form>
+            <div data-flag-result style="margin-top:12px; font-size:12.5px;"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/lab-sim.js') }}"></script>
+<script>
+window.csMarkPracticeDone = function () {
+    fetch("{{ url_for('complete_lesson', slug=course.slug, lesson_id=lesson.id) }}", { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .catch(function(){});
+};
+</script>
+{% endblock %}

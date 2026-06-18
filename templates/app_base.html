@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block body_class %}has-sidebar{% endblock %}
+{% block content %}
+<div class="app-shell">
+    {% include 'partials/sidebar.html' %}
+    <main class="app-main">
+        {% include 'partials/topbar.html' %}
+        <div class="app-content">
+            {% block app_content %}{% endblock %}
+        </div>
+    </main>
+</div>
+{% endblock %}
