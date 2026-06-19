@@ -36,7 +36,7 @@ python3 database/migrate.py
 python3 app.py
 ```
 
-Brauzerda oching: **http://127.0.0.1:5000**
+Brauzerda oching: **http://127.0.0.1:8080**
 
 ## 3. Tayyor kirish ma'lumotlari (demo hisoblar)
 

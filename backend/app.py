@@ -49,7 +49,7 @@ def load_knowledge_base() -> str:
 KNOWLEDGE_BASE = load_knowledge_base()
 
 # ─── CORS sozlash ─────────────────────────────────────────────────────────
-ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 'http://localhost:5000').split(',')
+ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 'http://localhost:8080').split(',')
 CORS(app, resources={r"/api/*": {"origins": ALLOWED_ORIGINS}})
 
 socketio = SocketIO(app, cors_allowed_origins=ALLOWED_ORIGINS, async_mode='threading')
@@ -1049,7 +1049,7 @@ def initiate_payment():
     ptype = data.get('type', 'pro_sub')
     if ptype not in ('pro_sub', 'unblock_ip'):
         return jsonify({'error': "Noto'g'ri to'lov turi"}), 400
-    amount = 150000 if ptype == 'pro_sub' else 100000
+    amount = 180800 if ptype == 'pro_sub' else 100000
 
     db = get_db()
     db.execute("INSERT INTO payments (user_id,amount,payment_type,status) VALUES (?,?,?,'pending')",

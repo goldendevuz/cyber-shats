@@ -881,7 +881,7 @@ def admin_dashboard():
         "free_smm_access": False,
         "free_test_limit": 30,
         "pro_price_uzs": 99000,
-        "pro_price_code": 5000,
+        "pro_price_code": 8080,
         "pro_ai_limit": 100,
         "pro_duration_days": 30,
     }
@@ -1380,7 +1380,7 @@ def admin_settings_free_plan():
 def admin_settings_pro_plan():
     """Pro plan sozlamalarini saqlash."""
     price_uzs = request.form.get("pro_price_uzs", 99000)
-    price_code = request.form.get("pro_price_code", 5000)
+    price_code = request.form.get("pro_price_code", 8080)
     ai_limit = request.form.get("pro_ai_limit", 100)
     duration = request.form.get("pro_duration_days", 30)
     log_action(session["user_id"], "update_pro_plan_settings",
@@ -1443,6 +1443,6 @@ def server_error(e):
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8080))
     debug = os.environ.get("FLASK_DEBUG", "1") == "1"
     app.run(host="0.0.0.0", port=port, debug=debug)
