@@ -8,6 +8,7 @@ qrcode==8.2
 Pillow==12.2.0
 anthropic==0.109.2
 python-dotenv==1.2.2
+bleach==6.4.0
 
 # ============================================================
 # IXTIYORIY / KELAJAKDA KERAK BO'LISHI MUMKIN (asl spetsifikatsiyada
