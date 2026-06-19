@@ -15,6 +15,7 @@ bcrypt==5.0.0
 Flask-Limiter==4.1.1
 PyJWT==2.13.0
 requests==2.34.2
+python-decouple==3.8
 
 # ============================================================
 # IXTIYORIY / KELAJAKDA KERAK BO'LISHI MUMKIN (asl spetsifikatsiyada
