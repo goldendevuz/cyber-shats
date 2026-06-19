@@ -29,6 +29,9 @@ DIRECTIONS = [
     ("data-science", "Data Science", "trending-up", 68, "yellow"),
     ("cloud", "Cloud Computing", "cloud", 45, "cyan"),
     ("devops", "DevOps", "git-branch", 60, "green"),
+    ("smm", "SMM Menejeri", "share-2", 30, "pink"),
+    ("targetolog", "Targetolog", "target", 25, "orange"),
+    ("logistika", "Logistika", "truck", 20, "blue"),
 ]
 
 # Har bir yo'nalish uchun namunaviy kurs nomlari (haqiqiy qator sifatida bazaga yoziladi)
@@ -45,6 +48,9 @@ COURSE_TEMPLATES = {
     "data-science": ["Data Science Asoslari", "Pandas va NumPy", "Data Vizualizatsiya", "Statistik Tahlil"],
     "cloud": ["AWS Asoslari", "Cloud Architecture", "Docker va Konteynerlar", "Serverless Dasturlash"],
     "devops": ["DevOps Asoslari", "CI/CD Pipeline", "Kubernetes Amaliyot", "Linux Server Boshqaruvi"],
+    "smm": ["SMM Asoslari", "Instagram va TikTok Marketing", "Kontent Strategiyasi", "SMM Analitika"],
+    "targetolog": ["Facebook Ads Asoslari", "Instagram Reklama", "Google Ads", "Targetolog Pro"],
+    "logistika": ["Logistika Asoslari", "Omborxona Boshqaruvi", "Import va Eksport", "Supply Chain Management"],
 }
 
 LEVELS = ["Boshlang'ich", "O'rta", "Yuqori"]
@@ -52,6 +58,7 @@ ICONS_BY_DIR = {
     "web-dev": "code", "python": "terminal", "cyber-security": "shield", "mobile-dev": "smartphone",
     "javascript": "code", "cpp": "cpu", "networking": "wifi", "database": "database",
     "ai-ml": "bot", "data-science": "trending-up", "cloud": "cloud", "devops": "git-branch",
+    "smm": "share-2", "targetolog": "target", "logistika": "truck",
 }
 
 # "Ethical Hacker" kursi uchun rasmiy 8 modulli o'quv dasturi (skrinshotga mos)
@@ -147,19 +154,23 @@ def main():
 
     # ---------- YO'NALISHLAR ----------
     direction_ids = {}
+    PRO_ONLY_DIRS = {"smm", "targetolog", "logistika"}
     for i, (slug, name, icon, count, color) in enumerate(DIRECTIONS):
+        is_pro = 1 if slug in PRO_ONLY_DIRS else 0
         cur.execute(
-            "INSERT INTO directions (slug, name_uz, icon, course_count, color, sort_order) VALUES (?,?,?,?,?,?)",
-            (slug, name, icon, count, color, i),
+            "INSERT INTO directions (slug, name_uz, icon, course_count, color, sort_order, is_pro_only) VALUES (?,?,?,?,?,?,?)",
+            (slug, name, icon, count, color, i, is_pro),
         )
         direction_ids[slug] = cur.lastrowid
 
     # ---------- KURSLAR + MODULLAR + DARSLAR ----------
     course_ids = {}
     all_course_rows = []
+    PRO_ONLY_SLUGS = {"smm", "targetolog", "logistika"}
     for slug, titles in COURSE_TEMPLATES.items():
         dir_id = direction_ids[slug]
         icon = ICONS_BY_DIR[slug]
+        is_pro_only = 1 if slug in PRO_ONLY_SLUGS else 0
         for j, title in enumerate(titles):
             course_slug = f"{slug}-{j+1}"
             level = LEVELS[min(j, 2)]
@@ -168,14 +179,18 @@ def main():
             students = random.randint(120, 5400)
             rating = round(random.uniform(4.3, 5.0), 1)
             price = 0 if j == 0 else random.choice([0, 49000, 99000, 149000])
+            # SMM/Logistika kurslari pullik va pro_only
+            code_price = 10000 if is_pro_only or (price > 0) else 0
+            is_paid = 1 if (is_pro_only or price > 0) and j > 0 else 0
             cur.execute(
                 """INSERT INTO courses (slug, direction_id, title, subtitle, description, level,
-                   duration_weeks, lessons_count, students_count, rating, price, icon)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                   duration_weeks, lessons_count, students_count, rating, price, icon, is_pro_only, code_price, is_paid)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (course_slug, dir_id, title, f"{title} bo'yicha to'liq amaliy kurs",
                  f"{title} kursida siz nazariy bilim va amaliy ko'nikmalarni birga egallaysiz. "
                  f"Kurs davomida real loyihalar ustida ishlaysiz va sertifikat olasiz.",
-                 level, duration, lessons_count, students, rating, price, icon),
+                 level, duration, lessons_count, students, rating, price, icon,
+                 is_pro_only, code_price, is_paid),
             )
             cid = cur.lastrowid
             course_ids[course_slug] = cid
@@ -348,6 +363,50 @@ def main():
     print(f"   Foydalanuvchilar: {len(users)} | Yo'nalishlar: {len(DIRECTIONS)} | Kurslar: {len(all_course_rows)}")
     print("   Admin: admin@cybershats.uz / admin123")
     print("   Demo student: jasur@example.com / demo1234")
+
+    conn2 = sqlite3.connect(DB_PATH)
+    conn2.row_factory = sqlite3.Row
+    cur2 = conn2.cursor()
+
+    # ---------- PREMIUM IDlar ----------
+    PREMIUM_ID_DATA = [
+        ("1111111", "quad7", 100000),
+        ("2222222", "quad7", 100000),
+        ("3333333", "quad7", 100000),
+        ("4444444", "quad7", 100000),
+        ("5555555", "quad7", 100000),
+        ("6666666", "quad7", 100000),
+        ("7777777", "quad7", 100000),
+        ("8888888", "quad7", 100000),
+        ("9999999", "quad7", 100000),
+        ("1234567", "sequential", 120000),
+    ]
+    for cid, ctype, price in PREMIUM_ID_DATA:
+        cur2.execute(
+            "INSERT OR IGNORE INTO premium_ids (custom_id, id_type, base_price, status) VALUES (?,?,?,'available')",
+            (cid, ctype, price)
+        )
+
+    # ---------- Foydalanuvchilarga auto custom_id ----------
+    all_users_rows = cur2.execute("SELECT id FROM users WHERE custom_id IS NULL").fetchall()
+    used_ids = set()
+    for row in all_users_rows:
+        uid = row[0]
+        for _ in range(200):
+            new_cid = str(random.randint(1000000, 9999999))
+            if any(new_cid.count(d) >= 4 for d in "0123456789"):
+                continue
+            if new_cid in used_ids:
+                continue
+            existing = cur2.execute("SELECT id FROM users WHERE custom_id=?", (new_cid,)).fetchone()
+            if not existing:
+                used_ids.add(new_cid)
+                cur2.execute("UPDATE users SET custom_id=? WHERE id=?", (new_cid, uid))
+                break
+
+    conn2.commit()
+    conn2.close()
+    print("   Premium IDlar va foydalanuvchi IDlari yaratildi.")
 
 if __name__ == "__main__":
     main()

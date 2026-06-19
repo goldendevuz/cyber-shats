@@ -1,0 +1,84 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Code Tangalar — CYBER SHATS{% endblock %}
+{% block app_content %}
+<div class="flex-between" style="margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+  <h1 style="font-size:20px;">{{ icon('zap',18) }} Code Tangalar</h1>
+</div>
+
+<!-- Balans kartasi -->
+<div class="cs-card" style="text-align:center; padding:32px; margin-bottom:20px; background:linear-gradient(135deg,rgba(0,255,65,.08),rgba(0,200,100,.04));">
+  <div style="font-size:11px; letter-spacing:2px; color:var(--cs-text-muted); margin-bottom:8px;">SIZNING BALANSINGIZ</div>
+  <div style="font-size:52px; font-weight:900; font-family:var(--cs-font-display); color:var(--cs-text-primary); line-height:1;">
+    ⚡ {{ "{:,}".format(balance) }}
+  </div>
+  <div style="font-size:13px; color:var(--cs-text-muted); margin-top:8px;">CODE</div>
+  {% if current_user.plan != 'pro' %}
+  <div style="margin-top:20px;">
+    <form method="post" action="{{ url_for('coins_buy_pro') }}">
+      <button class="cs-btn cs-btn-primary" {{ 'disabled' if balance < pro_cost }}>
+        {{ icon('star',16) }} Pro versiya sotib olish — ⚡ {{ "{:,}".format(pro_cost) }} CODE
+      </button>
+    </form>
+    {% if balance < pro_cost %}
+    <div class="muted" style="margin-top:8px; font-size:11px;">
+      Yetishmayapti: ⚡ {{ "{:,}".format(pro_cost - balance) }} code
+    </div>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="cs-chip solid" style="margin-top:16px; display:inline-flex;">{{ icon('check',14) }} PRO FOYDALANUVCHI</div>
+  {% endif %}
+</div>
+
+<!-- Qanday topish mumkin -->
+<div class="grid grid-2" style="margin-bottom:20px; gap:16px;">
+  <div class="cs-card">
+    <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('gift',14) }} CODE QANDAY TOPILADI</h3>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:rgba(0,255,65,.05); border-radius:6px;">
+        <span>{{ icon('book',14) }} Kurs bitirish</span>
+        <span style="color:var(--cs-text-primary); font-weight:700;">+{{ course_reward }} CODE</span>
+      </div>
+    </div>
+  </div>
+  <div class="cs-card">
+    <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('shopping-cart',14) }} NIMALARGA SARFLANADI</h3>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid rgba(0,255,65,.07);">
+        <span>{{ icon('star',14) }} Pro versiya</span>
+        <span style="color:#ff9900;">{{ "{:,}".format(pro_cost) }} CODE</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid rgba(0,255,65,.07);">
+        <span>{{ icon('book',14) }} Pulik kurs</span>
+        <span style="color:#ff9900;">{{ "{:,}".format(paid_course_code) }} CODE</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:8px;">
+        <span>{{ icon('bot',14) }} AI 1 javob</span>
+        <span style="color:#ff9900;">{{ ai_cost }} CODE</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tranzaksiyalar tarixi -->
+<div class="cs-card">
+  <div class="cs-card-title"><h3>{{ icon('clock',14) }} HARAKATLAR TARIXI</h3></div>
+  <div style="max-height:400px; overflow-y:auto;">
+  {% for t in txns %}
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(0,255,65,.07);">
+    <div>
+      <span style="font-size:12px;">{{ t.reason }}</span>
+      <div class="muted" style="font-size:10px;">{{ t.created_at[:16] }}</div>
+    </div>
+    <span style="font-family:var(--cs-font-display); font-weight:700;
+      color:{{ 'var(--cs-text-primary)' if t.amount > 0 else '#ff5555' }}">
+      {{ '+' if t.amount > 0 else '' }}{{ "{:,}".format(t.amount) }} CODE
+    </span>
+  </div>
+  {% else %}
+  <p class="muted" style="text-align:center; padding:30px;">Hali harakatlar yo'q</p>
+  {% endfor %}
+  </div>
+</div>
+{% endblock %}

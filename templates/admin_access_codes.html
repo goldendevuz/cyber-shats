@@ -1,0 +1,51 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Kurs Kirish Kodlari — Admin{% endblock %}
+{% block app_content %}
+<div class="flex-between" style="margin-bottom:18px;">
+    <h1 style="font-size:19px;">{{ icon('key',18) }} «{{ course.title }}» — Kirish Kodlari</h1>
+    <a href="{{ url_for('admin_dashboard') }}" class="cs-btn" style="font-size:13px;">{{ icon('arrow-left',13) }} Admin</a>
+</div>
+
+<!-- Yangi kod yaratish -->
+<div class="cs-card" style="padding:20px;margin-bottom:20px;">
+    <h3 style="font-size:14px;margin-bottom:12px;">{{ icon('plus',14) }} Yangi kodlar yaratish</h3>
+    <form method="POST" action="{{ url_for('admin_generate_access_codes', course_id=course.id) }}" style="display:flex;gap:10px;align-items:center;">
+        <input type="number" name="count" min="1" max="50" value="5" class="cs-input" style="width:80px;">
+        <span style="color:var(--cs-text-muted);font-size:13px;">ta kod (max 50)</span>
+        <button type="submit" class="cs-btn">Yaratish</button>
+    </form>
+</div>
+
+<!-- Kodlar ro'yxati -->
+<div class="cs-card" style="padding:20px;">
+    <h3 style="font-size:14px;margin-bottom:14px;">{{ icon('list',14) }} Barcha kodlar ({{ codes|length }} ta)</h3>
+    {% if codes %}
+    <div style="overflow-x:auto;">
+        <table class="cs-table">
+            <thead><tr><th>Kod</th><th>Holat</th><th>Foydalanuvchi</th><th>Sana</th></tr></thead>
+            <tbody>
+            {% for c in codes %}
+            <tr>
+                <td style="font-family:monospace;font-size:14px;letter-spacing:2px;color:{% if c.is_used %}var(--cs-text-muted){% else %}var(--cs-green){% endif %};">{{ c.access_code }}</td>
+                <td>
+                    {% if c.is_used %}
+                    <span class="cs-chip" style="color:var(--cs-text-muted);">Ishlatilgan</span>
+                    {% else %}
+                    <span class="cs-chip" style="color:#00ff41;">Bo'sh</span>
+                    {% endif %}
+                </td>
+                <td>{% if c.ism %}{{ c.ism }} {{ c.familiya }}{% else %}—{% endif %}</td>
+                <td style="font-size:12px;color:var(--cs-text-muted);">{{ c.used_at[:16] if c.used_at else c.created_at[:10] }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;color:var(--cs-text-muted);padding:20px;">
+        Hali kodlar yaratilmagan.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

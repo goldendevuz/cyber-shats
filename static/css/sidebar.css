@@ -5,6 +5,9 @@
 
 .cs-sidebar {
     width: var(--cs-sidebar-w); min-height: 100vh; background: var(--cs-grad-sidebar);
+    display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100;
+    border-right: 1px solid var(--cs-border);
+}
     border-right: 1px solid var(--cs-border); display:flex; flex-direction: column;
     position: fixed; left:0; top:0; z-index: 200; overflow-y:auto;
 }
@@ -12,7 +15,8 @@
 .cs-sidebar .logo .logo-mark { width:26px; height:26px; flex-shrink:0;}
 .cs-sidebar .logo span { color: var(--cs-text-cyan); display:block; font-size:9px; letter-spacing:3px; font-family: var(--cs-font-mono); text-transform: none;}
 
-.cs-nav { flex: 1; padding: 8px 0; }
+.cs-nav { flex: 1; padding: 8px 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+.cs-nav::-webkit-scrollbar { display: none; }
 .cs-nav-item {
     display:flex; align-items:center; gap:10px; padding: 11px 16px; color: var(--cs-text-muted);
     cursor:pointer; transition: all .2s; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;

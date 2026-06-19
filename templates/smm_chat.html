@@ -1,0 +1,76 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}{{ config.name }} AI — CYBER SHATS{% endblock %}
+{% block app_content %}
+<div class="flex-between" style="margin-bottom:14px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+        <a href="{{ url_for('smm_hub') }}" style="color:var(--cs-text-muted);">{{ icon('arrow-left',16) }}</a>
+        <h1 style="font-size:19px;">{{ icon(config.icon,18) }} {{ config.name }} AI</h1>
+        <span class="cs-chip solid" style="border-color:rgba(255,100,200,.4);color:#ff64c8;">{{ icon('crown',12) }} PRO</span>
+    </div>
+</div>
+<div class="chat-shell">
+    <div class="chat-side">
+        {% for dir_key, cfg in smm_directions.items() %}
+        <a href="{{ url_for('smm_chat', direction=dir_key) }}" class="ai-item {{ 'active' if dir_key==direction }}">{{ icon(cfg.icon,15) }} {{ cfg.name }}</a>
+        {% endfor %}
+        <div style="margin-top:12px;padding:10px;border:1px solid rgba(0,255,65,.15);border-radius:8px;font-size:12px;color:var(--cs-text-muted);">
+            {{ icon('info',12) }} Bu AI {{ config.name }} sohasida ixtisoslashgan
+        </div>
+    </div>
+    <div class="chat-main">
+        <div class="chat-msgs" data-chat-msgs>
+            {% if not history %}
+            <div class="msg bot">Salom! Men {{ config.name }} AI yordamchisiman. Sizga {{ config.name.lower() }} sohasida yordam bera olaman. Savolingizni yozing!</div>
+            {% endif %}
+            {% for m in history %}
+            <div class="msg {{ 'user' if m.role=='user' else 'bot' }}">{{ m.content }}</div>
+            {% endfor %}
+        </div>
+        <form class="chat-input-row" id="smmChatForm">
+            <input type="hidden" id="smmDirection" value="{{ direction }}">
+            <input type="text" id="smmChatInput" placeholder="Savolingizni yozing..." autocomplete="off">
+            <button type="submit">{{ icon('send',16) }}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+    var box = document.querySelector('[data-chat-msgs]');
+    if (box) box.scrollTop = box.scrollHeight;
+    
+    document.getElementById('smmChatForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        var input = document.getElementById('smmChatInput');
+        var direction = document.getElementById('smmDirection').value;
+        var msg = input.value.trim();
+        if (!msg) return;
+        var msgs = document.querySelector('[data-chat-msgs]');
+        msgs.innerHTML += '<div class="msg user">' + msg.replace(/</g,'&lt;') + '</div>';
+        input.value = '';
+        msgs.scrollTop = msgs.scrollHeight;
+        msgs.innerHTML += '<div class="msg bot" id="smm-typing">...</div>';
+        try {
+            var r = await fetch('/api/smm/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg, direction: direction})
+            });
+            var d = await r.json();
+            document.getElementById('smm-typing').remove();
+            if (d.ok) {
+                msgs.innerHTML += '<div class="msg bot">' + d.data.reply.replace(/</g,'&lt;').replace(/\n/g,'<br>') + '</div>';
+            } else {
+                msgs.innerHTML += '<div class="msg bot" style="color:var(--cs-danger);">' + (d.error||'Xatolik') + '</div>';
+            }
+        } catch(err) {
+            var t = document.getElementById('smm-typing');
+            if(t) t.textContent = 'Ulanish xatoligi';
+        }
+        msgs.scrollTop = msgs.scrollHeight;
+    });
+})();
+</script>
+{% endblock %}

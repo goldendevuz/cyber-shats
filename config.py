@@ -12,3 +12,22 @@ class Config:
     SITE_NAME = "CYBER SHATS"
     SITE_DOMAIN = os.environ.get("SITE_DOMAIN", "cyber.shats.uz")
     BUILD_DATE = "2026-01-01"
+
+    # OAuth
+    GOOGLE_CLIENT_ID     = os.environ.get("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+    GITHUB_CLIENT_ID     = os.environ.get("GITHUB_CLIENT_ID", "")
+    GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
+    OAUTH_REDIRECT_BASE  = os.environ.get("OAUTH_REDIRECT_BASE", "http://localhost:5000")
+
+    # Code tangasi narxlar
+    PRO_COST_CODE      = 57_000   # Pro versiya narxi (code)
+    COURSE_REWARD_CODE = 100      # Kurs bitirganda beriladigan code
+    AI_COST_PER_MSG    = 200      # Har bir AI javob narxi (code)
+    PAID_COURSE_CODE   = 10_000   # Pulik kurs narxi (code, standart)
+
+    # Xavfsizlik
+    MAX_FAILED_LOGINS  = 5        # Shuncha marta noto'g'ri parol → lock
+    LOCK_MINUTES       = 30       # Lock davomiyligi (daqiqa)
+    RATE_LIMIT_WINDOW  = 60       # Sekund
+    RATE_LIMIT_MAX     = 60       # Oyna ichida maksimal so'rovlar

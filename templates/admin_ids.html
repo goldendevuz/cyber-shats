@@ -1,0 +1,83 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}ID Boshqaruvi — Admin{% endblock %}
+{% block app_content %}
+<div class="flex-between" style="margin-bottom:18px;">
+    <h1 style="font-size:19px;">{{ icon('hash',18) }} ID & Auktsion Boshqaruvi</h1>
+    <a href="{{ url_for('admin_dashboard') }}" class="cs-btn" style="font-size:13px;">{{ icon('arrow-left',13) }} Admin</a>
+</div>
+
+<!-- Premium IDlar -->
+<div class="cs-card" style="padding:20px;margin-bottom:20px;">
+    <h3 style="font-size:14px;margin-bottom:14px;">{{ icon('star',14) }} Premium IDlar</h3>
+    <div style="overflow-x:auto;">
+        <table class="cs-table">
+            <thead><tr><th>ID</th><th>Tur</th><th>Narx</th><th>Holat</th><th>Admin: Berish</th><th>Auktsion</th></tr></thead>
+            <tbody>
+            {% for pid in premium_ids %}
+            <tr>
+                <td style="font-family:monospace;font-size:18px;letter-spacing:3px;color:var(--cs-green);">#{{ pid.custom_id }}</td>
+                <td><span class="cs-chip" style="font-size:11px;">{{ pid.id_type }}</span></td>
+                <td>{{ pid.base_price | int | format_number }} code</td>
+                <td>
+                    {% if pid.status == 'available' %}<span class="cs-chip" style="color:#00ff41;">Bo'sh</span>
+                    {% elif pid.status == 'sold' %}<span class="cs-chip" style="color:var(--cs-text-muted);">Sotilgan</span>
+                    {% elif pid.status == 'auction' %}<span class="cs-chip" style="color:#ffd23f;">Auktsion</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if pid.status == 'available' %}
+                    <form method="POST" action="{{ url_for('admin_give_id') }}" style="display:flex;gap:6px;">
+                        <input type="hidden" name="custom_id" value="{{ pid.custom_id }}">
+                        <input type="number" name="user_id" placeholder="User ID" class="cs-input" style="width:90px;">
+                        <button type="submit" class="cs-btn" style="font-size:12px;padding:4px 8px;">Ber</button>
+                    </form>
+                    {% else %}—{% endif %}
+                </td>
+                <td>
+                    {% if pid.status == 'available' %}
+                    <form method="POST" action="{{ url_for('admin_create_auction') }}" style="display:flex;gap:4px;flex-wrap:wrap;">
+                        <input type="hidden" name="custom_id" value="{{ pid.custom_id }}">
+                        <input type="number" name="start_price" value="{{ pid.base_price }}" class="cs-input" style="width:100px;" placeholder="Narx">
+                        <input type="number" name="hours" value="24" class="cs-input" style="width:60px;" placeholder="Soat">
+                        <button type="submit" class="cs-btn" style="font-size:12px;padding:4px 8px;">Auktsion</button>
+                    </form>
+                    {% else %}—{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Auktsionlar -->
+{% if auctions %}
+<div class="cs-card" style="padding:20px;">
+    <h3 style="font-size:14px;margin-bottom:14px;">{{ icon('gavel',14) }} Auktsionlar</h3>
+    <div style="overflow-x:auto;">
+        <table class="cs-table">
+            <thead><tr><th>ID</th><th>Narx</th><th>Joriy taklif</th><th>Holat</th><th>Tugash</th><th>Amal</th></tr></thead>
+            <tbody>
+            {% for a in auctions %}
+            <tr>
+                <td style="font-family:monospace;color:#ffd23f;">#{{ a.custom_id }}</td>
+                <td>{{ a.start_price | int | format_number }}</td>
+                <td style="color:var(--cs-green);">{{ (a.current_bid or 0) | int | format_number }}</td>
+                <td><span class="cs-chip" style="font-size:11px;{% if a.status=='active' %}color:#00ff41;{% endif %}">{{ a.status }}</span></td>
+                <td style="font-size:12px;">{{ a.ends_at[:16] }}</td>
+                <td>
+                    {% if a.status == 'active' %}
+                    <form method="POST" action="{{ url_for('admin_finalize_auction', auction_id=a.id) }}">
+                        <button type="submit" class="cs-btn" style="font-size:12px;padding:4px 8px;">Yakunla</button>
+                    </form>
+                    {% else %}—{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

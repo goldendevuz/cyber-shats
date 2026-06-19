@@ -1,0 +1,98 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Foydalanuvchilar — Admin{% endblock %}
+{% block app_content %}
+<div class="flex-between" style="margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+  <h1 style="font-size:20px;">{{ icon('users',18) }} Foydalanuvchilar</h1>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <a href="{{ url_for('admin_leaderboard') }}" class="cs-btn cs-btn-sm">{{ icon('trending-up',14) }} Reyting</a>
+    <a href="{{ url_for('admin_payments') }}" class="cs-btn cs-btn-sm">{{ icon('credit-card',14) }} To'lovlar</a>
+    <a href="{{ url_for('admin_security') }}" class="cs-btn cs-btn-sm">{{ icon('shield',14) }} Xavfsizlik</a>
+  </div>
+</div>
+
+<!-- Filter -->
+<form method="get" class="cs-card" style="padding:14px; margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
+  <input type="text" name="q" value="{{ search }}" placeholder="Ism, familiya yoki email..." class="cs-input" style="flex:1; min-width:200px;">
+  <select name="plan" class="cs-input" style="width:120px;">
+    <option value="">Barcha plan</option>
+    <option value="free" {{ 'selected' if plan=='free' }}>Free</option>
+    <option value="pro" {{ 'selected' if plan=='pro' }}>Pro</option>
+    <option value="enterprise" {{ 'selected' if plan=='enterprise' }}>Enterprise</option>
+  </select>
+  <button type="submit" class="cs-btn cs-btn-primary">{{ icon('search',14) }} Qidirish</button>
+</form>
+
+<div class="cs-card">
+  <table class="cs-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Ism Familiya</th><th>ID</th><th>Email</th><th>Plan</th>
+        <th>Code tangasi</th><th>Reyting</th><th>Holat</th><th>Amallar</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for u in users %}
+    <tr>
+      <td class="muted">{{ u.id }}</td>
+      <td>
+        {{ u.ism }} {{ u.familiya }}
+        <div class="muted" style="font-size:10px;">{{ u.oauth_provider or 'parol' }}</div>
+      </td>
+      <td style="font-family:monospace;color:var(--cs-green);font-size:13px;letter-spacing:2px;">#{{ u.custom_id or '—' }}</td>
+      <td class="muted" style="font-size:11px;">{{ u.email }}</td>
+      <td>
+        <span class="cs-chip {{ 'solid' if u.plan=='pro' }}">{{ u.plan|upper }}</span>
+      </td>
+      <td style="color:var(--cs-text-primary); font-weight:600;">
+        ⚡ {{ u.code_balance|default(0)|int }}
+      </td>
+      <td class="muted">#{{ u.rank|default(0) }}</td>
+      <td>
+        <span class="status-pill {{ '' if u.is_blocked else 'online' }}">
+          {{ 'Bloklangan' if u.is_blocked else 'Faol' }}
+        </span>
+      </td>
+      <td>
+        <div style="display:flex; gap:4px; flex-wrap:wrap;">
+          <!-- Bloklash/Ochish -->
+          <form method="post" action="{{ url_for('admin_toggle_block', user_id=u.id) }}">
+            <button class="cs-btn cs-btn-sm {{ 'cs-btn-danger' if not u.is_blocked }}">
+              {{ 'Ochish' if u.is_blocked else 'Blok' }}
+            </button>
+          </form>
+          <!-- Plan o'zgartirish -->
+          <form method="post" action="{{ url_for('admin_set_plan', user_id=u.id) }}" style="display:flex; gap:4px;">
+            <select name="plan" class="cs-input" style="padding:4px 6px; font-size:11px; height:30px;">
+              <option value="free" {{ 'selected' if u.plan=='free' }}>Free</option>
+              <option value="pro" {{ 'selected' if u.plan=='pro' }}>Pro</option>
+              <option value="enterprise" {{ 'selected' if u.plan=='enterprise' }}>Ent.</option>
+            </select>
+            <button class="cs-btn cs-btn-sm cs-btn-primary">Set</button>
+          </form>
+          <!-- Coin qo'shish -->
+          <form method="post" action="{{ url_for('admin_add_coins', user_id=u.id) }}" style="display:flex; gap:4px;">
+            <input type="number" name="amount" min="1" value="1000" class="cs-input"
+                   style="width:80px; padding:4px 6px; font-size:11px; height:30px;">
+            <button class="cs-btn cs-btn-sm" style="background:rgba(0,255,65,.15); border-color:var(--cs-text-primary);">
+              ⚡+Coin
+            </button>
+          </form>
+          <!-- Coin ayirish -->
+          <form method="post" action="{{ url_for('admin_remove_coins', user_id=u.id) }}" style="display:flex; gap:4px;">
+            <input type="number" name="amount" min="1" value="1000" class="cs-input"
+                   style="width:80px; padding:4px 6px; font-size:11px; height:30px;">
+            <button class="cs-btn cs-btn-sm cs-btn-danger">
+              ⚡−Coin
+            </button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8" class="muted" style="text-align:center; padding:30px;">Foydalanuvchi topilmadi</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

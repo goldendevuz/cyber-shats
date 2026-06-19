@@ -52,8 +52,8 @@
             </form>
             <div class="auth-divider">YOKI</div>
             <div class="oauth-row">
-                <button type="button" title="Google orqali (tez kunda)">{{ icon('globe',16) }} Google</button>
-                <button type="button" title="GitHub orqali (tez kunda)">{{ icon('github',16) }} GitHub</button>
+                <a href="{{ url_for('oauth.google_login') }}" class="cs-btn cs-btn-outline" title="Google orqali ro'yxatdan o'ting">{{ icon('globe',16) }} Google</a>
+                <a href="{{ url_for('oauth.github_login') }}" class="cs-btn cs-btn-outline" title="GitHub orqali ro'yxatdan o'ting">{{ icon('github',16) }} GitHub</a>
             </div>
             <p class="muted" style="text-align:center; font-size:12px; margin-top:18px;">Hisobingiz bormi? <a href="{{ url_for('login') }}" class="cyan">Kirish</a></p>
         </div>

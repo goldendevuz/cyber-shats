@@ -1,0 +1,36 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Reyting — Admin{% endblock %}
+{% block app_content %}
+<div class="flex-between" style="margin-bottom:20px;">
+  <h1 style="font-size:20px;">{{ icon('trending-up',18) }} Foydalanuvchilar Reytingi</h1>
+  <a href="{{ url_for('admin_users') }}" class="cs-btn cs-btn-sm">{{ icon('users',14) }} Foydalanuvchilar</a>
+</div>
+<div class="cs-card">
+  <table class="cs-table">
+    <thead>
+      <tr><th>#</th><th>Foydalanuvchi</th><th>Plan</th><th>Ball</th><th>Kurslar</th><th>Testlar</th><th>Code tangasi</th><th>Daraja</th></tr>
+    </thead>
+    <tbody>
+    {% for l in leaders %}
+    <tr style="{{ 'background:rgba(0,255,65,.04);' if loop.index <= 3 }}">
+      <td style="font-family:var(--cs-font-display); font-size:14px;
+        color:{{ '#FFD700' if loop.index==1 else '#C0C0C0' if loop.index==2 else '#CD7F32' if loop.index==3 else 'var(--cs-text-muted)' }}">
+        {{ '🥇' if loop.index==1 else '🥈' if loop.index==2 else '🥉' if loop.index==3 else loop.index }}
+      </td>
+      <td>
+        <strong>{{ l.ism }} {{ l.familiya }}</strong>
+        <div class="muted" style="font-size:10px;">ID: {{ l.id }}</div>
+      </td>
+      <td><span class="cs-chip {{ 'solid' if l.plan=='pro' }}">{{ l.plan|upper }}</span></td>
+      <td style="color:var(--cs-text-primary); font-weight:700;">{{ l.total_score|int }}</td>
+      <td>{{ l.courses_done }}</td>
+      <td>{{ l.tests_passed }}</td>
+      <td style="color:var(--cs-text-primary);">⚡ {{ l.code_balance|default(0)|int }}</td>
+      <td>{{ l.level }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

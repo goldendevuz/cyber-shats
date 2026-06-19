@@ -1,0 +1,76 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}ID Auktsion — CYBER SHATS{% endblock %}
+{% block app_content %}
+<div class="flex-between" style="margin-bottom:18px;">
+    <h1 style="font-size:19px;">{{ icon('gavel',18) }} ID Auktsion</h1>
+    <div class="cs-chip">Balans: <b>{{ balance | int | format_number }}</b> code</div>
+</div>
+<p style="color:var(--cs-text-muted);margin-bottom:20px;">Chiroyli (premium) raqamlarni auktsion orqali sotin oling. G'olib eng ko'p taklif bergan foydalanuvchi bo'ladi.</p>
+
+{% if auctions %}
+<div class="grid-2" style="gap:18px;margin-bottom:28px;">
+{% for a in auctions %}
+<div class="cs-card" style="padding:20px;border-color:rgba(255,210,63,.3);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+        <div>
+            <div style="font-size:11px;color:var(--cs-text-muted);">ID Raqami</div>
+            <div style="font-family:monospace;font-size:30px;font-weight:700;letter-spacing:6px;color:#ffd23f;">#{{ a.custom_id }}</div>
+        </div>
+        <span class="cs-chip" style="color:#ffd23f;border-color:#ffd23f40;">{{ a.id_type|upper }}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div style="background:rgba(0,255,65,.06);border-radius:8px;padding:10px;">
+            <div style="font-size:11px;color:var(--cs-text-muted);">Boshlang'ich narx</div>
+            <div style="font-size:15px;font-weight:600;">{{ a.start_price | int | format_number }} code</div>
+        </div>
+        <div style="background:rgba(0,255,65,.06);border-radius:8px;padding:10px;">
+            <div style="font-size:11px;color:var(--cs-text-muted);">Joriy taklif</div>
+            <div style="font-size:15px;font-weight:600;color:var(--cs-green);">{{ (a.current_bid or a.start_price) | int | format_number }} code</div>
+        </div>
+    </div>
+    {% if a.bidder_ism %}
+    <div style="font-size:12px;color:var(--cs-text-muted);margin-bottom:10px;">
+        {{ icon('user',11) }} Lider: {{ a.bidder_ism }} {{ a.bidder_familiya }}
+    </div>
+    {% endif %}
+    <div style="font-size:12px;color:var(--cs-text-muted);margin-bottom:12px;">
+        {{ icon('clock',11) }} Tugash: {{ a.ends_at[:16] }}
+    </div>
+    <form method="POST" action="{{ url_for('auction_bid', auction_id=a.id) }}" style="display:flex;gap:8px;">
+        <input type="number" name="amount" min="{{ (a.current_bid or a.start_price) + 1000 }}" 
+               placeholder="Taklif (code)" class="cs-input" style="flex:1;">
+        <button type="submit" class="cs-btn">{{ icon('gavel',14) }} Taklif</button>
+    </form>
+    <div style="font-size:11px;color:var(--cs-text-muted);margin-top:6px;">Minimal oshim: +1,000 code</div>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<div class="cs-card" style="padding:32px;text-align:center;color:var(--cs-text-muted);">
+    {{ icon('gavel',32) }}
+    <p style="margin-top:12px;">Hozircha faol auktsionlar yo'q.</p>
+    <p style="font-size:13px;">Admin yangi auktsion qo'shganida bu yerda ko'rinadi.</p>
+</div>
+{% endif %}
+
+<!-- Tugagan auktsionlar -->
+{% if ended %}
+<h3 style="font-size:15px;margin-bottom:12px;">{{ icon('archive',14) }} Yakunlangan auktsionlar</h3>
+<div style="overflow-x:auto;">
+    <table class="cs-table">
+        <thead><tr><th>ID</th><th>Yakuniy narx</th><th>G'olib</th><th>Sana</th></tr></thead>
+        <tbody>
+        {% for a in ended %}
+        <tr>
+            <td style="font-family:monospace;color:#ffd23f;">#{{ a.custom_id }}</td>
+            <td style="color:var(--cs-green);">{{ a.current_bid | int | format_number }} code</td>
+            <td>{% if a.winner_ism %}{{ a.winner_ism }} {{ a.winner_familiya }}{% else %}—{% endif %}</td>
+            <td style="font-size:12px;color:var(--cs-text-muted);">{{ a.ends_at[:10] }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

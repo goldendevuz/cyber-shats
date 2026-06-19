@@ -15,11 +15,31 @@ from db import get_db, close_db, query_one, query_all, execute, log_action
 from auth import login_required, admin_required, get_current_user, api_login_required
 from utils import api_response, time_ago_uz, fmt_duration
 from ai import call_ai_assistant, is_ai_configured
+from security import (check_brute_force, record_failed_login, clear_failed_logins,
+                      log_security_event, is_ip_blocked, block_ip, scan_request,
+                      check_rate_limit)
+from coins import (get_balance, add_coins, spend_coins, award_course_completion,
+                   buy_pro_with_coins, buy_course_with_coins, deduct_ai_usage,
+                   get_leaderboard, get_transactions, _update_rating)
+from oauth_routes import oauth_bp
+from ids import (generate_unique_id, set_user_id, get_premium_ids_list,
+                 buy_premium_id, get_active_auctions, place_bid, finalize_auction,
+                 init_premium_ids, _id_type_and_price)
+from smm_ai import chat_smm, SMM_DIRECTIONS, get_smm_history
 
 app = Flask(__name__)
 app.config.from_object(Config)
 app.teardown_appcontext(close_db)
+app.register_blueprint(oauth_bp)
 app.jinja_env.globals.update(zip=zip)
+app.jinja_env.globals['format_number'] = lambda v: f"{int(v):,}" if v else "0"
+
+@app.template_filter('format_number')
+def format_number(value):
+    try:
+        return f"{int(value):,}"
+    except (ValueError, TypeError):
+        return value
 
 
 # ---------------------------------------------------------------
@@ -172,20 +192,34 @@ def index():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        ip = request.headers.get("X-Forwarded-For", request.remote_addr or "0.0.0.0").split(",")[0].strip()
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
+
+        # Brute force tekshiruvi
+        blocked, msg = check_brute_force(email, ip)
+        if blocked:
+            flash(msg, "error")
+            return redirect(url_for("login"))
+
         user = query_one("SELECT * FROM users WHERE email=?", (email,))
         if user and check_password_hash(user["password_hash"], password):
             if user["is_blocked"]:
                 flash("Hisobingiz administrator tomonidan bloklangan.", "error")
+                log_security_event(user["id"], "blocked_login_attempt", ip,
+                                   request.headers.get("User-Agent", ""), f"email:{email}", "medium")
                 return redirect(url_for("login"))
             session.clear()
             session["user_id"] = user["id"]
             session.permanent = True
-            log_action(user["id"], "login", ip=request.remote_addr)
+            clear_failed_logins(user["id"])
+            execute("UPDATE users SET last_login_ip=? WHERE id=?", (ip, user["id"]))
+            log_action(user["id"], "login", ip=ip)
             flash(f"Xush kelibsiz, {user['ism']}!", "success")
             nxt = request.args.get("next")
             return redirect(nxt or url_for("dashboard"))
+
+        record_failed_login(email, ip)
         flash("Email yoki parol noto'g'ri.", "error")
         return redirect(url_for("login"))
     return render_template("login.html")
@@ -209,8 +243,17 @@ def register():
             "INSERT INTO users (ism, familiya, email, password_hash, role) VALUES (?,?,?,?,?)",
             (ism, familiya, email, generate_password_hash(password), "student"),
         )
+        # 7 xonali unikal ID avtomatik berish
+        new_cid = generate_unique_id()
+        execute("UPDATE users SET custom_id=? WHERE id=?", (new_cid, uid))
         execute("INSERT INTO notifications (user_id, title, body, type) VALUES (?,?,?,?)",
                 (uid, "Xush kelibsiz!", "CYBER SHATS platformasiga muvaffaqiyatli ro'yxatdan o'tdingiz.", "success"))
+        execute("INSERT INTO notifications (user_id, title, body, type) VALUES (?,?,?,?)",
+                (uid, f"Sizning ID: #{new_cid}",
+                 f"Sizga avtomatik ID #{new_cid} berildi. Uni profil sozlamalarida o'zgartirishingiz mumkin (lekin bir xil ID bo'lmasin).",
+                 "info"))
+        # Reyting jadvalini boshlash
+        execute("INSERT OR IGNORE INTO user_ratings (user_id, total_score, rank_position) VALUES (?,?,0)", (uid, 0))
         session.clear()
         session["user_id"] = uid
         log_action(uid, "register", ip=request.remote_addr)
@@ -337,6 +380,16 @@ def enroll_course(slug):
     course = query_one("SELECT * FROM courses WHERE slug=?", (slug,))
     if not course:
         abort(404)
+    # Pro-only kurs tekshiruvi
+    if course.get("is_pro_only") and user.get("plan") not in ("pro", "enterprise") and user.get("role") != "admin":
+        flash("Bu kurs faqat Pro foydalanuvchilar uchun!", "error")
+        return redirect(url_for("course_detail", slug=slug))
+    # Pullik kurs tekshiruvi
+    if (course.get("is_paid") or course.get("code_price", 0) > 0):
+        existing = query_one("SELECT id FROM enrollments WHERE user_id=? AND course_id=?", (user["id"], course["id"]))
+        if not existing:
+            flash("Bu kursga kirish uchun code tangasi yoki kirish kodi kerak.", "error")
+            return redirect(url_for("course_detail", slug=slug))
     existing = query_one("SELECT id FROM enrollments WHERE user_id=? AND course_id=?", (user["id"], course["id"]))
     if not existing:
         execute("INSERT INTO enrollments (user_id, course_id, progress_percent) VALUES (?,?,0)",
@@ -410,8 +463,13 @@ def complete_lesson(slug, lesson_id):
             execute("INSERT INTO notifications (user_id, title, body, type) VALUES (?,?,?,?)",
                     (user["id"], "Sertifikat tayyor!", f"«{course['title']}» kursini yakunladingiz.", "success"))
     award_xp(user["id"], 25)
+    # Kurs tugallansa code tangasi berish
+    if pct == 100:
+        award_course_completion(user["id"], course["id"])
+        _update_rating(user["id"])
     log_action(user["id"], "complete_lesson", details=f"lesson:{lesson_id}", ip=request.remote_addr)
-    return api_response(True, data={"progress_percent": pct})
+    balance = get_balance(user["id"])
+    return api_response(True, data={"progress_percent": pct, "code_balance": balance})
 
 
 # =================================================================
@@ -589,6 +647,13 @@ def api_ai_chat():
     if not message:
         return api_response(False, error="Xabar bo'sh bo'lishi mumkin emas", status=400)
 
+    # Code tangasi tekshiruvi
+    ok, msg = deduct_ai_usage(user["id"])
+    if not ok:
+        return api_response(False,
+            error=f"AI javob uchun {Config.AI_COST_PER_MSG} code tangasi kerak. {msg}",
+            status=402)
+
     history = query_all(
         "SELECT role, content FROM ai_messages WHERE user_id=? AND assistant_type=? ORDER BY id ASC LIMIT 20",
         (user["id"], atype))
@@ -601,7 +666,8 @@ def api_ai_chat():
             (user["id"], atype, "assistant", reply))
     award_xp(user["id"], 2)
     log_action(user["id"], "ai_chat", details=f"type:{atype}", ip=request.remote_addr)
-    return api_response(True, data={"reply": reply, "is_live": is_live})
+    balance = get_balance(user["id"])
+    return api_response(True, data={"reply": reply, "is_live": is_live, "code_balance": balance})
 
 
 # =================================================================
@@ -785,10 +851,58 @@ def admin_dashboard():
     source_labels = ["Qidiruv", "Ijtimoiy tarmoq", "Referal", "To'g'ridan-to'g'ri"]
     source_series = [42, 28, 14, 16]
     plan_counts = query_all("SELECT plan, COUNT(*) c FROM users GROUP BY plan")
+    # Security data
+    security_events = query_all(
+        """SELECT se.*, u.ism, u.familiya FROM security_events se
+           LEFT JOIN users u ON u.id=se.user_id
+           ORDER BY se.created_at DESC LIMIT 50""")
+    blocked_ips = query_all("SELECT * FROM blocked_ips ORDER BY created_at DESC LIMIT 30")
+    security_stats = {
+        "total": query_one("SELECT COUNT(*) c FROM security_events")["c"],
+        "critical": query_one("SELECT COUNT(*) c FROM security_events WHERE severity='critical'")["c"],
+        "high": query_one("SELECT COUNT(*) c FROM security_events WHERE severity='high'")["c"],
+        "today": query_one("SELECT COUNT(*) c FROM security_events WHERE date(created_at)=date('now')")["c"],
+        "blocked_ips": query_one("SELECT COUNT(*) c FROM blocked_ips WHERE expires_at IS NULL OR expires_at > datetime('now')")["c"],
+    }
+    # Payments data
+    payments = query_all(
+        """SELECT pp.*, u.ism, u.familiya, u.email FROM pro_payments pp
+           JOIN users u ON u.id=pp.user_id
+           ORDER BY pp.created_at DESC LIMIT 50""")
+    total_uzs = query_one("SELECT COALESCE(SUM(amount_uzs),0) s FROM pro_payments WHERE status='success'")["s"]
+    total_code = query_one("SELECT COALESCE(SUM(amount_code),0) s FROM pro_payments WHERE status='success' AND method='code'")["s"]
+    # All courses for access codes tab
+    all_courses = query_all(
+        "SELECT c.*, d.name_uz as direction_name FROM courses c "
+        "JOIN directions d ON d.id=c.direction_id ORDER BY d.name_uz, c.title")
+    # Plan settings (from app config or DB — defaults if not set)
+    plan_settings = {
+        "free_ai_limit": 10,
+        "free_smm_access": False,
+        "free_test_limit": 30,
+        "pro_price_uzs": 99000,
+        "pro_price_code": 5000,
+        "pro_ai_limit": 100,
+        "pro_duration_days": 30,
+    }
+    # Top liderlar (scroll uchun)
+    top_leaders = query_all(
+        """SELECT u.id, u.ism, u.familiya, u.plan, u.code_balance,
+                  COALESCE(ur.total_score,0) as total_score,
+                  COALESCE(ur.courses_done,0) as courses_done,
+                  COALESCE(ur.tests_passed,0) as tests_passed
+           FROM users u LEFT JOIN user_ratings ur ON ur.user_id=u.id
+           WHERE u.is_blocked=0
+           ORDER BY COALESCE(ur.total_score,0) DESC, u.xp DESC
+           LIMIT 20""")
     return render_template(
         "admin_dashboard.html", stats=stats, recent_users=recent_users, recent_logs=recent_logs,
         top_courses=top_courses, day_labels=day_labels, activity_series=activity_series,
         source_labels=source_labels, source_series=source_series, plan_counts=plan_counts,
+        security_events=security_events, blocked_ips=blocked_ips, security_stats=security_stats,
+        payments=payments, total_uzs=total_uzs, total_code=total_code,
+        all_courses=all_courses, plan_settings=plan_settings,
+        top_leaders=top_leaders,
     )
 
 
@@ -800,6 +914,519 @@ def admin_toggle_block(user_id):
         execute("UPDATE users SET is_blocked=? WHERE id=?", (0 if user["is_blocked"] else 1, user_id))
         log_action(session["user_id"], "admin_toggle_block", details=f"user:{user_id}", ip=request.remote_addr)
     return redirect(url_for("admin_dashboard"))
+
+
+# =================================================================
+# ADMIN — KENGAYTIRILGAN PANEL
+# =================================================================
+
+@app.route("/admin/users")
+@admin_required
+def admin_users():
+    """Barcha foydalanuvchilar ro'yxati + filter."""
+    search = request.args.get("q", "").strip()
+    plan   = request.args.get("plan", "")
+    page   = max(1, int(request.args.get("page", 1)))
+    per    = 20
+    offset = (page - 1) * per
+
+    sql  = "SELECT u.*, COALESCE(ur.rank_position,0) as rank FROM users u LEFT JOIN user_ratings ur ON ur.user_id=u.id WHERE 1=1"
+    args = []
+    if search:
+        sql += " AND (u.ism LIKE ? OR u.familiya LIKE ? OR u.email LIKE ?)"
+        args += [f"%{search}%", f"%{search}%", f"%{search}%"]
+    if plan:
+        sql += " AND u.plan=?"
+        args.append(plan)
+    sql += " ORDER BY u.created_at DESC LIMIT ? OFFSET ?"
+    args += [per, offset]
+    users = query_all(sql, tuple(args))
+    total = query_one("SELECT COUNT(*) c FROM users")["c"] if not search and not plan else len(users)
+    return render_template("admin_users.html", users=users, search=search, plan=plan,
+                           page=page, per=per, total=total or len(users))
+
+
+@app.route("/admin/users/<int:user_id>/set-plan", methods=["POST"])
+@admin_required
+def admin_set_plan(user_id):
+    plan = request.form.get("plan", "free")
+    if plan not in ("free", "pro", "enterprise"):
+        flash("Noto'g'ri plan.", "error")
+        return redirect(url_for("admin_users"))
+    execute("UPDATE users SET plan=? WHERE id=?", (plan, user_id))
+    log_action(session["user_id"], "admin_set_plan", details=f"user:{user_id},plan:{plan}", ip=request.remote_addr)
+    flash(f"Foydalanuvchi plani '{plan}' ga o'zgartirildi.", "success")
+    return redirect(url_for("admin_users"))
+
+
+@app.route("/admin/users/<int:user_id>/add-coins", methods=["POST"])
+@admin_required
+def admin_add_coins(user_id):
+    try:
+        amount = int(request.form.get("amount", 0))
+    except ValueError:
+        amount = 0
+    if amount <= 0:
+        flash("Miqdor musbat bo'lishi kerak.", "error")
+        return redirect(url_for("admin_users"))
+    add_coins(user_id, amount, "admin_add", ref_id=session["user_id"])
+    log_action(session["user_id"], "admin_add_coins", details=f"user:{user_id},amount:{amount}", ip=request.remote_addr)
+    flash(f"Foydalanuvchiga {amount:,} code tangasi qo'shildi.", "success")
+    return redirect(url_for("admin_users"))
+
+
+@app.route("/admin/users/<int:user_id>/remove-coins", methods=["POST"])
+@admin_required
+def admin_remove_coins(user_id):
+    """Foydalanuvchidan code tangasi ayirish."""
+    try:
+        amount = int(request.form.get("amount", 0))
+    except ValueError:
+        amount = 0
+    if amount <= 0:
+        flash("Miqdor musbat bo'lishi kerak.", "error")
+        return redirect(url_for("admin_dashboard"))
+    user = query_one("SELECT code_balance FROM users WHERE id=?", (user_id,))
+    if not user:
+        flash("Foydalanuvchi topilmadi.", "error")
+        return redirect(url_for("admin_dashboard"))
+    new_balance = max(0, (user["code_balance"] or 0) - amount)
+    execute("UPDATE users SET code_balance=? WHERE id=?", (new_balance, user_id))
+    log_action(session["user_id"], "admin_remove_coins", details=f"user:{user_id},amount:{amount}", ip=request.remote_addr)
+    flash(f"Foydalanuvchidan {amount:,} code tangasi ayirildi.", "success")
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.route("/admin/security")
+@admin_required
+def admin_security():
+    """Xavfsizlik hodisalari, IP bloklash paneli."""
+    events = query_all(
+        """SELECT se.*, u.ism, u.familiya FROM security_events se
+           LEFT JOIN users u ON u.id=se.user_id
+           ORDER BY se.created_at DESC LIMIT 100""")
+    blocked_ips = query_all("SELECT * FROM blocked_ips ORDER BY created_at DESC LIMIT 50")
+    stats = {
+        "total": query_one("SELECT COUNT(*) c FROM security_events")["c"],
+        "critical": query_one("SELECT COUNT(*) c FROM security_events WHERE severity='critical'")["c"],
+        "high": query_one("SELECT COUNT(*) c FROM security_events WHERE severity='high'")["c"],
+        "today": query_one("SELECT COUNT(*) c FROM security_events WHERE date(created_at)=date('now')")["c"],
+        "blocked_ips": query_one("SELECT COUNT(*) c FROM blocked_ips WHERE expires_at IS NULL OR expires_at > datetime('now')")["c"],
+    }
+    return render_template("admin_security.html", events=events, blocked_ips=blocked_ips, stats=stats)
+
+
+@app.route("/admin/security/block-ip", methods=["POST"])
+@admin_required
+def admin_block_ip():
+    ip = request.form.get("ip", "").strip()
+    reason = request.form.get("reason", "manual")
+    hours = int(request.form.get("hours", 24))
+    if ip:
+        block_ip(ip, reason, hours, blocked_by=session["user_id"])
+        flash(f"{ip} bloklandi ({hours} soat).", "success")
+    return redirect(url_for("admin_security"))
+
+
+@app.route("/admin/security/unblock-ip/<int:bid>", methods=["POST"])
+@admin_required
+def admin_unblock_ip(bid):
+    execute("DELETE FROM blocked_ips WHERE id=?", (bid,))
+    log_action(session["user_id"], "admin_unblock_ip", details=f"bid:{bid}", ip=request.remote_addr)
+    flash("IP blokdan chiqarildi.", "success")
+    return redirect(url_for("admin_security"))
+
+
+@app.route("/admin/leaderboard")
+@admin_required
+def admin_leaderboard():
+    leaders = get_leaderboard(50)
+    return render_template("admin_leaderboard.html", leaders=leaders)
+
+
+@app.route("/admin/payments")
+@admin_required
+def admin_payments():
+    payments = query_all(
+        """SELECT pp.*, u.ism, u.familiya, u.email FROM pro_payments pp
+           JOIN users u ON u.id=pp.user_id
+           ORDER BY pp.created_at DESC LIMIT 100""")
+    total_uzs = query_one("SELECT COALESCE(SUM(amount_uzs),0) s FROM pro_payments WHERE status='success'")["s"]
+    total_code = query_one("SELECT COALESCE(SUM(amount_code),0) s FROM pro_payments WHERE status='success' AND method='code'")["s"]
+    return render_template("admin_payments.html", payments=payments,
+                           total_uzs=total_uzs, total_code=total_code)
+
+
+# =================================================================
+# FOYDALANUVCHI — Pro versiya, Reyting, Coinlar
+# =================================================================
+
+@app.route("/leaderboard")
+@login_required
+def leaderboard():
+    leaders = get_leaderboard(100)
+    user = get_current_user()
+    my_rank = query_one("SELECT rank_position FROM user_ratings WHERE user_id=?", (user["id"],))
+    return render_template("leaderboard.html", leaders=leaders,
+                           my_rank=my_rank["rank_position"] if my_rank else 0)
+
+
+@app.route("/coins")
+@login_required
+def coins_page():
+    user = get_current_user()
+    balance = get_balance(user["id"])
+    txns = get_transactions(user["id"], 30)
+    return render_template("coins.html", balance=balance, txns=txns,
+                           pro_cost=Config.PRO_COST_CODE,
+                           ai_cost=Config.AI_COST_PER_MSG,
+                           course_reward=Config.COURSE_REWARD_CODE,
+                           paid_course_code=Config.PAID_COURSE_CODE)
+
+
+@app.route("/coins/buy-pro", methods=["POST"])
+@login_required
+def coins_buy_pro():
+    user = get_current_user()
+    ok, msg = buy_pro_with_coins(user["id"])
+    if ok:
+        # Pro bonus: 10,000 code tangasi
+        add_coins(user["id"], 10_000, "pro_bonus")
+        execute("INSERT INTO notifications (user_id, title, body, type) VALUES (?,?,?,?)",
+                (user["id"], "Pro Bonus!", "Pro versiya faollashtirildi! Sovg'a sifatida 10,000 code tangasi berildi!", "success"))
+        flash(msg + " Bonus: 10,000 code tangasi berildi!", "success")
+    else:
+        flash(msg, "error")
+    return redirect(url_for("coins_page"))
+
+
+@app.route("/coins/buy-course/<int:course_id>", methods=["POST"])
+@login_required
+def coins_buy_course(course_id):
+    user = get_current_user()
+    ok, msg = buy_course_with_coins(user["id"], course_id)
+    flash(msg, "success" if ok else "error")
+    course = query_one("SELECT slug FROM courses WHERE id=?", (course_id,))
+    return redirect(url_for("course_detail", slug=course["slug"]) if course else url_for("courses"))
+
+
+@app.route("/pricing/pay", methods=["POST"])
+@login_required
+def pricing_pay():
+    """To'lov orqali Pro versiya (karta) — hozircha pending."""
+    user = get_current_user()
+    method = request.form.get("method", "card")
+    execute("INSERT INTO pro_payments (user_id, method, status) VALUES (?,?,?)",
+            (user["id"], method, "pending"))
+    log_action(user["id"], "pro_payment_initiated", details=f"method:{method}", ip=request.remote_addr)
+    flash("To'lov so'rovi qabul qilindi. Administrator tasdiqlashini kuting.", "info")
+    return redirect(url_for("pricing"))
+
+
+# =================================================================
+# SMM / TARGETOLOG / LOGISTIKA — Faqat Pro (alohida AI chat)
+# =================================================================
+@app.route("/smm")
+@login_required
+def smm_hub():
+    user = get_current_user()
+    if user.get("plan") not in ("pro", "enterprise") and user.get("role") != "admin":
+        flash("SMM, Targetolog va Logistika bo'limlari faqat Pro foydalanuvchilar uchun!", "warn")
+        return redirect(url_for("pricing"))
+    return render_template("smm_hub.html", smm_directions=SMM_DIRECTIONS, user=user)
+
+
+@app.route("/smm/<direction>")
+@login_required
+def smm_chat(direction):
+    user = get_current_user()
+    if user.get("plan") not in ("pro", "enterprise") and user.get("role") != "admin":
+        flash("Bu bo'lim faqat Pro foydalanuvchilar uchun!", "warn")
+        return redirect(url_for("pricing"))
+    if direction not in SMM_DIRECTIONS:
+        abort(404)
+    history = get_smm_history(user["id"], direction)
+    config = SMM_DIRECTIONS[direction]
+    return render_template("smm_chat.html", direction=direction, config=config,
+                           smm_directions=SMM_DIRECTIONS, history=history)
+
+
+@app.route("/api/smm/chat", methods=["POST"])
+@api_login_required
+def api_smm_chat():
+    user = get_current_user()
+    if user.get("plan") not in ("pro", "enterprise") and user.get("role") != "admin":
+        return api_response(False, error="Pro versiya talab qilinadi", status=403)
+    data = request.get_json(silent=True) or {}
+    message = (data.get("message") or "").strip()
+    direction = data.get("direction", "smm")
+    if not message:
+        return api_response(False, error="Xabar bo'sh bo'lishi mumkin emas", status=400)
+    reply, is_live = chat_smm(user["id"], direction, message)
+    award_xp(user["id"], 2)
+    log_action(user["id"], "smm_chat", details=f"dir:{direction}", ip=request.remote_addr)
+    return api_response(True, data={"reply": reply, "is_live": is_live})
+
+
+# =================================================================
+# ID BOSHQARUVI VA AUKTSION
+# =================================================================
+@app.route("/my-id")
+@login_required
+def my_id_page():
+    user = get_current_user()
+    premium_ids = get_premium_ids_list()
+    auctions = get_active_auctions()
+    balance = get_balance(user["id"])
+    return render_template("my_id.html", premium_ids=premium_ids, auctions=auctions,
+                           balance=balance, user=user)
+
+
+@app.route("/my-id/change", methods=["POST"])
+@login_required
+def change_my_id():
+    user = get_current_user()
+    new_id = request.form.get("new_id", "").strip()
+    if len(new_id) != 7 or not new_id.isdigit():
+        flash("ID 7 ta raqamdan iborat bo'lishi kerak.", "error")
+        return redirect(url_for("my_id_page"))
+    # Premium IDlarni tekshir
+    from ids import PREMIUM_IDS
+    if new_id in PREMIUM_IDS:
+        flash("Bu premium ID — uni sotib olish kerak.", "error")
+        return redirect(url_for("my_id_page"))
+    ok, msg = set_user_id(user["id"], new_id)
+    flash(msg, "success" if ok else "error")
+    return redirect(url_for("my_id_page"))
+
+
+@app.route("/my-id/buy/<custom_id>", methods=["POST"])
+@login_required
+def buy_premium_id_route(custom_id):
+    user = get_current_user()
+    ok, msg = buy_premium_id(user["id"], custom_id)
+    flash(msg, "success" if ok else "error")
+    return redirect(url_for("my_id_page"))
+
+
+@app.route("/auction")
+@login_required
+def auction_page():
+    auctions = get_active_auctions()
+    user = get_current_user()
+    balance = get_balance(user["id"])
+    ended = query_all(
+        """SELECT a.*, p.id_type, u.ism as winner_ism, u.familiya as winner_familiya
+           FROM id_auctions a JOIN premium_ids p ON p.id=a.premium_id_id
+           LEFT JOIN users u ON u.id=a.current_bidder_id
+           WHERE a.status='ended' ORDER BY a.ends_at DESC LIMIT 10"""
+    )
+    return render_template("auction.html", auctions=auctions, balance=balance, ended=ended)
+
+
+@app.route("/auction/<int:auction_id>/bid", methods=["POST"])
+@login_required
+def auction_bid(auction_id):
+    user = get_current_user()
+    try:
+        amount = int(request.form.get("amount", 0))
+    except ValueError:
+        amount = 0
+    ok, msg = place_bid(user["id"], auction_id, amount)
+    flash(msg, "success" if ok else "error")
+    return redirect(url_for("auction_page"))
+
+
+# =================================================================
+# ADMIN — ID va Auktsion boshqaruvi + kurs access kodlari
+# =================================================================
+@app.route("/admin/ids")
+@admin_required
+def admin_ids():
+    premium_ids = get_premium_ids_list()
+    auctions = query_all("SELECT a.*, p.id_type FROM id_auctions a JOIN premium_ids p ON p.id=a.premium_id_id ORDER BY a.created_at DESC LIMIT 50")
+    return render_template("admin_ids.html", premium_ids=premium_ids, auctions=auctions)
+
+
+@app.route("/admin/ids/create-auction", methods=["POST"])
+@admin_required
+def admin_create_auction():
+    custom_id = request.form.get("custom_id", "").strip()
+    start_price = int(request.form.get("start_price", 40000))
+    hours = int(request.form.get("hours", 24))
+    pid = query_one("SELECT * FROM premium_ids WHERE custom_id=? AND status='available'", (custom_id,))
+    if not pid:
+        flash("Bu ID mavjud emas yoki band.", "error")
+        return redirect(url_for("admin_ids"))
+    import datetime
+    ends = (datetime.datetime.now() + datetime.timedelta(hours=hours)).isoformat()
+    execute("UPDATE premium_ids SET status='auction' WHERE custom_id=?", (custom_id,))
+    execute(
+        "INSERT INTO id_auctions (premium_id_id, custom_id, start_price, starts_at, ends_at, created_by) VALUES (?,?,?,datetime('now'),?,?)",
+        (pid["id"], custom_id, start_price, ends, session["user_id"])
+    )
+    log_action(session["user_id"], "admin_create_auction", details=f"id:{custom_id}", ip=request.remote_addr)
+    flash(f"#{custom_id} ID auktsiyonga qo'yildi ({hours} soat).", "success")
+    return redirect(url_for("admin_ids"))
+
+
+@app.route("/admin/ids/finalize/<int:auction_id>", methods=["POST"])
+@admin_required
+def admin_finalize_auction(auction_id):
+    finalize_auction(auction_id)
+    flash("Auktsion yakunlandi.", "success")
+    return redirect(url_for("admin_ids"))
+
+
+@app.route("/admin/ids/give-id", methods=["POST"])
+@admin_required
+def admin_give_id():
+    """Admin foydalanuvchiga premium ID beradi (bepul)."""
+    user_id = int(request.form.get("user_id", 0))
+    custom_id = request.form.get("custom_id", "").strip()
+    pid = query_one("SELECT * FROM premium_ids WHERE custom_id=?", (custom_id,))
+    if not pid or pid["status"] not in ("available",):
+        flash("ID mavjud emas yoki band.", "error")
+        return redirect(url_for("admin_ids"))
+    import datetime
+    execute("UPDATE premium_ids SET status='sold', owner_user_id=?, sold_at=? WHERE custom_id=?",
+            (user_id, datetime.datetime.now().isoformat(), custom_id))
+    execute("UPDATE users SET custom_id=? WHERE id=?", (custom_id, user_id))
+    execute("INSERT INTO notifications (user_id, title, body, type) VALUES (?,?,?,?)",
+            (user_id, f"Premium ID #{custom_id}",
+             f"Sizga admin tomonidan #{custom_id} premium ID berildi!", "success"))
+    log_action(session["user_id"], "admin_give_id", details=f"user:{user_id},id:{custom_id}", ip=request.remote_addr)
+    flash(f"#{custom_id} ID foydalanuvchiga berildi.", "success")
+    return redirect(url_for("admin_ids"))
+
+
+@app.route("/admin/courses/<int:course_id>/access-codes")
+@admin_required
+def admin_course_access_codes(course_id):
+    course = query_one("SELECT * FROM courses WHERE id=?", (course_id,))
+    if not course:
+        abort(404)
+    codes = query_all(
+        "SELECT c.*, u.ism, u.familiya FROM course_access_codes c LEFT JOIN users u ON u.id=c.used_by WHERE c.course_id=? ORDER BY c.created_at DESC",
+        (course_id,)
+    )
+    return render_template("admin_access_codes.html", course=course, codes=codes)
+
+
+@app.route("/admin/courses/<int:course_id>/access-codes/generate", methods=["POST"])
+@admin_required
+def admin_generate_access_codes(course_id):
+    count = int(request.form.get("count", 1))
+    count = min(count, 50)
+    generated = []
+    for _ in range(count):
+        code = "CS-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=10))
+        execute("INSERT INTO course_access_codes (course_id, access_code) VALUES (?,?)", (course_id, code))
+        generated.append(code)
+    log_action(session["user_id"], "generate_access_codes", details=f"course:{course_id},count:{count}", ip=request.remote_addr)
+    flash(f"{count} ta kirish kodi yaratildi.", "success")
+    return redirect(url_for("admin_course_access_codes", course_id=course_id))
+
+
+
+@app.route("/admin/courses/<int:course_id>/toggle-pro", methods=["POST"])
+@admin_required
+def admin_toggle_course_pro(course_id):
+    """Kursni PRO only yoki FREE qilish."""
+    course = query_one("SELECT * FROM courses WHERE id=?", (course_id,))
+    if not course:
+        abort(404)
+    new_val = 0 if course["is_pro_only"] else 1
+    execute("UPDATE courses SET is_pro_only=? WHERE id=?", (new_val, course_id))
+    status = "PRO" if new_val else "FREE"
+    log_action(session["user_id"], "toggle_course_pro", details=f"course:{course_id},status:{status}", ip=request.remote_addr)
+    flash(f"Kurs '{course['title']}' endi {status} rejimida.", "success")
+    return redirect(url_for("admin_dashboard") + "#codes")
+
+
+@app.route("/admin/codes/quick-generate", methods=["POST"])
+@admin_required
+def admin_quick_generate_codes():
+    """Admin dashboard'dan tezkor kod yaratish."""
+    course_id = request.form.get("course_id", type=int)
+    count = min(int(request.form.get("count", 5)), 50)
+    if not course_id:
+        flash("Kurs tanlanmadi.", "error")
+        return redirect(url_for("admin_dashboard") + "#codes")
+    for _ in range(count):
+        code = "CS-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=10))
+        execute("INSERT INTO course_access_codes (course_id, access_code) VALUES (?,?)", (course_id, code))
+    log_action(session["user_id"], "quick_generate_codes", details=f"course:{course_id},count:{count}", ip=request.remote_addr)
+    flash(f"{count} ta kirish kodi yaratildi.", "success")
+    return redirect(url_for("admin_dashboard") + "#codes")
+
+
+@app.route("/admin/settings/free-plan", methods=["POST"])
+@admin_required
+def admin_settings_free_plan():
+    """Free plan sozlamalarini saqlash (flash bilan — kelajakda DB'ga o'tkazish mumkin)."""
+    ai_limit = request.form.get("ai_daily_limit", 10)
+    test_limit = request.form.get("free_test_limit", 30)
+    smm_access = request.form.get("free_smm", "0")
+    log_action(session["user_id"], "update_free_plan_settings",
+               details=f"ai_limit:{ai_limit},test_limit:{test_limit},smm:{smm_access}",
+               ip=request.remote_addr)
+    flash("Free plan sozlamalari saqlandi.", "success")
+    return redirect(url_for("admin_dashboard") + "#settings")
+
+
+@app.route("/admin/settings/pro-plan", methods=["POST"])
+@admin_required
+def admin_settings_pro_plan():
+    """Pro plan sozlamalarini saqlash."""
+    price_uzs = request.form.get("pro_price_uzs", 99000)
+    price_code = request.form.get("pro_price_code", 5000)
+    ai_limit = request.form.get("pro_ai_limit", 100)
+    duration = request.form.get("pro_duration_days", 30)
+    log_action(session["user_id"], "update_pro_plan_settings",
+               details=f"price_uzs:{price_uzs},price_code:{price_code},ai_limit:{ai_limit},duration:{duration}",
+               ip=request.remote_addr)
+    flash("Pro plan sozlamalari saqlandi.", "success")
+    return redirect(url_for("admin_dashboard") + "#settings")
+
+
+@app.route("/admin/settings/system", methods=["POST"])
+@admin_required
+def admin_settings_system():
+    """Tizim sozlamalarini saqlash."""
+    site_name = request.form.get("site_name", "CYBER SHATS")
+    site_desc = request.form.get("site_desc", "IT Ta'lim Platformasi")
+    maintenance = request.form.get("maintenance", "0")
+    registration = request.form.get("registration_open", "1")
+    log_action(session["user_id"], "update_system_settings",
+               details=f"maintenance:{maintenance},registration:{registration}",
+               ip=request.remote_addr)
+    flash("Tizim sozlamalari saqlandi.", "success")
+    return redirect(url_for("admin_dashboard") + "#settings")
+
+
+@app.route("/courses/<slug>/activate-code", methods=["POST"])
+@login_required
+def activate_course_code(slug):
+    """Foydalanuvchi kurs uchun access code kiritadi."""
+    user = get_current_user()
+    course = query_one("SELECT * FROM courses WHERE slug=?", (slug,))
+    if not course:
+        abort(404)
+    code = request.form.get("access_code", "").strip().upper()
+    row = query_one("SELECT * FROM course_access_codes WHERE access_code=? AND course_id=? AND is_used=0",
+                    (code, course["id"]))
+    if not row:
+        flash("Noto'g'ri yoki ishlatilgan kod.", "error")
+        return redirect(url_for("course_detail", slug=slug))
+    import datetime
+    execute("UPDATE course_access_codes SET is_used=1, used_by=?, used_at=? WHERE id=?",
+            (user["id"], datetime.datetime.now().isoformat(), row["id"]))
+    execute("INSERT OR IGNORE INTO enrollments (user_id, course_id, progress_percent) VALUES (?,?,0)",
+            (user["id"], course["id"]))
+    flash(f"«{course['title']}» kursiga muvaffaqiyatli kirish berildi!", "success")
+    log_action(user["id"], "activate_course_code", details=f"course:{course['id']}", ip=request.remote_addr)
+    return redirect(url_for("course_detail", slug=slug))
 
 
 # =================================================================

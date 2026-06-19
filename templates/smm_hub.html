@@ -1,0 +1,29 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}SMM & Logistika Hub — CYBER SHATS{% endblock %}
+{% block app_content %}
+<div class="flex-between" style="margin-bottom:18px;">
+    <h1 style="font-size:19px;">{{ icon('share-2',18) }} SMM, Targetolog & Logistika</h1>
+    <span class="cs-chip solid" style="border-color:rgba(255,100,200,.4);color:#ff64c8;">{{ icon('crown',12) }} PRO EKSKLYUZIV</span>
+</div>
+<p style="color:var(--cs-text-muted);margin-bottom:20px;">Bu bo'lim faqat Pro foydalanuvchilar uchun. Alohida AI yordamchi va amaliy kurslar mavjud.</p>
+<div class="grid-3" style="gap:18px;">
+{% for dir_key, cfg in smm_directions.items() %}
+<a href="{{ url_for('smm_chat', direction=dir_key) }}" class="cs-card hover-card" style="text-decoration:none;display:block;padding:24px;">
+    <div style="width:48px;height:48px;border-radius:12px;background:rgba(0,255,65,.1);border:1px solid rgba(0,255,65,.25);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+        {{ icon(cfg.icon, 22) }}
+    </div>
+    <div style="font-size:17px;font-weight:600;margin-bottom:6px;">{{ cfg.name }}</div>
+    <div style="color:var(--cs-text-muted);font-size:13px;">AI yordamchi bilan ishlang</div>
+    <div style="margin-top:12px;display:flex;gap:8px;">
+        <span class="cs-chip" style="font-size:11px;">{{ icon('bot',10) }} AI Chat</span>
+        <span class="cs-chip" style="font-size:11px;">{{ icon('book-open',10) }} Kurslar</span>
+    </div>
+</a>
+{% endfor %}
+</div>
+<div style="margin-top:28px;" class="cs-card" style="padding:20px;">
+    <h3 style="font-size:15px;margin-bottom:12px;">{{ icon('info',16) }} Amaliy joylar</h3>
+    <p style="color:var(--cs-text-muted);font-size:13px;">Har bir yo'nalish uchun alohida AI chat va amaliy kurslar mavjud. AI chat sizga real loyihalar, strategyalar va ish topish bo'yicha maslahat beradi.</p>
+</div>
+{% endblock %}

@@ -9,13 +9,19 @@ CREATE TABLE IF NOT EXISTS users (
     familiya TEXT NOT NULL DEFAULT '',
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'student',         -- student | mentor | admin
+    role TEXT NOT NULL DEFAULT 'student',
     avatar TEXT DEFAULT '',
     bio TEXT DEFAULT '',
     xp INTEGER NOT NULL DEFAULT 0,
     level INTEGER NOT NULL DEFAULT 1,
-    plan TEXT NOT NULL DEFAULT 'free',             -- free | pro | enterprise
+    plan TEXT NOT NULL DEFAULT 'free',
     is_blocked INTEGER NOT NULL DEFAULT 0,
+    code_balance INTEGER NOT NULL DEFAULT 0,
+    oauth_provider TEXT DEFAULT '',
+    last_login_ip TEXT DEFAULT '',
+    failed_login_count INTEGER NOT NULL DEFAULT 0,
+    locked_until TEXT DEFAULT NULL,
+    custom_id TEXT UNIQUE DEFAULT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -27,7 +33,8 @@ CREATE TABLE IF NOT EXISTS directions (
     description TEXT DEFAULT '',
     course_count INTEGER NOT NULL DEFAULT 0,
     color TEXT NOT NULL DEFAULT 'green',
-    sort_order INTEGER NOT NULL DEFAULT 0
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_pro_only INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS courses (
@@ -37,7 +44,7 @@ CREATE TABLE IF NOT EXISTS courses (
     title TEXT NOT NULL,
     subtitle TEXT DEFAULT '',
     description TEXT DEFAULT '',
-    level TEXT NOT NULL DEFAULT 'Boshlang''ich',   -- Boshlang'ich | O'rta | Yuqori
+    level TEXT NOT NULL DEFAULT 'Boshlang''ich',
     duration_weeks INTEGER NOT NULL DEFAULT 6,
     lessons_count INTEGER NOT NULL DEFAULT 10,
     students_count INTEGER NOT NULL DEFAULT 0,
@@ -45,6 +52,9 @@ CREATE TABLE IF NOT EXISTS courses (
     price INTEGER NOT NULL DEFAULT 0,
     icon TEXT NOT NULL DEFAULT 'shield',
     is_active INTEGER NOT NULL DEFAULT 1,
+    code_price INTEGER NOT NULL DEFAULT 0,
+    is_pro_only INTEGER NOT NULL DEFAULT 0,
+    is_paid INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -197,7 +207,124 @@ CREATE TABLE IF NOT EXISTS ai_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id),
     assistant_type TEXT NOT NULL DEFAULT 'umumiy',
-    role TEXT NOT NULL,                 -- user | assistant
+    role TEXT NOT NULL,
     content TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS code_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    amount INTEGER NOT NULL,
+    reason TEXT NOT NULL DEFAULT '',
+    ref_id INTEGER DEFAULT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS pro_payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    method TEXT NOT NULL DEFAULT 'code',
+    amount_code INTEGER DEFAULT 0,
+    amount_uzs INTEGER DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'pending',
+    txn_id TEXT DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS oauth_links (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    provider TEXT NOT NULL,
+    provider_id TEXT NOT NULL,
+    email TEXT DEFAULT '',
+    name TEXT DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(provider, provider_id)
+);
+
+CREATE TABLE IF NOT EXISTS security_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER DEFAULT NULL,
+    event_type TEXT NOT NULL,
+    ip TEXT DEFAULT '',
+    user_agent TEXT DEFAULT '',
+    details TEXT DEFAULT '',
+    severity TEXT NOT NULL DEFAULT 'low',
+    is_blocked INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS blocked_ips (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ip TEXT NOT NULL UNIQUE,
+    reason TEXT DEFAULT '',
+    blocked_by INTEGER DEFAULT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at TEXT DEFAULT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_ratings (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id),
+    total_score INTEGER NOT NULL DEFAULT 0,
+    courses_done INTEGER NOT NULL DEFAULT 0,
+    tests_passed INTEGER NOT NULL DEFAULT 0,
+    rank_position INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ============================================================
+-- YANGI: Premium IDlar, Auktsion, SMM AI, Kurs Access Kodlari
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS premium_ids (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    custom_id TEXT NOT NULL UNIQUE,
+    id_type TEXT NOT NULL DEFAULT 'normal',
+    base_price INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'available',
+    owner_user_id INTEGER DEFAULT NULL REFERENCES users(id),
+    sold_at TEXT DEFAULT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS id_auctions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    premium_id_id INTEGER NOT NULL REFERENCES premium_ids(id),
+    custom_id TEXT NOT NULL,
+    start_price INTEGER NOT NULL DEFAULT 40000,
+    current_bid INTEGER NOT NULL DEFAULT 0,
+    current_bidder_id INTEGER DEFAULT NULL REFERENCES users(id),
+    starts_at TEXT NOT NULL DEFAULT (datetime('now')),
+    ends_at TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
+    created_by INTEGER NOT NULL REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS auction_bids (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    auction_id INTEGER NOT NULL REFERENCES id_auctions(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    bid_amount INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS smm_ai_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    direction TEXT NOT NULL DEFAULT 'smm',
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS course_access_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    course_id INTEGER NOT NULL REFERENCES courses(id),
+    access_code TEXT NOT NULL UNIQUE,
+    is_used INTEGER NOT NULL DEFAULT 0,
+    used_by INTEGER DEFAULT NULL REFERENCES users(id),
+    used_at TEXT DEFAULT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

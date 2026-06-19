@@ -40,14 +40,16 @@ def is_ai_configured():
     return bool(os.environ.get("ANTHROPIC_API_KEY"))
 
 
-def call_ai_assistant(assistant_type, user_message, history=None):
-    """assistant_type: umumiy|kod|cyber|design|cloud|tarix
+def call_ai_assistant(assistant_type, user_message, history=None, system_override=None):
+    """assistant_type: umumiy|kod|cyber|design|cloud|tarix|smm|targetolog|logistika
+    system_override: maxsus system prompt (SMM/Logistika uchun)
     Qaytaradi: (reply_text, is_live: bool)
     """
-    assistant_type = assistant_type if assistant_type in ASSISTANT_PROMPTS else "umumiy"
+    system_prompt = system_override or ASSISTANT_PROMPTS.get(assistant_type, ASSISTANT_PROMPTS["umumiy"])
+    fallback = FALLBACK_REPLIES.get(assistant_type, FALLBACK_REPLIES["umumiy"])
 
     if not is_ai_configured():
-        return FALLBACK_REPLIES[assistant_type], False
+        return fallback, False
 
     try:
         import anthropic
@@ -60,11 +62,11 @@ def call_ai_assistant(assistant_type, user_message, history=None):
         resp = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=800,
-            system=ASSISTANT_PROMPTS[assistant_type],
+            system=system_prompt,
             messages=messages,
         )
         text_parts = [b.text for b in resp.content if getattr(b, "type", "") == "text"]
-        reply = "\n".join(text_parts).strip() or FALLBACK_REPLIES[assistant_type]
+        reply = "\n".join(text_parts).strip() or fallback
         return reply, True
     except Exception as e:
         return f"AI xizmatiga ulanishda xatolik yuz berdi ({type(e).__name__}). Birozdan so'ng qayta urinib ko'ring.", False

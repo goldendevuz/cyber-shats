@@ -26,9 +26,30 @@
                 <a href="{{ url_for('lesson', slug=course.slug, lesson_id=modules[0].lessons[0].id) }}" class="cs-btn cs-btn-primary cs-btn-block">{{ icon('play',14) }} Davom ettirish</a>
                 {% endif %}
             {% else %}
+                {% if course.is_pro_only and (not current_user or current_user.plan not in ['pro','enterprise']) and current_user.role != 'admin' %}
+                <div style="border:1px solid rgba(255,100,200,.3);border-radius:8px;padding:12px;text-align:center;margin-bottom:8px;">
+                    <div style="color:#ff64c8;font-size:13px;margin-bottom:6px;">{{ icon('crown',14) }} Faqat Pro</div>
+                    <div style="font-size:11px;color:var(--cs-text-muted);">Bu kurs Pro foydalanuvchilar uchun</div>
+                </div>
+                <a href="{{ url_for('pricing') }}" class="cs-btn cs-btn-primary cs-btn-block">Pro olish</a>
+                {% elif course.is_paid or course.code_price > 0 %}
+                <div style="border:1px solid rgba(0,255,65,.2);border-radius:8px;padding:12px;margin-bottom:10px;">
+                    <div style="font-size:12px;color:var(--cs-text-muted);margin-bottom:4px;">Kirish usullari:</div>
+                    <div style="font-size:15px;font-weight:600;color:var(--cs-green);margin-bottom:8px;">{{ course.code_price | default(10000) | int | format_number }} code tangasi</div>
+                    <form method="post" action="{{ url_for('coins_buy_course', course_id=course.id) }}" style="margin-bottom:8px;">
+                        <button type="submit" class="cs-btn cs-btn-primary cs-btn-block">{{ icon('zap',13) }} Code bilan kirish</button>
+                    </form>
+                    <div style="text-align:center;color:var(--cs-text-muted);font-size:11px;margin:6px 0;">yoki kirish kodi bilan</div>
+                    <form method="post" action="{{ url_for('activate_course_code', slug=course.slug) }}" style="display:flex;gap:6px;">
+                        <input type="text" name="access_code" placeholder="CS-XXXXXXXXXX" class="cs-input" style="flex:1;font-family:monospace;text-transform:uppercase;">
+                        <button type="submit" class="cs-btn">{{ icon('key',13) }}</button>
+                    </form>
+                </div>
+                {% else %}
                 <form method="post" action="{{ url_for('enroll_course', slug=course.slug) }}">
                     <button type="submit" class="cs-btn cs-btn-primary cs-btn-block">{{ icon('zap',14) }} Kursga yozilish</button>
                 </form>
+                {% endif %}
             {% endif %}
             {% if test %}
             <a href="{{ url_for('test_take', test_id=test.id) }}" class="cs-btn cs-btn-block" style="margin-top:8px;">{{ icon('file-text',14) }} Yakuniy test</a>

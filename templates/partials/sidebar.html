@@ -4,30 +4,119 @@
         {{ icon('shield', 22) }}
         <div>CYBER SHATS<span>IT TA'LIM PLATFORMASI</span></div>
     </a>
-    <nav class="cs-nav">
+
+    <!-- Yuqoriga scroll tugmasi -->
+    <button class="sidebar-scroll-btn" id="nav-scroll-up" onclick="navScroll(-1)" title="Yuqoriga">↑</button>
+
+    <nav class="cs-nav" id="cs-nav-scroll">
         <a href="{{ url_for('dashboard') }}" class="cs-nav-item {{ 'active' if request.endpoint=='dashboard' }}">{{ icon('home') }} Bosh sahifa</a>
         <a href="{{ url_for('directions') }}" class="cs-nav-item {{ 'active' if request.endpoint=='directions' }}">{{ icon('grid') }} Yo'nalishlar</a>
         <a href="{{ url_for('courses') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['courses','course_detail','lesson','lesson_materials'] }}">{{ icon('book') }} Kurslar</a>
         <a href="{{ url_for('hacker_lab') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['hacker_lab','practice'] }}">{{ icon('terminal') }} Amaliyot</a>
         <a href="{{ url_for('ai_assistant') }}" class="cs-nav-item {{ 'active' if request.endpoint=='ai_assistant' }}">{{ icon('bot') }} AI Yordamchi</a>
+        {% if current_user and current_user.plan in ['pro','enterprise'] or current_user and current_user.role=='admin' %}
+        <a href="{{ url_for('smm_hub') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['smm_hub','smm_chat'] }}" style="color:#ff64c8;">{{ icon('share-2') }} SMM & Logistika</a>
+        {% endif %}
+        <a href="{{ url_for('my_id_page') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['my_id_page','change_my_id'] }}">{{ icon('hash') }} Mening ID</a>
+        <a href="{{ url_for('auction_page') }}" class="cs-nav-item {{ 'active' if request.endpoint=='auction_page' }}">{{ icon('gavel') }} ID Auktsion</a>
         <a href="{{ url_for('tests') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['tests','test_take'] }}">{{ icon('file-text') }} Testlar</a>
         <a href="{{ url_for('forum') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['forum','forum_post'] }}">{{ icon('message') }} Forum</a>
         <a href="{{ url_for('results') }}" class="cs-nav-item {{ 'active' if request.endpoint=='results' }}">{{ icon('folder') }} Loyihalar</a>
         <a href="{{ url_for('news') }}" class="cs-nav-item {{ 'active' if request.endpoint=='news' }}">{{ icon('zap') }} Yangiliklar</a>
-        <a href="{{ url_for('library') }}" class="cs-nav-item {{ 'active' if request.endpoint=='library' }}">{{ icon('book') }} E-kutubxona</a>
         <a href="{{ url_for('gamification') }}" class="cs-nav-item {{ 'active' if request.endpoint=='gamification' }}">{{ icon('award') }} Reyting</a>
+        <a href="{{ url_for('leaderboard') }}" class="cs-nav-item {{ 'active' if request.endpoint=='leaderboard' }}">{{ icon('trending-up') }} Liderlar</a>
+        <a href="{{ url_for('coins_page') }}" class="cs-nav-item {{ 'active' if request.endpoint=='coins_page' }}">{{ icon('zap') }} Code Tangalar</a>
         {% if current_user and current_user.role in ['admin','mentor'] %}
+        <div class="cs-nav-divider" style="height:1px; background:rgba(0,255,65,.08); margin:6px 0;"></div>
         <a href="{{ url_for('mentor') }}" class="cs-nav-item {{ 'active' if request.endpoint=='mentor' }}">{{ icon('users') }} Mentor</a>
-        <a href="{{ url_for('admin_dashboard') }}" class="cs-nav-item {{ 'active' if request.endpoint=='admin_dashboard' }}">{{ icon('cpu') }} Boshqaruv</a>
+        <a href="{{ url_for('admin_dashboard') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['admin_dashboard','admin_users','admin_security','admin_payments','admin_leaderboard'] }}" style="color:var(--cs-text-primary);">{{ icon('cpu') }} Admin Panel</a>
+        <a href="{{ url_for('admin_ids') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['admin_ids'] }}" style="color:#ffd23f;">{{ icon('hash') }} ID Boshqaruvi</a>
         {% endif %}
         <a href="{{ url_for('profile') }}" class="cs-nav-item {{ 'active' if request.endpoint=='profile' }}">{{ icon('user') }} Profil</a>
         <a href="{{ url_for('settings') }}" class="cs-nav-item {{ 'active' if request.endpoint=='settings' }}">{{ icon('settings') }} Sozlamalar</a>
         <a href="{{ url_for('logout') }}" class="cs-nav-item logout">{{ icon('logout') }} Chiqish</a>
     </nav>
+
+    <!-- Pastga scroll tugmasi -->
+    <button class="sidebar-scroll-btn" id="nav-scroll-down" onclick="navScroll(1)" title="Pastga">↓</button>
+
     {% if current_user %}
     <div class="cs-nav-foot">
         <div class="avatar-fallback flex-center" style="background:rgba(0,255,65,.1); color:var(--cs-text-primary); font-family:var(--cs-font-display);">{{ current_user.ism[0]|upper }}</div>
-        <div class="who">{{ current_user.ism }} {{ current_user.familiya }}<br><small>LVL {{ current_user.level }} · {{ current_user.xp }} XP</small></div>
+        <div class="who">{{ current_user.ism }} {{ current_user.familiya }}<br>
+        <small>LVL {{ current_user.level }} · {{ current_user.xp }} XP</small><br>
+        <small style="color:var(--cs-text-primary);">⚡ {{ current_user.code_balance|default(0) }} CODE</small>
+        {% if current_user.custom_id %}<br><small style="color:var(--cs-text-muted);font-family:monospace;">#{{ current_user.custom_id }}</small>{% endif %}
+        </div>
     </div>
     {% endif %}
 </aside>
+
+<style>
+/* Sidebar nav scroll */
+#cs-nav-scroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    scrollbar-width: none; /* Firefox */
+}
+#cs-nav-scroll::-webkit-scrollbar { display: none; } /* Chrome */
+
+/* Yuqori/pastga tugmalar */
+.sidebar-scroll-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(100% - 24px);
+    margin: 0 12px;
+    padding: 3px 0;
+    background: transparent;
+    border: none;
+    border-top: 1px solid rgba(0,255,65,.1);
+    color: var(--cs-text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .2s;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.sidebar-scroll-btn:hover {
+    color: var(--cs-text-primary);
+    background: rgba(0,255,65,.05);
+}
+/* Yuqori tugma yuqorida, pastki pastda */
+#nav-scroll-up { order: -1; border-top: none; border-bottom: 1px solid rgba(0,255,65,.1); }
+</style>
+
+<script>
+function navScroll(dir) {
+    const nav = document.getElementById('cs-nav-scroll');
+    if (nav) nav.scrollBy({ top: dir * 110, behavior: 'smooth' });
+}
+
+// Scroll holati bo'yicha tugmalarni ko'rsatish/yashirish
+(function() {
+    const nav = document.getElementById('cs-nav-scroll');
+    const btnUp = document.getElementById('nav-scroll-up');
+    const btnDown = document.getElementById('nav-scroll-down');
+    if (!nav) return;
+
+    function updateBtns() {
+        const atTop = nav.scrollTop <= 4;
+        const atBot = nav.scrollTop + nav.clientHeight >= nav.scrollHeight - 4;
+        btnUp.style.opacity  = atTop ? '0.2' : '1';
+        btnDown.style.opacity = atBot ? '0.2' : '1';
+        btnUp.style.pointerEvents  = atTop ? 'none' : 'auto';
+        btnDown.style.pointerEvents = atBot ? 'none' : 'auto';
+    }
+
+    nav.addEventListener('scroll', updateBtns);
+    updateBtns();
+
+    // Faol linkni ko'rinib turishini ta'minlash
+    const activeLink = nav.querySelector('.cs-nav-item.active');
+    if (activeLink) {
+        setTimeout(() => activeLink.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 100);
+    }
+})();
+</script>

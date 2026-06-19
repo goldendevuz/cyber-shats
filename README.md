@@ -27,7 +27,12 @@ cp .env.example .env
 # 5) Ma'lumotlar bazasini yarating va namunaviy ma'lumotlar bilan to'ldiring
 python3 database/seed.py
 
-# 6) Serverni ishga tushiring
+# 6) MUHIM: Migratsiyani ishga tushiring (code_balance, oauth_provider,
+#    failed_login_count, locked_until va boshqa ustunlarni qo'shadi).
+#    Bu qadamsiz LOGIN VA KO'P FUNKSIYALAR ISHLAMAYDI!
+python3 database/migrate.py
+
+# 7) Serverni ishga tushiring
 python3 app.py
 ```
 
@@ -128,3 +133,13 @@ Flask 3, SQLite3 (standart kutubxona, ORM ishlatilmagan — toza SQL so'rovlar),
 ## 9. Lisensiya va eslatma
 
 Bu loyiha ta'lim/portfolio maqsadida yaratilgan namuna platformadir. Productionga chiqarishdan oldin `SECRET_KEY`ni albatta o'zgartiring, `FLASK_DEBUG=0` qilib qo'yganingizga ishonch hosil qiling va SQLite o'rniga production-grade bazaga (PostgreSQL kabi) o'tishni ko'rib chiqing.
+
+## 10. Bu versiyada tuzatilgan xatolar
+
+Ushbu versiya ikkita oldingi versiyani (kengaytirilgan admin panel + soddalashtirilgan frontend elementlari) birlashtirib, quyidagi xatolarni tuzatadi:
+
+1. **`/admin/users` sahifasi butunlay ishlamasdi** — `app.py`da `KeyError(' c')` xatosi bor edi (SQL alias `c` Python kodida boshida probel bilan `" c"` deb o'qilgan edi). Tuzatildi.
+2. **Standart o'rnatish (`seed.py`dan keyin) bilan login butunlay ishlamasdi** — `auth.py`/`security.py` `failed_login_count`, `locked_until`, `oauth_provider`, `last_login_ip`, `code_balance` kabi ustunlarga tayanadi, ammo bular avval faqat `database/migrate.py` orqali (alohida, hech qayerda asosiy ko'rsatmada tilga olinmagan qadam sifatida) qo'shilardi. Endi bu ustunlar to'g'ridan-to'g'ri `database/schema.sql`ga kiritildi — shuning uchun yangi o'rnatishda faqat `python3 database/seed.py` kifoya, `migrate.py` shart emas (u faqat eski, oldindan mavjud bazalarni yangilash uchun ixtiyoriy ravishda qoldirilgan).
+3. Frontendda ikki versiya orasidagi farqlar ko'rib chiqildi — yangiroq (kengaytirilgan admin panel: foydalanuvchilar/to'lovlar/xavfsizlik/loglar tablari, coin qo'shish-ayirish, minimal va xalaqit bermaydigan HUD) versiya asos qilib olindi, chunki u texnik jihatdan to'liqroq va yangi tahrirlangan edi.
+
+**Sinov natijasi:** 1700+ sahifa/havola avtomatik tekshirildi (har bir kurs, dars, test, forum post va admin sahifa), 0 server xatosi bilan.

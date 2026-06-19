@@ -1,0 +1,48 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Liderlar Taxtasi — CYBER SHATS{% endblock %}
+{% block app_content %}
+<div class="flex-between" style="margin-bottom:20px;">
+  <h1 style="font-size:20px;">{{ icon('trending-up',18) }} Liderlar Taxtasi</h1>
+  {% if my_rank %}
+  <span class="cs-chip solid">Sizning o'rningiz: #{{ my_rank }}</span>
+  {% endif %}
+</div>
+
+{% for l in leaders %}
+<div class="cs-card" style="padding:14px 18px; margin-bottom:10px; display:flex; align-items:center; gap:16px;
+  {{ 'background:linear-gradient(135deg,rgba(255,215,0,.06),rgba(0,255,65,.03)); border-color:rgba(255,215,0,.3);' if loop.index==1 else
+     'background:linear-gradient(135deg,rgba(192,192,192,.06),rgba(0,255,65,.03)); border-color:rgba(192,192,192,.3);' if loop.index==2 else
+     'background:linear-gradient(135deg,rgba(205,127,50,.06),rgba(0,255,65,.03)); border-color:rgba(205,127,50,.3);' if loop.index==3 else '' }}">
+
+  <!-- Pozitsiya -->
+  <div style="width:36px; text-align:center; font-family:var(--cs-font-display); font-size:18px; font-weight:900;
+    color:{{ '#FFD700' if loop.index==1 else '#C0C0C0' if loop.index==2 else '#CD7F32' if loop.index==3 else 'var(--cs-text-muted)' }}">
+    {{ '🥇' if loop.index==1 else '🥈' if loop.index==2 else '🥉' if loop.index==3 else loop.index }}
+  </div>
+
+  <!-- Avatar -->
+  <div class="avatar-fallback flex-center" style="width:40px; height:40px; border-radius:50%; flex-shrink:0;
+    background:rgba(0,255,65,.1); color:var(--cs-text-primary); font-family:var(--cs-font-display);">
+    {{ l.ism[0]|upper }}
+  </div>
+
+  <!-- Info -->
+  <div style="flex:1;">
+    <div style="font-weight:600;">{{ l.ism }} {{ l.familiya }}
+      {% if l.plan=='pro' %}<span class="cs-chip solid" style="font-size:9px; padding:2px 6px; margin-left:6px;">PRO</span>{% endif %}
+    </div>
+    <div class="muted" style="font-size:11px;">Daraja {{ l.level }} · {{ l.courses_done }} kurs · {{ l.tests_passed }} test</div>
+  </div>
+
+  <!-- Ball -->
+  <div style="text-align:right;">
+    <div style="font-family:var(--cs-font-display); font-size:20px; font-weight:900; color:var(--cs-text-primary);">
+      {{ "{:,}".format(l.total_score|int) }}
+    </div>
+    <div class="muted" style="font-size:10px;">BALL</div>
+    <div style="font-size:11px; color:var(--cs-text-primary); margin-top:2px;">⚡ {{ "{:,}".format(l.code_balance|default(0)|int) }}</div>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

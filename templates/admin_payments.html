@@ -1,0 +1,42 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}To'lovlar — Admin{% endblock %}
+{% block app_content %}
+<div class="flex-between" style="margin-bottom:20px;">
+  <h1 style="font-size:20px;">{{ icon('credit-card',18) }} Pro To'lovlar</h1>
+</div>
+<div class="grid grid-2" style="margin-bottom:20px;">
+  <div class="stat-card">
+    <div class="num" style="color:var(--cs-text-primary);">{{ "{:,}".format(total_uzs|int) }} UZS</div>
+    <div class="label">Jami karta to'lovlari</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" style="color:var(--cs-text-primary);">⚡ {{ "{:,}".format(total_code|int) }}</div>
+    <div class="label">Jami code tangasi to'lovlari</div>
+  </div>
+</div>
+<div class="cs-card">
+  <table class="cs-table">
+    <thead><tr><th>ID</th><th>Foydalanuvchi</th><th>Usul</th><th>Miqdor</th><th>Holat</th><th>Sana</th></tr></thead>
+    <tbody>
+    {% for p in payments %}
+    <tr>
+      <td class="muted">#{{ p.id }}</td>
+      <td>{{ p.ism }} {{ p.familiya }}<div class="muted" style="font-size:10px;">{{ p.email }}</div></td>
+      <td><span class="cs-chip">{{ p.method }}</span></td>
+      <td>
+        {% if p.amount_code %}⚡ {{ "{:,}".format(p.amount_code|int) }} code{% endif %}
+        {% if p.amount_uzs %}{{ "{:,}".format(p.amount_uzs|int) }} UZS{% endif %}
+      </td>
+      <td>
+        <span class="status-pill {{ 'online' if p.status=='success' else '' }}">{{ p.status }}</span>
+      </td>
+      <td class="muted" style="font-size:11px;">{{ p.created_at[:16] }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="muted" style="text-align:center; padding:30px;">To'lovlar yo'q</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
