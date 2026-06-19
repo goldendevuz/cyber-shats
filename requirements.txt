@@ -11,6 +11,7 @@ python-dotenv==1.2.2
 bleach==6.4.0
 Flask-SocketIO==5.6.1
 flask-cors==6.0.5
+bcrypt==5.0.0
 
 # ============================================================
 # IXTIYORIY / KELAJAKDA KERAK BO'LISHI MUMKIN (asl spetsifikatsiyada
