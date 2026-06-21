@@ -10,6 +10,7 @@ import datetime
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, abort, jsonify, request
 from markupsafe import Markup
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config import Config
 from db import get_db, close_db, query_one, query_all, execute, log_action, ensure_schema
