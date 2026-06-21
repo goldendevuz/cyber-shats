@@ -416,10 +416,12 @@ def telegram_verify_resend():
     username = pending["telegram_username"] if pending else (user.get("telegram_username") or "")
     if not username:
         flash("Avval Telegram username kiriting.", "error")
-        return redirect(url_for("telegram_verify_page"))
+        # return redirect(url_for("telegram_verify_page"))
+        return redirect(url_for("dashboard"))
     ok, msg, code = tgv.create_verification(user["id"], username)
     flash("Yangi kod yaratildi. Botga qaytadan /start bosing." if ok else msg, "success" if ok else "error")
-    return redirect(url_for("telegram_verify_page"))
+    # return redirect(url_for("telegram_verify_page"))
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/logout")
