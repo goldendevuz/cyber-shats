@@ -49,6 +49,13 @@ from smm_ai import chat_smm, SMM_DIRECTIONS, get_smm_history
 from pricing import get_pricing, get_price, set_prices
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(
+    app.wsgi_app,
+    x_for=1,
+    x_proto=1,
+    x_host=1,
+    x_port=1,
+)
 app.config.from_object(Config)
 ensure_schema(app.config["DB_PATH"])  # yetishmayotgan jadval/ustunlarni avtomatik to'g'rilaydi
 app.teardown_appcontext(close_db)
