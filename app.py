@@ -367,7 +367,8 @@ def register():
         session["user_id"] = uid
         log_action(uid, "register", ip=request.remote_addr)
         flash("Ro'yxatdan o'tish muvaffaqiyatli! Endi Telegram orqali hisobingizni tasdiqlang.", "success")
-        return redirect(url_for("telegram_verify_page"))
+        return redirect(url_for("dashboard"))
+        # return redirect(url_for("telegram_verify_page"))
     return render_template("register.html")
 
 
@@ -376,8 +377,8 @@ def register():
 # =================================================================
 @app.route("/verify-telegram", methods=["GET", "POST"])
 def telegram_verify_page():
-    return redirect(url_for("index"))
-    # return redirect(url_for("dashboard"))
+    # return redirect(url_for("index"))
+    return redirect(url_for("dashboard"))
 
     # if not session.get("user_id"):
     #     return redirect(url_for("login"))
