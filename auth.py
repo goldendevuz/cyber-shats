@@ -24,14 +24,6 @@ def login_required(view):
             session.clear()
             flash("Hisobingiz bloklangan yoki topilmadi.", "error")
             return redirect(url_for("login"))
-        # Telegram orqali tasdiqlanmagan foydalanuvchi faqat tasdiqlash
-        # sahifasiga va profil/chiqishga kira oladi, qolgan hammasidan chetlatiladi.
-        return redirect(url_for("dashboard"))
-        # if not user.get("telegram_verified"):
-        #     allowed_endpoints = {"telegram_verify_page", "telegram_verify_check",
-        #                          "telegram_verify_resend", "logout", "static"}
-        #     if request.endpoint not in allowed_endpoints:
-        #         return redirect(url_for("telegram_verify_page"))
         return view(*args, **kwargs)
     return wrapped
 

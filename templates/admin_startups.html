@@ -38,6 +38,17 @@
         <button class="cs-btn cs-btn-sm cs-btn-danger cs-btn-full" style="font-size:10px;">✗ Rad etish</button>
       </form>
     </div>
+    {% elif s.status == 'approved' and not s.in_auction %}
+    <form method="post" action="{{ url_for('admin_startup_create_auction', startup_id=s.id) }}" style="margin-top:10px; display:flex; gap:6px; align-items:end;">
+      <input type="number" name="start_price" placeholder="Boshlang'ich narx" value="10000" class="cs-input" style="font-size:10px; padding:5px 8px;">
+      <input type="number" name="duration_days" placeholder="Kun" value="7" class="cs-input" style="font-size:10px; padding:5px 8px; width:60px;">
+      <button class="cs-btn cs-btn-sm cs-btn-primary" style="font-size:10px; white-space:nowrap;">{{ icon('zap',10) }} Auksionga qo'yish</button>
+    </form>
+    {% elif s.in_auction %}
+    <div style="margin-top:10px;">
+      <span class="cs-chip solid" style="font-size:9px; background:linear-gradient(135deg,#ffd23f,#ffb800); color:#000; border:0;">{{ icon('zap',9) }} Auksionda</span>
+      <a href="{{ url_for('startup_auctions_list') }}" class="muted" style="font-size:10px; margin-left:6px;">Ko'rish →</a>
+    </div>
     {% endif %}
   </div>
   {% else %}

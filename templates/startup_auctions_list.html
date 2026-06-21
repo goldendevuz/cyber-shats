@@ -1,0 +1,42 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Startaplar Auksioni — CYBER SHATS{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <div>
+    <h1 style="font-size:20px;">{{ icon('zap',18) }} Startaplar va Loyihalar Auksioni</h1>
+    <p class="muted" style="font-size:11.5px; margin-top:4px;">Eng yaxshi g'oyalarga homiylik huquqini CODE bilan yutib oling</p>
+  </div>
+  <a href="{{ url_for('startups_list') }}" class="cs-btn cs-btn-sm">{{ icon('briefcase',13) }} Startaplar</a>
+</div>
+
+<div class="grid grid-3" style="gap:14px;">
+  {% for a in auctions %}
+  <a href="{{ url_for('startup_auction_detail', auction_id=a.id) }}" class="cs-card" style="text-decoration:none; color:inherit; border-color:rgba(255,210,63,.3);">
+    {% if a.image_path %}
+    <img src="{{ a.image_path }}" style="width:100%; height:130px; object-fit:cover; border-radius:6px; margin-bottom:10px;">
+    {% else %}
+    <div style="width:100%; height:130px; background:rgba(255,210,63,.05); border-radius:6px; margin-bottom:10px; display:flex; align-items:center; justify-content:center;">{{ icon('briefcase',28) }}</div>
+    {% endif %}
+    <strong style="font-size:13.5px;">{{ a.name }}</strong>
+    <p class="muted" style="font-size:11px; margin-top:4px;">{{ a.description[:70] }}</p>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+      <div>
+        <div class="muted" style="font-size:9.5px;">Joriy narx</div>
+        <div style="font-family:var(--cs-font-display); font-weight:700; color:#ffd23f; font-size:15px;">
+          ⚡ {{ "{:,}".format(a.current_bid if a.current_bid > 0 else a.start_price) }}
+        </div>
+      </div>
+      <span class="cs-chip" style="font-size:9px;">{{ icon('clock',9) }} {{ a.ends_at[:10] }}</span>
+    </div>
+    {% if a.bidder_ism %}
+    <div class="muted" style="font-size:10px; margin-top:6px;">Yetakchi: {{ a.bidder_ism }} {{ a.bidder_familiya }}</div>
+    {% endif %}
+  </a>
+  {% else %}
+  <p class="muted" style="grid-column:1/-1; text-align:center; padding:50px;">Hozircha faol auksion yo'q</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

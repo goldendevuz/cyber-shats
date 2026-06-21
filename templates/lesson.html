@@ -5,16 +5,15 @@
 <div class="muted" style="font-size:11px; margin-bottom:14px;"><a href="{{ url_for('course_detail', slug=course.slug) }}" class="muted">{{ course.title }}</a> / {{ lesson.title }}</div>
 <div class="grid" style="grid-template-columns: 1fr 300px; gap:22px; align-items:flex-start;">
     <div>
-        <div class="browser-mock" style="margin-bottom:18px;">
-            <div class="bm-bar"><div class="bm-dot" style="width:9px;height:9px;border-radius:50%;background:#333;"></div><div class="bm-url">cyber.shats.uz/video/{{ lesson.id }}</div></div>
-            <div class="bm-body flex-center" style="min-height:340px; flex-direction:column; gap:14px;">
-                <div class="hex-icon lg pulse-glow" style="cursor:pointer;">{{ icon('play', 30) }}</div>
-                <div class="muted" style="font-size:12px;">VIDEO DARS · {{ fmt_duration(lesson.duration_seconds) }}</div>
+        <div class="cs-card" style="margin-bottom:18px; padding:20px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                <div class="hex-icon">{{ icon('book-open', 18) }}</div>
+                <div class="muted" style="font-size:11.5px;">O'QISH VAQTI · {{ fmt_duration(lesson.duration_seconds) }}</div>
             </div>
+            <h1 style="font-size:19px; margin-top:6px;">{{ lesson.title }}</h1>
         </div>
-        <h1 style="font-size:19px;">{{ lesson.title }}</h1>
-        <div class="cs-card" style="margin-top:14px; font-size:13.5px; line-height:1.8;">
-            {{ lesson.content_html|safe }}
+        <div class="cs-card markdown-content" style="margin-top:14px; font-size:13.5px; line-height:1.8;">
+            {{ lesson.content_html|markdown }}
         </div>
         <div class="flex-between" style="margin-top:20px; flex-wrap:wrap; gap:10px;">
             <div class="flex gap-12">
@@ -34,7 +33,7 @@
         <h3 style="font-size:12px; margin-bottom:12px;">{{ icon('layers',14) }} DARSLAR ({{ all_lessons|length }})</h3>
         {% for l in all_lessons %}
         <a href="{{ url_for('lesson', slug=course.slug, lesson_id=l.id) }}" class="cs-nav-item" style="padding:9px 6px; {{ 'active' if l.id==lesson.id }}">
-            {% if l.id in done_ids %}{{ icon('check',14) }}{% else %}{{ icon('play',14) }}{% endif %}
+            {% if l.id in done_ids %}{{ icon('check',14) }}{% else %}{{ icon('book-open',14) }}{% endif %}
             <span style="font-size:11.5px; text-transform:none; letter-spacing:0;">{{ l.title }}</span>
         </a>
         {% endfor %}
@@ -42,6 +41,16 @@
 </div>
 {% endblock %}
 {% block scripts %}
+<style>
+.markdown-content h1 { font-size:18px; margin:14px 0 10px; color:var(--cs-text-primary); }
+.markdown-content h2 { font-size:15px; margin:14px 0 8px; color:var(--cs-text-white); }
+.markdown-content h3 { font-size:13.5px; margin:12px 0 6px; color:var(--cs-text-cyan); }
+.markdown-content p { margin-bottom:10px; }
+.markdown-content ul, .markdown-content ol { padding-left:20px; margin-bottom:10px; }
+.markdown-content li { margin-bottom:4px; }
+.markdown-content code { background: rgba(0,255,65,.08); padding:2px 5px; border-radius:3px; font-family: var(--cs-font-mono); font-size:12px; }
+.markdown-content pre { background: var(--cs-bg-input); padding:12px; border-radius:6px; overflow-x:auto; border:1px solid var(--cs-border); margin-bottom:12px; }
+</style>
 <script>
 (function(){
     var btn = document.getElementById('mark-done-btn');

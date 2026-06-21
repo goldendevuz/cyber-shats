@@ -568,54 +568,10 @@ def handle_start(chat_id, user):
     lang = tg_user.get("language", "uz")
     set_tg_state(chat_id, "main", {})
 
-    # Sayt hisobini avtomatik tasdiqlash: agar shu Telegram username uchun
-    # kutilayotgan tasdiqlash kodi bo'lsa, darhol tasdiqlaymiz va xabar beramiz.
-    username = (user.get("username") or "").strip()
-    if username:
-        verify_result = try_auto_verify_site_account(username, chat_id)
-        if verify_result:
-            tg_send_message(chat_id,
-                "✅ *Sayt hisobingiz tasdiqlandi!*\n\nCYBER SHATS saytiga qaytib, davom etishingiz mumkin.")
-
+    # Salomlashish — til tanlash bosqichi YO'Q, darhol asosiy menyu chiqadi
     welcome = t(lang, "welcome_named", name=name)
     tg_send_message(chat_id, welcome)
-    tg_send_message(chat_id, t(lang, "choose_lang"), reply_markup=kb_languages())
-
-
-def try_auto_verify_site_account(telegram_username, chat_id):
-    """
-    Botga /start bosgan foydalanuvchining Telegram username'i bo'yicha
-    saytda kutilayotgan tasdiqlash bormi tekshiradi, bo'lsa avtomatik tasdiqlaydi.
-    Foydalanuvchi alohida kod kiritishi shart emas — bu eng qulay yo'l.
-    """
-    try:
-        conn = db_conn()
-        c = conn.cursor()
-        row = c.execute(
-            """SELECT * FROM telegram_verifications
-               WHERE telegram_username=? AND is_used=0
-               ORDER BY id DESC LIMIT 1""",
-            (telegram_username,)
-        ).fetchone()
-        if not row:
-            conn.close()
-            return False
-        import datetime
-        try:
-            expires = datetime.datetime.fromisoformat(row["expires_at"])
-        except Exception:
-            expires = datetime.datetime.now()
-        if datetime.datetime.now() > expires:
-            conn.close()
-            return False
-        c.execute("UPDATE telegram_verifications SET is_used=1, verified_at=datetime('now') WHERE id=?", (row["id"],))
-        c.execute("UPDATE users SET telegram_verified=1, telegram_chat_id=? WHERE id=?", (chat_id, row["user_id"]))
-        conn.commit()
-        conn.close()
-        return True
-    except Exception as e:
-        log.error(f"Auto-verify error: {e}")
-        return False
+    show_main_menu(chat_id, lang)
 
 
 def show_main_menu(chat_id, lang):
@@ -671,6 +627,7 @@ def handle_callback(callback):
     if data == "menu:help":
         tg_send_message(chat_id, t(lang, "help_text"), reply_markup=kb_main_menu(lang))
         return
+        return
 
     # Code paketi tanlandi
     if data.startswith("code:"):
@@ -723,38 +680,6 @@ def handle_callback(callback):
         return
 
 
-def try_auto_verify_with_code(telegram_username, code, chat_id):
-    """Foydalanuvchi /verify <kod> yuborganda — kod va username'ni aniq tekshiradi."""
-    try:
-        conn = db_conn()
-        c = conn.cursor()
-        row = c.execute(
-            """SELECT * FROM telegram_verifications
-               WHERE telegram_username=? AND code=? AND is_used=0
-               ORDER BY id DESC LIMIT 1""",
-            (telegram_username, code)
-        ).fetchone()
-        if not row:
-            conn.close()
-            return False
-        import datetime
-        try:
-            expires = datetime.datetime.fromisoformat(row["expires_at"])
-        except Exception:
-            expires = datetime.datetime.now()
-        if datetime.datetime.now() > expires:
-            conn.close()
-            return False
-        c.execute("UPDATE telegram_verifications SET is_used=1, verified_at=datetime('now') WHERE id=?", (row["id"],))
-        c.execute("UPDATE users SET telegram_verified=1, telegram_chat_id=? WHERE id=?", (chat_id, row["user_id"]))
-        conn.commit()
-        conn.close()
-        return True
-    except Exception as e:
-        log.error(f"Manual verify error: {e}")
-        return False
-
-
 def handle_text(chat_id, text, user_info):
     tg_user = get_or_create_tg_user(chat_id, first_name=user_info.get("first_name", ""),
                                      username=user_info.get("username", ""))
@@ -768,23 +693,6 @@ def handle_text(chat_id, text, user_info):
         return
     if text.strip() == "/menu":
         show_main_menu(chat_id, lang); return
-    if text.strip().startswith("/verify"):
-        parts = text.strip().split()
-        username = (user_info.get("username") or "").strip()
-        if len(parts) < 2:
-            tg_send_message(chat_id, "Foydalanish: /verify <kod>\nMasalan: /verify 123456")
-            return
-        if not username:
-            tg_send_message(chat_id, "Telegram hisobingizda username (foydalanuvchi nomi) o'rnatilmagan. "
-                                     "Sozlamalar -> Username qo'shing va qaytadan urinib ko'ring.")
-            return
-        code = parts[1].strip()
-        ok = try_auto_verify_with_code(username, code, chat_id)
-        if ok:
-            tg_send_message(chat_id, "✅ Sayt hisobingiz muvaffaqiyatli tasdiqlandi! Saytga qaytishingiz mumkin.")
-        else:
-            tg_send_message(chat_id, "❌ Kod noto'g'ri yoki muddati o'tgan. Saytdan yangi kod so'rang.")
-        return
 
     # ID kutmoqda (code uchun yoki kurs uchun)
     if state in ("awaiting_id_for_code", "awaiting_id_for_course"):

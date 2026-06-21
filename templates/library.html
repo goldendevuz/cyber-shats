@@ -7,7 +7,7 @@
 
 <div class="cs-tabs">
     <a href="{{ url_for('library') }}" class="cs-tab {{ 'active' if not active_cat }}">Barchasi</a>
-    {% for cat in ['cyber-security','python','networking','devops','ai-ml','javascript','cpp','cloud','mobile-dev'] %}
+    {% for cat in ['cyber-security','python','web-dev','javascript','networking','database','devops','ai-ml','data-science','cpp','cloud'] %}
     <a href="{{ url_for('library', cat=cat) }}" class="cs-tab {{ 'active' if active_cat==cat }}">{{ cat }}</a>
     {% endfor %}
 </div>
@@ -18,7 +18,7 @@
         <div class="hex-icon" style="margin-bottom:10px;">{{ icon('file-text', 22) }}</div>
         <h4 style="font-size:12.5px; color:var(--cs-text-white);">{{ b.title }}</h4>
         <div class="stats-line" style="margin-top:8px;"><span class="cs-chip">{{ b.type }}</span><span>{{ b.size_label }}</span></div>
-        <button class="cs-btn cs-btn-sm cs-btn-block" style="margin-top:12px;" onclick="alert('Demo rejim: bu material namuna sifatida ko\'rsatilgan.')">{{ icon('download',12) }} Yuklab olish</button>
+        <a href="{{ b.file_url }}" target="_blank" rel="noopener" class="cs-btn cs-btn-sm cs-btn-block" style="margin-top:12px; text-align:center;">{{ icon('download',12) }} Ochish / Yuklash</a>
     </div>
     {% endfor %}
 </div>

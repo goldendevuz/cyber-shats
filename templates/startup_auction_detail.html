@@ -1,0 +1,74 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}{{ auction.name }} — Auksion{% endblock %}
+{% block app_content %}
+
+<a href="{{ url_for('startup_auctions_list') }}" class="muted" style="display:inline-block; margin-bottom:14px; font-size:12px;">{{ icon('arrow-left',13) }} Auksionlar</a>
+
+<div class="grid" style="grid-template-columns:1.3fr 1fr; gap:20px; align-items:start;">
+  <div class="cs-card">
+    {% if auction.image_path %}
+    <img src="{{ auction.image_path }}" style="width:100%; max-height:320px; object-fit:cover; border-radius:8px; margin-bottom:16px;">
+    {% endif %}
+    <h1 style="font-size:19px;">{{ auction.name }}</h1>
+    <div class="muted" style="font-size:11.5px; margin-top:6px;">
+      Muallif: {{ auction.owner_ism }} {{ auction.owner_familiya }} · {{ auction.category }}
+    </div>
+    {% if auction.description %}
+    <p style="font-size:13.5px; line-height:1.7; margin-top:14px; white-space:pre-wrap;">{{ auction.description }}</p>
+    {% endif %}
+    {% if auction.link_url %}
+    <a href="{{ auction.link_url }}" target="_blank" rel="noopener" class="cs-btn cs-btn-sm" style="margin-top:14px;">{{ icon('globe',12) }} Loyihani ko'rish</a>
+    {% endif %}
+  </div>
+
+  <div class="cs-card" style="border-color:rgba(255,210,63,.4);">
+    <div class="muted" style="font-size:11px; text-transform:uppercase;">Joriy narx</div>
+    <div style="font-family:var(--cs-font-display); font-size:32px; font-weight:800; color:#ffd23f; margin-top:6px;">
+      ⚡ {{ "{:,}".format(auction.current_bid if auction.current_bid > 0 else auction.start_price) }}
+    </div>
+    {% if auction.bidder_ism %}
+    <div class="muted" style="font-size:11.5px; margin-top:8px;">Yetakchi: <strong>{{ auction.bidder_ism }} {{ auction.bidder_familiya }}</strong></div>
+    {% endif %}
+    <div class="muted" style="font-size:11px; margin-top:8px;">{{ icon('clock',11) }} Tugaydi: {{ auction.ends_at|tashkent_time }}</div>
+
+    {% if auction.status == 'active' %}
+    <form method="post" action="{{ url_for('startup_auction_bid', auction_id=auction.id) }}" style="margin-top:16px;">
+      <label class="muted" style="font-size:11px; display:block; margin-bottom:6px;">Tiklov miqdori (CODE)</label>
+      <input type="number" name="amount" min="{{ auction.current_bid + 1000 if auction.current_bid > 0 else auction.start_price }}"
+             value="{{ auction.current_bid + 1000 if auction.current_bid > 0 else auction.start_price }}"
+             required class="cs-input" style="margin-bottom:10px;">
+      <button type="submit" class="cs-btn cs-btn-primary cs-btn-full">{{ icon('zap',13) }} Tiklov qo'yish</button>
+    </form>
+    {% else %}
+    <div class="cs-chip" style="margin-top:16px; display:inline-flex;">Auksion yakunlangan</div>
+    {% endif %}
+
+    {% if current_user.role in ['admin','super_admin'] and auction.status == 'active' %}
+    <form method="post" action="{{ url_for('admin_startup_auction_cancel', auction_id=auction.id) }}" style="margin-top:10px;" onsubmit="return confirm('Auksionni bekor qilasizmi?');">
+      <button class="cs-btn cs-btn-sm cs-btn-danger cs-btn-full">{{ icon('x',12) }} Auksionni bekor qilish</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<!-- TIKLOVLAR TARIXI -->
+<div class="cs-card" style="margin-top:20px;">
+  <h3 style="font-size:13px; margin-bottom:12px;">{{ icon('clock',14) }} TIKLOVLAR TARIXI</h3>
+  <table class="cs-table">
+    <thead><tr><th>Foydalanuvchi</th><th>Miqdor</th><th>Sana</th></tr></thead>
+    <tbody>
+    {% for b in bids %}
+    <tr>
+      <td>{{ b.ism }} {{ b.familiya }}</td>
+      <td style="color:#ffd23f; font-weight:700;">⚡ {{ "{:,}".format(b.amount) }}</td>
+      <td class="muted" style="font-size:11px;">{{ b.created_at|tashkent_time }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3" class="muted" style="text-align:center; padding:20px;">Hali tiklov yo'q</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

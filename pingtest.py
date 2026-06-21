@@ -125,9 +125,199 @@ def do_ping(host: str) -> dict:
         return {"success": False, "response_time_ms": 0, "host": host, "output": str(e)}
 
 
-def run_ping_test(user_id: int, host: str) -> tuple[bool, str, dict]:
-    """Foydalanuvchi uchun ping test bajaradi.
+def do_traceroute(host: str) -> dict:
+    """Haqiqiy traceroute (Linux: traceroute, Windows: tracert).
+    Agar buyruq tizimda o'rnatilmagan bo'lsa, xato xabari bilan qaytadi
+    (saytni buzmaydi, lekin natija REAL hisoblanmaydi)."""
+    import platform
+    system = platform.system().lower()
+    if system == "windows":
+        cmd = ["tracert", "-d", "-h", "15", "-w", "2000", host]
+    else:
+        cmd = ["traceroute", "-n", "-m", "15", "-w", "2", host]
+
+    start = time.time()
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+        elapsed_ms = int((time.time() - start) * 1000)
+        output = (result.stdout or "").strip()
+        success = result.returncode == 0 and bool(output)
+        # Hoplar sonini hisoblash (har bir qator ~ bitta hop)
+        hops = len([ln for ln in output.splitlines() if ln.strip() and ln.strip()[0].isdigit()])
+        return {
+            "success": success,
+            "response_time_ms": elapsed_ms,
+            "host": host,
+            "output": output[:2000],
+            "hops": hops,
+        }
+    except FileNotFoundError:
+        return {"success": False, "response_time_ms": 0, "host": host,
+                "output": "traceroute/tracert tizimda o'rnatilmagan. Server administratoridan "
+                          "o'rnatishni so'rang (Linux: apt install traceroute).", "hops": 0}
+    except subprocess.TimeoutExpired:
+        return {"success": False, "response_time_ms": 20000, "host": host, "output": "Timeout", "hops": 0}
+    except Exception as e:
+        return {"success": False, "response_time_ms": 0, "host": host, "output": str(e), "hops": 0}
+
+
+# =================================================================
+# SIMULYATSIYA REJIMI — TCP SYN, UDP, ARP, PathPing, SNI, MTR
+# Bu usullar root huquqi yoki maxsus raw-socket kutubxonalar talab
+# qiladi, internetga ochiq web-serverda xavfsiz ishlatib bo'lmaydi.
+# Shuning uchun ta'lim maqsadida REALISTIK NAMUNA natija ko'rsatiladi —
+# foydalanuvchiga usul qanday ishlashi va natija qanday ko'rinishini
+# tushuntirish uchun. Bu hech qachon haqiqiy tarmoq so'rovi yubormaydi.
+# =================================================================
+PING_METHODS = {
+    "icmp": {
+        "name": "ICMP Ping",
+        "description": "Xost jonlimi? Tarmoq kechikishi qanday?",
+        "note": "Eng oddiy usul, lekin ko'p joylarda bloklangan",
+        "real": True,
+    },
+    "tcp_syn": {
+        "name": "TCP SYN Ping",
+        "description": "Xostni aniqlash, firewall siyosatini tekshirish",
+        "note": "ICMP bloklangan tarmoqlarda samarali",
+        "real": False,
+    },
+    "udp": {
+        "name": "UDP Ping",
+        "description": "Xostni aniqlash",
+        "note": "Yopiq portdan ICMP xatolik qaytishiga tayanadi",
+        "real": False,
+    },
+    "arp": {
+        "name": "ARP Ping",
+        "description": "Mahalliy tarmoqda xostlarni aniqlash",
+        "note": "Eng tez va ishonchli (LAN uchun)",
+        "real": False,
+    },
+    "traceroute": {
+        "name": "Traceroute",
+        "description": "Tarmoq yo'lini tahlil qilish",
+        "note": "Har bir hopda kechikish va yo'qotishni ko'rsatadi",
+        "real": True,
+    },
+    "pathping": {
+        "name": "PathPing",
+        "description": "Tarmoq muammolarini lokalizatsiya qilish",
+        "note": "Har bir hopda paket yo'qotish foizini hisoblaydi",
+        "real": False,
+    },
+    "sni": {
+        "name": "SNI Ping",
+        "description": "CDN va serverlarni aniqlash",
+        "note": "HTTPS trafigini niqoblash uchun ishlatiladi",
+        "real": False,
+    },
+    "mtr": {
+        "name": "MTR (My TraceRoute)",
+        "description": "Real vaqtda tarmoq monitoringi",
+        "note": "Ping va traceroute'ni birlashtiradi",
+        "real": False,
+    },
+}
+
+
+def _simulate_tcp_syn(host):
+    import random
+    common_ports = [22, 80, 443, 3306, 8080]
+    open_ports = random.sample(common_ports, k=random.randint(1, 3))
+    lines = [f"TCP SYN Ping -> {host} (SIMULYATSIYA, real so'rov yuborilmadi)"]
+    for p in sorted(open_ports):
+        lines.append(f"  Port {p}/tcp: OCHIQ (SYN-ACK qaytdi)")
+    for p in [x for x in common_ports if x not in open_ports][:2]:
+        lines.append(f"  Port {p}/tcp: YOPIQ (RST qaytdi)")
+    return "\n".join(lines), len(open_ports) > 0
+
+
+def _simulate_udp(host):
+    import random
+    return (f"UDP Ping -> {host} (SIMULYATSIYA)\n"
+            f"  Port 53/udp: javob yo'q (ochiq yoki filtrlangan)\n"
+            f"  Port 123/udp: ICMP Port Unreachable qaytdi (yopiq)\n"
+            f"  Natija: xost faol, ammo aniq portlar holatini aniqlash uchun qo'shimcha tekshiruv kerak"), True
+
+
+def _simulate_arp(host):
+    import random
+    mac = ":".join(f"{random.randint(0,255):02x}" for _ in range(6))
+    return (f"ARP Ping -> {host} (SIMULYATSIYA, faqat LAN'da ishlaydi)\n"
+            f"  Javob: {host} bor (0.8 ms)\n"
+            f"  MAC manzil (namuna): {mac}\n"
+            f"  Eslatma: ARP faqat bitta L2 segmentda (mahalliy tarmoqda) ishlaydi, "
+            f"internet orqali ishlamaydi"), True
+
+
+def _simulate_pathping(host):
+    import random
+    lines = [f"PathPing -> {host} (SIMULYATSIYA)", "Hop  Manzil            Yo'qotish%  O'rt-kechikish"]
+    for i in range(1, random.randint(4, 7)):
+        loss = random.choice([0, 0, 0, 2, 5])
+        lat = random.randint(5, 80) * i // 2
+        lines.append(f" {i:2d}   10.0.{i}.1          {loss}%         {lat} ms")
+    lines.append(f" {i+1:2d}   {host}    0%         {lat+10} ms (maqsad)")
+    return "\n".join(lines), True
+
+
+def _simulate_sni(host):
+    return (f"SNI Ping -> {host} (SIMULYATSIYA)\n"
+            f"  TLS ClientHello yuborildi, SNI={host}\n"
+            f"  Server sertifikat bilan javob qaytardi (namuna)\n"
+            f"  CDN aniqlandi: Cloudflare/Akamai turidagi infratuzilma belgilari topildi (namuna)\n"
+            f"  Eslatma: bu usul HTTPS orqali qaysi serverga ulanayotganini CDN orqasida ham "
+            f"aniqlash uchun ishlatiladi"), True
+
+
+def _simulate_mtr(host):
+    import random
+    lines = [f"MTR -> {host} (SIMULYATSIYA, real-vaqt monitoring namunasi)",
+             "Hop  Host              Yo'qotish%  Yuborilgan  O'rt    Eng yaxshi  Eng yomon"]
+    for i in range(1, random.randint(5, 9)):
+        loss = random.choice([0, 0, 0, 1, 3])
+        avg = random.randint(5, 60)
+        lines.append(f" {i:2d}   10.0.{i}.1          {loss}%      10          {avg}ms   {avg-3}ms      {avg+8}ms")
+    lines.append(f" {i+1:2d}   {host}    0%      10          {avg+15}ms (maqsad)")
+    return "\n".join(lines), True
+
+
+def run_method_test(method: str, host: str) -> dict:
+    """Berilgan usul bilan test bajaradi. ICMP va Traceroute REAL, qolganlari simulyatsiya."""
+    if method == "icmp":
+        return do_ping(host)
+    if method == "traceroute":
+        return do_traceroute(host)
+
+    simulators = {
+        "tcp_syn": _simulate_tcp_syn,
+        "udp": _simulate_udp,
+        "arp": _simulate_arp,
+        "pathping": _simulate_pathping,
+        "sni": _simulate_sni,
+        "mtr": _simulate_mtr,
+    }
+    sim_fn = simulators.get(method)
+    if not sim_fn:
+        return {"success": False, "response_time_ms": 0, "host": host, "output": "Noma'lum usul."}
+
+    output, success = sim_fn(host)
+    return {
+        "success": success,
+        "response_time_ms": 0,
+        "host": host,
+        "output": output,
+        "simulated": True,
+    }
+
+
+def run_ping_test(user_id: int, host: str, method: str = "icmp") -> tuple[bool, str, dict]:
+    """Foydalanuvchi uchun ping test bajaradi (tanlangan usul bilan).
     Returns: (success, message, result_dict)"""
+    if method not in PING_METHODS:
+        method = "icmp"
+
     # Rate limit
     if get_minute_count(user_id) >= 30:
         return False, "Tezlik chegarasi: minutida maksimal 30 ta ping. Birozdan keyin urinib ko'ring.", {}
@@ -160,13 +350,13 @@ def run_ping_test(user_id: int, host: str) -> tuple[bool, str, dict]:
         was_paid = True
         paid_amount = cost
 
-    # Pingni bajarish
-    result = do_ping(host)
+    # Tanlangan usul bilan testni bajarish
+    result = run_method_test(method, host)
     execute(
         """INSERT INTO ping_test_usage
            (user_id, target, response_time_ms, success, was_paid, cost_paid)
            VALUES (?,?,?,?,?,?)""",
-        (user_id, host, result["response_time_ms"], 1 if result["success"] else 0,
+        (user_id, host, result.get("response_time_ms", 0), 1 if result["success"] else 0,
          1 if was_paid else 0, paid_amount)
     )
 
@@ -175,6 +365,8 @@ def run_ping_test(user_id: int, host: str) -> tuple[bool, str, dict]:
     remaining = max(0, quota - new_used)
 
     result.update({
+        "method": method,
+        "method_name": PING_METHODS[method]["name"],
         "quota": quota,
         "used": new_used,
         "remaining": remaining,
@@ -182,4 +374,4 @@ def run_ping_test(user_id: int, host: str) -> tuple[bool, str, dict]:
         "was_paid": was_paid,
         "paid_amount": paid_amount,
     })
-    return True, "Ping yakunlandi.", result
+    return True, "Test yakunlandi.", result

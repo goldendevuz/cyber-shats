@@ -26,6 +26,7 @@
         <a href="{{ url_for('stories_feed') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['stories_feed','stories_view_user'] }}">{{ icon('zap') }} Hikoyalar</a>
         <a href="{{ url_for('reels_feed') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['reels_feed','reels_create'] }}">{{ icon('play') }} Reels</a>
         <a href="{{ url_for('startups_list') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['startups_list','startup_detail'] }}">{{ icon('briefcase') }} Startaplar</a>
+        <a href="{{ url_for('startup_auctions_list') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['startup_auctions_list','startup_auction_detail'] }}" style="color:#ffd23f;">{{ icon('zap') }} Startap Auksioni</a>
         <a href="{{ url_for('messages_page') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['messages_page','messages_thread'] }}" style="display:flex; align-items:center; justify-content:space-between;">
             <span>{{ icon('send') }} Xabarlar</span>
             {% if unread_msg_count and unread_msg_count > 0 %}

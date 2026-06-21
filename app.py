@@ -7,10 +7,9 @@ import random
 import string
 import datetime
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, abort, jsonify, request
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, abort, jsonify
 from markupsafe import Markup
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config import Config
 from db import get_db, close_db, query_one, query_all, execute, log_action, ensure_schema
@@ -38,7 +37,6 @@ import hacker_lab as hacker_lab_mod
 import terminal_sim
 import coins_purchase
 import social
-import telegram_verify as tgv
 import startups as startups_mod
 from oauth_routes import oauth_bp
 from ids import (generate_unique_id, set_user_id, get_premium_ids_list,
@@ -50,13 +48,6 @@ from smm_ai import chat_smm, SMM_DIRECTIONS, get_smm_history
 from pricing import get_pricing, get_price, set_prices
 
 app = Flask(__name__)
-app.wsgi_app = ProxyFix(
-    app.wsgi_app,
-    x_for=1,
-    x_proto=1,
-    x_host=1,
-    x_port=1,
-)
 app.config.from_object(Config)
 ensure_schema(app.config["DB_PATH"])  # yetishmayotgan jadval/ustunlarni avtomatik to'g'rilaydi
 app.teardown_appcontext(close_db)
@@ -86,12 +77,48 @@ def fromjson_safe(value):
 
 @app.template_filter('markdown')
 def render_markdown(text):
-    """Oddiy markdown matnni xavfsiz HTML'ga aylantiradi (yo'nalish materiallari uchun)."""
+    """
+    Oddiy markdown matnni xavfsiz HTML'ga aylantiradi (yo'nalish materiallari uchun).
+    Agar 'markdown' kutubxonasi o'rnatilmagan bo'lsa (masalan pip install qilinmagan),
+    sahifa xato bilan to'xtab qolmasligi uchun oddiy fallback formatlash ishlatiladi
+    (qatorlarni <br>/<p> ga, **qalin**ni <strong>ga, # sarlavhalarni <h*>ga aylantiradi).
+    """
     if not text:
         return ""
-    import markdown as md_lib
-    html = md_lib.markdown(text, extensions=["fenced_code", "tables"])
-    return Markup(html)
+    try:
+        import markdown as md_lib
+        html = md_lib.markdown(text, extensions=["fenced_code", "tables"])
+        return Markup(html)
+    except ImportError:
+        return Markup(_simple_markdown_fallback(text))
+
+
+def _simple_markdown_fallback(text: str) -> str:
+    """'markdown' kutubxonasi yo'q bo'lganda ishlatiladigan juda sodda,
+    qo'lda yozilgan formatlash (xavfsiz — avval HTML escape qilinadi)."""
+    import html as _html
+    import re
+    escaped = _html.escape(text)
+    lines = escaped.split("\n")
+    out = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("### "):
+            out.append(f"<h3>{stripped[4:]}</h3>")
+        elif stripped.startswith("## "):
+            out.append(f"<h2>{stripped[3:]}</h2>")
+        elif stripped.startswith("# "):
+            out.append(f"<h1>{stripped[2:]}</h1>")
+        elif stripped.startswith("- ") or stripped.startswith("* "):
+            out.append(f"<li>{stripped[2:]}</li>")
+        elif stripped == "":
+            out.append("<br>")
+        else:
+            out.append(f"<p>{stripped}</p>")
+    joined = "\n".join(out)
+    # **qalin** -> <strong>qalin</strong>
+    joined = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", joined)
+    return joined
 
 
 @app.template_filter('tashkent_time')
@@ -374,62 +401,9 @@ def register():
         session.clear()
         session["user_id"] = uid
         log_action(uid, "register", ip=request.remote_addr)
-        flash("Ro'yxatdan o'tish muvaffaqiyatli! Endi Telegram orqali hisobingizni tasdiqlang.", "success")
+        flash("Ro'yxatdan o'tish muvaffaqiyatli! Xush kelibsiz.", "success")
         return redirect(url_for("dashboard"))
-        # return redirect(url_for("telegram_verify_page"))
     return render_template("register.html")
-
-
-# =================================================================
-# TELEGRAM ORQALI MAJBURIY TASDIQLASH (ro'yxatdan o'tishdan keyin)
-# =================================================================
-@app.route("/verify-telegram", methods=["GET", "POST"])
-def telegram_verify_page():
-    # return redirect(url_for("index"))
-    return redirect(url_for("dashboard"))
-
-    # if not session.get("user_id"):
-    #     return redirect(url_for("login"))
-    # user = get_current_user()
-    # if user.get("telegram_verified"):
-    #     return redirect(url_for("dashboard"))
-
-    # if request.method == "POST":
-    #     username = request.form.get("telegram_username", "")
-    #     ok, msg, code = tgv.create_verification(user["id"], username)
-    #     if not ok:
-    #         flash(msg, "error")
-    #     return redirect(url_for("telegram_verify_page"))
-
-    # pending = tgv.get_pending_verification(user["id"])
-    # bot_username = Config.TELEGRAM_BOT_USERNAME if hasattr(Config, "TELEGRAM_BOT_USERNAME") else ""
-    # return render_template("telegram_verify.html", pending=pending, bot_username=bot_username)
-
-
-@app.route("/verify-telegram/check")
-def telegram_verify_check():
-    """Foydalanuvchi sahifada kutib turganda — tasdiqlanganmi tekshirish (polling)."""
-    if not session.get("user_id"):
-        return api_response(False, error="Tizimga kirilmagan")
-    verified = tgv.is_verified(session["user_id"])
-    return api_response(True, data={"verified": verified})
-
-
-@app.route("/verify-telegram/resend", methods=["POST"])
-def telegram_verify_resend():
-    if not session.get("user_id"):
-        return redirect(url_for("login"))
-    user = get_current_user()
-    pending = tgv.get_pending_verification(user["id"])
-    username = pending["telegram_username"] if pending else (user.get("telegram_username") or "")
-    if not username:
-        flash("Avval Telegram username kiriting.", "error")
-        # return redirect(url_for("telegram_verify_page"))
-        return redirect(url_for("dashboard"))
-    ok, msg, code = tgv.create_verification(user["id"], username)
-    flash("Yangi kod yaratildi. Botga qaytadan /start bosing." if ok else msg, "success" if ok else "error")
-    # return redirect(url_for("telegram_verify_page"))
-    return redirect(url_for("dashboard"))
 
 
 @app.route("/logout")
@@ -1370,6 +1344,66 @@ def admin_startups_review(startup_id):
     ok, msg = startups_mod.review_startup(startup_id, session["user_id"], decision)
     flash(msg, "success" if ok else "error")
     return redirect(url_for("admin_startups"))
+
+
+@app.route("/admin/startups/<int:startup_id>/auction", methods=["POST"])
+@admin_required
+def admin_startup_create_auction(startup_id):
+    """Admin tasdiqlangan loyihani auksionga qo'yadi."""
+    try:
+        start_price = int(request.form.get("start_price") or 0) or None
+    except ValueError:
+        start_price = None
+    try:
+        duration_days = int(request.form.get("duration_days") or 0) or None
+    except ValueError:
+        duration_days = None
+    ok, msg, aid = startups_mod.create_auction(startup_id, session["user_id"], start_price, duration_days)
+    flash(msg, "success" if ok else "error")
+    return redirect(url_for("admin_startups"))
+
+
+@app.route("/admin/startup-auctions/<int:auction_id>/cancel", methods=["POST"])
+@admin_required
+def admin_startup_auction_cancel(auction_id):
+    ok, msg = startups_mod.cancel_auction(auction_id, session["user_id"])
+    flash(msg, "success" if ok else "error")
+    return redirect(url_for("startup_auctions_list"))
+
+
+# =================================================================
+# STARTAPLAR AUKSIONI — foydalanuvchi tomondan
+# =================================================================
+@app.route("/startup-auctions")
+@login_required
+def startup_auctions_list():
+    startups_mod.check_and_finalize_expired_auctions()
+    auctions = startups_mod.get_active_auctions()
+    return render_template("startup_auctions_list.html", auctions=auctions)
+
+
+@app.route("/startup-auctions/<int:auction_id>")
+@login_required
+def startup_auction_detail(auction_id):
+    startups_mod.check_and_finalize_expired_auctions()
+    auction = startups_mod.get_auction(auction_id)
+    if not auction:
+        abort(404)
+    bids = startups_mod.get_auction_bids(auction_id)
+    return render_template("startup_auction_detail.html", auction=auction, bids=bids)
+
+
+@app.route("/startup-auctions/<int:auction_id>/bid", methods=["POST"])
+@login_required
+def startup_auction_bid(auction_id):
+    user = get_current_user()
+    try:
+        amount = int(request.form.get("amount", 0))
+    except ValueError:
+        amount = 0
+    ok, msg = startups_mod.place_bid(auction_id, user["id"], amount)
+    flash(msg, "success" if ok else "error")
+    return redirect(url_for("startup_auction_detail", auction_id=auction_id))
 
 
 @app.route("/tests")
@@ -2978,7 +3012,8 @@ def pentesting_ping_page():
     )
     return render_template("pentesting_ping.html",
                            quota=quota, cost=cost, used=used,
-                           remaining=max(0, quota - used), recent=recent)
+                           remaining=max(0, quota - used), recent=recent,
+                           methods=ping_mod.PING_METHODS)
 
 
 @app.route("/api/pentesting/ping", methods=["POST"])
@@ -2987,9 +3022,10 @@ def api_pentesting_ping():
     user = get_current_user()
     data = request.get_json(silent=True) or {}
     host = (data.get("host") or "").strip()
+    method = (data.get("method") or "icmp").strip()
     if not host:
         return api_response(False, error="Host bo'sh.")
-    ok, msg, result = ping_mod.run_ping_test(user["id"], host)
+    ok, msg, result = ping_mod.run_ping_test(user["id"], host, method)
     if ok:
         return api_response(True, data={
             "result": result,
@@ -3629,16 +3665,6 @@ def activate_course_code(slug):
     flash(f"«{course['title']}» kursiga muvaffaqiyatli kirish berildi!", "success")
     log_action(user["id"], "activate_course_code", details=f"course:{course['id']}", ip=request.remote_addr)
     return redirect(url_for("course_detail", slug=slug))
-
-@app.route("/debug")
-def debug():
-    return {
-        "url": request.url,
-        "host": request.host,
-        "scheme": request.scheme,
-        "is_secure": request.is_secure,
-        "x_forwarded_proto": request.headers.get("X-Forwarded-Proto"),
-    }
 
 
 # =================================================================
