@@ -376,7 +376,8 @@ def register():
 # =================================================================
 @app.route("/verify-telegram", methods=["GET", "POST"])
 def telegram_verify_page():
-    return redirect(url_for("dashboard"))
+    return redirect(url_for("index"))
+    # return redirect(url_for("dashboard"))
 
     # if not session.get("user_id"):
     #     return redirect(url_for("login"))
