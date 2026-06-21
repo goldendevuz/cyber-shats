@@ -376,22 +376,24 @@ def register():
 # =================================================================
 @app.route("/verify-telegram", methods=["GET", "POST"])
 def telegram_verify_page():
-    if not session.get("user_id"):
-        return redirect(url_for("login"))
-    user = get_current_user()
-    if user.get("telegram_verified"):
-        return redirect(url_for("dashboard"))
+    return redirect(url_for("dashboard"))
 
-    if request.method == "POST":
-        username = request.form.get("telegram_username", "")
-        ok, msg, code = tgv.create_verification(user["id"], username)
-        if not ok:
-            flash(msg, "error")
-        return redirect(url_for("telegram_verify_page"))
+    # if not session.get("user_id"):
+    #     return redirect(url_for("login"))
+    # user = get_current_user()
+    # if user.get("telegram_verified"):
+    #     return redirect(url_for("dashboard"))
 
-    pending = tgv.get_pending_verification(user["id"])
-    bot_username = Config.TELEGRAM_BOT_USERNAME if hasattr(Config, "TELEGRAM_BOT_USERNAME") else ""
-    return render_template("telegram_verify.html", pending=pending, bot_username=bot_username)
+    # if request.method == "POST":
+    #     username = request.form.get("telegram_username", "")
+    #     ok, msg, code = tgv.create_verification(user["id"], username)
+    #     if not ok:
+    #         flash(msg, "error")
+    #     return redirect(url_for("telegram_verify_page"))
+
+    # pending = tgv.get_pending_verification(user["id"])
+    # bot_username = Config.TELEGRAM_BOT_USERNAME if hasattr(Config, "TELEGRAM_BOT_USERNAME") else ""
+    # return render_template("telegram_verify.html", pending=pending, bot_username=bot_username)
 
 
 @app.route("/verify-telegram/check")
