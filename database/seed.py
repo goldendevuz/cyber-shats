@@ -135,22 +135,11 @@ def main():
     cur = conn.cursor()
 
     # ---------- FOYDALANUVCHILAR ----------
-    users = [
-        ("Admin", "Shats", "admin@cybershats.uz", "admin123", "admin", 9999, 20, "enterprise"),
-        ("Mentor", "Aliyev", "mentor@cybershats.uz", "mentor123", "mentor", 4200, 12, "pro"),
-        ("Jasur", "Karimov", "jasur@example.com", "demo1234", "student", 1850, 6, "pro"),
-        ("Dilnoza", "Yusupova", "dilnoza@example.com", "demo1234", "student", 920, 4, "free"),
-        ("Sardor", "Tosheva", "sardor@example.com", "demo1234", "student", 3100, 9, "pro"),
-        ("Madina", "Rashidova", "madina@example.com", "demo1234", "student", 410, 2, "free"),
-        ("Bekzod", "Nazarov", "bekzod@example.com", "demo1234", "student", 60, 1, "free"),
-    ]
+    # ESLATMA: Bu yerda HECH QANDAY admin/demo foydalanuvchi yaratilmaydi.
+    # Real admin va g'aznachi hisoblari faqat database/bootstrap_v13.py orqali
+    # yaratiladi (xavfsizlik uchun ataylab ajratilgan).
+    users = []
     user_ids = {}
-    for ism, familiya, email, pw, role, xp, level, plan in users:
-        cur.execute(
-            "INSERT INTO users (ism, familiya, email, password_hash, role, xp, level, plan) VALUES (?,?,?,?,?,?,?,?)",
-            (ism, familiya, email, generate_password_hash(pw), role, xp, level, plan),
-        )
-        user_ids[email] = cur.lastrowid
 
     # ---------- YO'NALISHLAR ----------
     direction_ids = {}
@@ -267,59 +256,12 @@ def main():
             )
 
     # ---------- YOZILISHLAR (enrollments) + TEST URINISHLARI ----------
-    student_emails = ["jasur@example.com", "dilnoza@example.com", "sardor@example.com", "madina@example.com", "bekzod@example.com"]
-    enrolled_courses = random.sample(all_course_rows, 18)
-    for email in student_emails:
-        uid = user_ids[email]
-        picks = random.sample(enrolled_courses, random.randint(2, 5))
-        for cid, cslug, title, dslug in picks:
-            progress = random.choice([15, 30, 45, 60, 75, 90, 100])
-            cur.execute(
-                "INSERT OR IGNORE INTO enrollments (user_id, course_id, progress_percent, started_at) VALUES (?,?,?,?)",
-                (uid, cid, progress, (datetime.now() - timedelta(days=random.randint(1, 60))).isoformat()),
-            )
-            if progress == 100:
-                cert_code = f"CS-{uid:04d}-{cid:04d}-{random.randint(1000,9999)}"
-                cur.execute(
-                    "INSERT INTO certificates (user_id, course_id, cert_code) VALUES (?,?,?)",
-                    (uid, cid, cert_code),
-                )
-
-    cur.execute("SELECT id FROM tests LIMIT 10")
-    test_ids = [r[0] for r in cur.fetchall()]
-    for email in student_emails:
-        uid = user_ids[email]
-        for tid in random.sample(test_ids, min(3, len(test_ids))):
-            total = 5
-            score = random.randint(2, 5)
-            cur.execute("INSERT INTO test_attempts (user_id, test_id, score, total) VALUES (?,?,?,?)", (uid, tid, score, total))
+    # ESLATMA: Demo foydalanuvchilar olib tashlangani uchun bu bo'lim bo'sh.
+    # Real foydalanuvchilar ro'yxatdan o'tganda o'zlari kurslarga yoziladi.
 
     # ---------- FORUM ----------
-    post_ids = []
-    for title, body, cat in FORUM_POSTS:
-        uid = user_ids[random.choice(student_emails)]
-        cur.execute(
-            "INSERT INTO forum_posts (user_id, title, body, category, views, created_at) VALUES (?,?,?,?,?,?)",
-            (uid, title, body, cat, random.randint(12, 480), (datetime.now() - timedelta(days=random.randint(0, 30))).isoformat()),
-        )
-        post_ids.append(cur.lastrowid)
-    sample_replies = [
-        "Menimcha, avval rasmiy hujjatlarni o'qib chiqing, ko'p savollar shu yerda javob topadi.",
-        "Bu muammoga men ham duch kelgandim, quyidagi yechim yordam berdi.",
-        "Juda foydali savol, men ham shu narsani bilmoqchi edim.",
-        "YouTube'da shu mavzu bo'yicha yaxshi darslar bor, qidirib ko'ring.",
-        "Kodingizni to'liq yuborsangiz, aniqroq yordam bera olardim.",
-    ]
-    for pid in post_ids:
-        for _ in range(random.randint(1, 4)):
-            uid = user_ids[random.choice(student_emails + ["mentor@cybershats.uz"])]
-            cur.execute(
-                "INSERT INTO forum_replies (post_id, user_id, body, created_at) VALUES (?,?,?,?)",
-                (pid, uid, random.choice(sample_replies), datetime.now().isoformat()),
-            )
-
-    cur.execute("""UPDATE forum_posts SET replies_count = (
-        SELECT COUNT(*) FROM forum_replies WHERE forum_replies.post_id = forum_posts.id)""")
+    # ESLATMA: Demo forum postlari olib tashlangan. Forum bo'limi bo'sh boshlanadi,
+    # real foydalanuvchilar o'zlari mavzu ochishi mumkin.
 
     # ---------- YANGILIKLAR ----------
     for title, summary, cat in NEWS_ITEMS:
@@ -332,37 +274,21 @@ def main():
     for title, ftype, size, cat in BOOKS:
         cur.execute("INSERT INTO books (title, type, size_label, category) VALUES (?,?,?,?)", (title, ftype, size, cat))
 
-    # ---------- BADGELAR ----------
+    # ---------- BADGELAR (faqat ta'rifi, demo foydalanuvchiga berilmaydi) ----------
     badge_ids = []
     for name, icon, desc in BADGES:
         cur.execute("INSERT INTO badges (name, icon, description) VALUES (?,?,?)", (name, icon, desc))
         badge_ids.append(cur.lastrowid)
-    for email in student_emails:
-        uid = user_ids[email]
-        for bid in random.sample(badge_ids, random.randint(1, 5)):
-            cur.execute("INSERT OR IGNORE INTO user_badges (user_id, badge_id) VALUES (?,?)", (uid, bid))
 
     # ---------- BILDIRISHNOMALAR ----------
-    notif_templates = [
-        ("Yangi dars qo'shildi", "Sizning kursingizga yangi dars qo'shildi.", "info"),
-        ("Test natijasi", "Testdan o'tdingiz! Natijangizni profilingizdan ko'ring.", "success"),
-        ("Sertifikat tayyor", "Kursni yakunladingiz, sertifikatingiz tayyor.", "success"),
-        ("Forumda javob", "Sizning postingizga yangi javob yozildi.", "info"),
-    ]
-    for email in student_emails:
-        uid = user_ids[email]
-        for title, body, ntype in random.sample(notif_templates, random.randint(1, 4)):
-            cur.execute(
-                "INSERT INTO notifications (user_id, title, body, type, is_read) VALUES (?,?,?,?,?)",
-                (uid, title, body, ntype, random.choice([0, 1])),
-            )
+    # ESLATMA: Demo bildirishnomalar olib tashlangan.
 
     conn.commit()
     conn.close()
     print(f"✅ Baza muvaffaqiyatli yaratildi: {DB_PATH}")
-    print(f"   Foydalanuvchilar: {len(users)} | Yo'nalishlar: {len(DIRECTIONS)} | Kurslar: {len(all_course_rows)}")
-    print("   Admin: admin@cybershats.uz / admin123")
-    print("   Demo student: jasur@example.com / demo1234")
+    print(f"   Yo'nalishlar: {len(DIRECTIONS)} | Kurslar: {len(all_course_rows)}")
+    print("   ESLATMA: Hech qanday demo/admin foydalanuvchi yaratilmadi.")
+    print("   Admin va g'aznachi hisobi uchun: python database/bootstrap_v13.py")
 
     conn2 = sqlite3.connect(DB_PATH)
     conn2.row_factory = sqlite3.Row

@@ -28,11 +28,14 @@
 <div class="admin-tabs" style="display:flex; gap:4px; margin-bottom:20px; border-bottom:1px solid rgba(0,255,65,.12); padding-bottom:0; flex-wrap:wrap;">
     <button class="admin-tab active" data-tab="overview">{{ icon('bar-chart-2',14) }} Umumiy</button>
     <button class="admin-tab" data-tab="users">{{ icon('users',14) }} Foydalanuvchilar</button>
+    <button class="admin-tab" data-tab="treasury" style="color:#ffd23f;">{{ icon('zap',14) }} G'azna</button>
     <button class="admin-tab" data-tab="payments">{{ icon('credit-card',14) }} To'lovlar</button>
     <button class="admin-tab" data-tab="security">{{ icon('shield',14) }} Xavfsizlik</button>
     <button class="admin-tab" data-tab="logs">{{ icon('clock',14) }} Loglar</button>
     <button class="admin-tab" data-tab="codes">{{ icon('key',14) }} Kodlar</button>
     <button class="admin-tab" data-tab="settings">{{ icon('settings',14) }} Sozlamalar</button>
+    <button class="admin-tab" data-tab="pricing">{{ icon('zap',14) }} Narxlar boshqaruvi</button>
+    <button class="admin-tab" data-tab="admins">{{ icon('shield',14) }} Adminlar</button>
     <a href="{{ url_for('admin_ids') }}" class="admin-tab" style="text-decoration:none;color:inherit;">{{ icon('hash',14) }} ID & Auktsion</a>
 </div>
 
@@ -50,6 +53,9 @@
             <a href="{{ url_for('admin_payments') }}" class="cs-btn" style="font-size:12px;">{{ icon('credit-card',14) }} To'lovlar</a>
             <a href="{{ url_for('courses') }}" class="cs-btn" style="font-size:12px;">{{ icon('book',14) }} Kurslar</a>
             <button onclick="document.querySelector('[data-tab=codes]').click(); document.querySelector('[data-tab=codes]').scrollIntoView();" class="cs-btn" style="font-size:12px; color:#ffd23f; border-color:#ffd23f40;">{{ icon('key',14) }} Kodlar</button>
+            <button onclick="document.querySelector('[data-tab=treasury]').click(); document.querySelector('[data-tab=treasury]').scrollIntoView();" class="cs-btn" style="font-size:12px; color:#ffd23f; border-color:#ffd23f40; font-weight:700;">{{ icon('zap',14) }} G'azna</button>
+            <a href="{{ url_for('admin_certificates') }}" class="cs-btn" style="font-size:12px; color:#3366ff; border-color:rgba(51,102,255,.4);">{{ icon('award',14) }} Sertifikatlar</a>
+            <a href="{{ url_for('admin_announcements') }}" class="cs-btn" style="font-size:12px; color:#ffd23f; border-color:rgba(255,210,63,.4);">{{ icon('message',14) }} E'lonlar</a>
             <button onclick="document.querySelector('[data-tab=settings]').click();" class="cs-btn" style="font-size:12px; color:#ff64c8; border-color:rgba(255,100,200,.4);">{{ icon('settings',14) }} Sozlamalar</button>
         </div>
     </div>
@@ -163,7 +169,13 @@
                         <div class="muted" style="font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ u.email }}</div>
                     </div>
                     <div style="text-align:right; flex-shrink:0;">
+                        {% if u.plan == 'vip' %}
+                        <span class="cs-chip" style="font-size:9px; padding:2px 7px; background:linear-gradient(135deg,#ff3030,#8c0f0f); color:#ffe0e0; border:0; font-weight:700;">🔥 PRO+</span>
+                        {% elif u.plan == 'cyber_pro' %}
+                        <span class="cs-chip" style="font-size:9px; padding:2px 7px; background:linear-gradient(135deg,#ff3366,#3366ff); color:#fff; border:0;">CYBER PRO</span>
+                        {% else %}
                         <span class="cs-chip {{ 'solid' if u.plan=='pro' }}" style="font-size:9px; padding:2px 7px;">{{ u.plan|upper }}</span>
+                        {% endif %}
                         <div class="muted" style="font-size:10px; margin-top:3px;">⚡ {{ u.code_balance|default(0)|int }}</div>
                     </div>
                 </div>
@@ -180,12 +192,15 @@
 
 <!-- ===== TAB: FOYDALANUVCHILAR ===== -->
 <div class="tab-panel" id="tab-users" style="display:none;">
+
     <form method="get" action="{{ url_for('admin_users') }}" class="cs-card" style="padding:14px; margin-bottom:16px; display:flex; gap:10px; flex-wrap:wrap;">
         <input type="text" name="q" placeholder="Ism, familiya yoki email..." class="cs-input" style="flex:1; min-width:200px;">
         <select name="plan" class="cs-input" style="width:130px;">
             <option value="">Barcha plan</option>
             <option value="free">Free</option>
             <option value="pro">Pro</option>
+            <option value="cyber_pro">Cyber Pro</option>
+            <option value="vip">🔥 PRO+</option>
             <option value="enterprise">Enterprise</option>
         </select>
         <button type="submit" class="cs-btn cs-btn-primary">{{ icon('search',14) }} Qidirish</button>
@@ -207,30 +222,34 @@
                 <td>
                     <!-- Plan o'zgartirish -->
                     <form method="post" action="{{ url_for('admin_set_plan', user_id=u.id) }}" style="display:flex; gap:4px; align-items:center;">
-                        <select name="plan" class="cs-input" style="padding:3px 6px; font-size:11px; height:28px; width:90px;">
+                        <select name="plan" class="cs-input" style="padding:3px 6px; font-size:11px; height:28px; width:110px;">
                             <option value="free" {{ 'selected' if u.plan=='free' }}>FREE</option>
                             <option value="pro" {{ 'selected' if u.plan=='pro' }}>PRO</option>
+                            <option value="cyber_pro" {{ 'selected' if u.plan=='cyber_pro' }}>CYBER PRO</option>
+                            <option value="vip" {{ 'selected' if u.plan=='vip' }}>🔥 PRO+</option>
                             <option value="enterprise" {{ 'selected' if u.plan=='enterprise' }}>ENT.</option>
                         </select>
                         <button class="cs-btn cs-btn-sm cs-btn-primary" style="padding:3px 8px; font-size:10px; height:28px;">✓</button>
                     </form>
                 </td>
                 <td>
-                    <div style="display:flex; align-items:center; gap:4px;">
-                        <!-- Coin ayirish -->
-                        <form method="post" action="{{ url_for('admin_remove_coins', user_id=u.id) }}" style="display:inline;" onsubmit="return confirmAction('Tangalarni ayirishni tasdiqlaysizmi?')">
-                            <input type="number" name="amount" min="1" value="100" class="cs-input"
-                                   style="width:70px; padding:3px 5px; font-size:10px; height:28px;" title="Ayirish miqdori">
-                            <button class="cs-btn cs-btn-sm" style="background:rgba(255,85,85,.15); border-color:#ff5555; color:#ff5555; padding:3px 7px; height:28px; font-size:10px;">
-                                ⚡ −
-                            </button>
-                        </form>
+                    <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
                         <!-- Coin qo'shish -->
                         <form method="post" action="{{ url_for('admin_add_coins', user_id=u.id) }}" style="display:inline;">
+                            <input type="hidden" name="redirect_to" value="{{ url_for('admin_dashboard') }}#users">
                             <input type="number" name="amount" min="1" value="500" class="cs-input"
                                    style="width:70px; padding:3px 5px; font-size:10px; height:28px;" title="Qo'shish miqdori">
                             <button class="cs-btn cs-btn-sm" style="background:rgba(0,255,65,.15); border-color:var(--cs-text-primary); color:var(--cs-text-primary); padding:3px 7px; height:28px; font-size:10px;">
                                 ⚡ +
+                            </button>
+                        </form>
+                        <!-- Coin ayirish -->
+                        <form method="post" action="{{ url_for('admin_remove_coins', user_id=u.id) }}" style="display:inline;" onsubmit="return confirm('Tangalarni ayirishni tasdiqlaysizmi?')">
+                            <input type="hidden" name="redirect_to" value="{{ url_for('admin_dashboard') }}#users">
+                            <input type="number" name="amount" min="1" value="100" class="cs-input"
+                                   style="width:70px; padding:3px 5px; font-size:10px; height:28px;" title="Ayirish miqdori">
+                            <button class="cs-btn cs-btn-sm" style="background:rgba(255,85,85,.15); border-color:#ff5555; color:#ff5555; padding:3px 7px; height:28px; font-size:10px;">
+                                ⚡ −
                             </button>
                         </form>
                     </div>
@@ -260,6 +279,69 @@
         <div style="padding:12px 0 0; text-align:right;">
             <a href="{{ url_for('admin_users') }}" class="cs-btn cs-btn-sm">Barchasi {{ icon('chevron-right',13) }}</a>
         </div>
+    </div>
+</div>
+
+<!-- ===== TAB: G'AZNA ===== -->
+<div class="tab-panel" id="tab-treasury" style="display:none;">
+
+    <div class="cs-card" style="padding:24px; margin-bottom:20px; text-align:center; border-color:rgba(255,210,63,.5); background:linear-gradient(135deg, rgba(255,210,63,.06), transparent);">
+        <div class="muted" style="font-size:11.5px; text-transform:uppercase; letter-spacing:1px;">G'azna jamg'armasi (joriy balans)</div>
+        <div style="font-family:var(--cs-font-display); font-size:42px; font-weight:800; color:#ffd23f; margin-top:6px;">
+            ⚡ {{ "{:,}".format(treasury_balance|default(0)|int) }}
+        </div>
+        <div class="muted" style="font-size:11px; margin-top:8px;">
+            G'azna kirim-chiqim tarixini to'liq ko'rish uchun G'azna paneliga kiring:
+            <a href="{{ url_for('treasury_login') }}" style="color:#ffd23f;">/treasury/login</a>
+        </div>
+    </div>
+
+    <!-- G'AZNAGA CODE SOLIB BERISH -->
+    <div class="cs-card" style="padding:20px; margin-bottom:16px; border-color:rgba(255,210,63,.4); background:rgba(255,210,63,.04);">
+      <h3 style="font-size:14px; color:#ffd23f; margin-bottom:10px;">
+        {{ icon('zap',16) }} G'AZNA JAMG'ARMASIGA CODE SOLIB BERISH
+      </h3>
+      <p class="muted" style="font-size:11.5px; margin-bottom:14px;">
+        Admin sifatida g'azna balansini to'g'ridan-to'g'ri to'ldira olasiz. Bu code tangalari
+        keyinchalik g'aznachi tomonidan foydalanuvchilarga ID orqali taqsimlanadi.
+      </p>
+      <form method="post" action="{{ url_for('admin_deposit_to_treasury') }}" style="display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;">
+        <div style="flex:1; min-width:160px;">
+          <label class="muted" style="font-size:11px;">Miqdor (CODE)</label>
+          <input type="number" name="amount" min="1" value="10000" required class="cs-input">
+        </div>
+        <div style="flex:2; min-width:200px;">
+          <label class="muted" style="font-size:11px;">Izoh (ixtiyoriy)</label>
+          <input type="text" name="note" placeholder="masalan: aylanma fond to'ldirish" class="cs-input">
+        </div>
+        <button class="cs-btn cs-btn-primary" style="height:38px;">
+          {{ icon('plus',14) }} G'aznaga qo'shish
+        </button>
+      </form>
+    </div>
+
+    <div class="cs-card" style="padding:16px;">
+      <h3 style="font-size:13px; margin-bottom:10px;">{{ icon('clock',14) }} SO'NGGI G'AZNA HARAKATLARI</h3>
+      <table class="cs-table">
+        <thead><tr><th>Yo'nalish</th><th>Miqdor</th><th>Sabab</th><th>Sana</th></tr></thead>
+        <tbody>
+        {% for log in treasury_recent_log %}
+        <tr>
+          <td>
+            {% if log.direction == 'in' %}<span class="cs-chip" style="color:var(--cs-text-primary); font-size:10px;">↓ Kirim</span>
+            {% else %}<span class="cs-chip" style="color:#ff9900; font-size:10px;">↑ Chiqim</span>{% endif %}
+          </td>
+          <td style="font-family:var(--cs-font-display); font-weight:700; color:{{ 'var(--cs-text-primary)' if log.direction=='in' else '#ff9900' }};">
+            {{ '+' if log.direction=='in' else '−' }}{{ "{:,}".format(log.amount) }}
+          </td>
+          <td class="muted" style="font-size:11px;">{{ log.reason }}</td>
+          <td class="muted" style="font-size:10px;">{{ log.created_at[:16] }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="muted" style="text-align:center; padding:20px;">Hozircha harakatlar yo'q</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
 </div>
 
@@ -404,11 +486,12 @@
                         {% if c.price %}
                         <span style="font-size:11.5px;">{{ "{:,}".format(c.price) }} UZS</span>
                         {% endif %}
-                        {% if c.code_price %}
-                        <div style="font-size:11px; color:var(--cs-text-primary);">⚡ {{ "{:,}".format(c.code_price) }}</div>
-                        {% endif %}
+                        <form method="post" action="/admin/courses/{{ c.id }}/set-price" style="display:flex; gap:4px; align-items:center; margin-top:4px;">
+                            <input type="number" name="code_price" min="0" value="{{ c.code_price or 0 }}" class="cs-input" style="width:90px; padding:3px 6px; font-size:10.5px; height:26px;">
+                            <button type="submit" class="cs-btn cs-btn-sm" style="font-size:9.5px; padding:3px 7px; height:26px;">⚡ Saqla</button>
+                        </form>
                         {% if not c.price and not c.code_price %}
-                        <span class="cs-chip" style="color:var(--cs-text-primary);">Bepul</span>
+                        <span class="cs-chip" style="color:var(--cs-text-primary); margin-top:4px; display:inline-block;">Bepul</span>
                         {% endif %}
                     </td>
                     <td>
@@ -522,7 +605,7 @@
                     </label>
                     <label style="font-size:11.5px; color:var(--cs-text-muted);">
                         Code tangasi narxi
-                        <input type="number" name="pro_price_code" value="{{ plan_settings.pro_price_code|default(8080) }}" class="cs-input" style="margin-top:5px; display:block; width:100%;">
+                        <input type="number" name="pro_price_code" value="{{ plan_settings.pro_price_code|default(5000) }}" class="cs-input" style="margin-top:5px; display:block; width:100%;">
                     </label>
                     <label style="font-size:11.5px; color:var(--cs-text-muted);">
                         AI yordamchi kunlik so'rovlar limiti
@@ -591,6 +674,264 @@
                 {{ icon('save',13) }} Tizim sozlamalarini saqlash
             </button>
         </form>
+    </div>
+</div>
+
+<!-- ===== TAB: NARXLAR BOSHQARUVI ===== -->
+<div class="tab-panel" id="tab-pricing" style="display:none;">
+    <div class="cs-card" style="padding:14px 18px; margin-bottom:18px; border-color:rgba(255,210,63,.3); background:rgba(255,210,63,.04);">
+        <span style="font-size:12px; color:#ffd23f;">
+            {{ icon('info',13) }} Bu yerda barcha CODE narxlarni boshqaring. O'zgartirgan zahoti butun saytda kuchga kiradi.
+        </span>
+    </div>
+
+    <form method="post" action="{{ url_for('admin_update_pricing') }}">
+    <div class="grid grid-2" style="gap:20px; margin-bottom:20px;">
+
+        <!-- Asosiy va versiyalar -->
+        <div class="cs-card" style="padding:18px;">
+            <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('star',14) }} VERSIYALAR (CODE)</h3>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <label style="font-size:11px;">Pro versiyasi narxi
+                    <input type="number" name="pro_price_code" value="{{ plan_settings.pro_price_code }}" class="cs-input">
+                </label>
+                <label style="font-size:11px;">Cyber Pro versiyasi narxi
+                    <input type="number" name="cyber_pro_price_code" value="{{ plan_settings.cyber_pro_price_code }}" class="cs-input">
+                </label>
+                <label style="font-size:11px; color:#ff3030;">🔥 SHATS CYBER PRO narxi
+                    <input type="number" name="vip_price_code" value="{{ plan_settings.vip_price_code }}" class="cs-input" style="border-color:rgba(255,48,48,.4);">
+                </label>
+                <label style="font-size:11px;">Pulik kurs (standart) narxi
+                    <input type="number" name="paid_course_code_default" value="{{ plan_settings.paid_course_code_default }}" class="cs-input">
+                </label>
+                <label style="font-size:11px;">P2P o'tkazma komissiyasi (%)
+                    <input type="number" name="coin_transfer_fee_percent" value="{{ plan_settings.coin_transfer_fee_percent }}" class="cs-input">
+                </label>
+                <label style="font-size:11px;">Obuna muddati (kun) — Pro/Cyber Pro/VIP
+                    <input type="number" name="plan_duration_days" value="{{ plan_settings.plan_duration_days }}" class="cs-input">
+                </label>
+            </div>
+        </div>
+
+        <!-- SHATS CYBER PRO boshqaruvi -->
+        <div class="cs-card" style="padding:18px; border-color:rgba(255,48,48,.35); background:linear-gradient(135deg, rgba(255,48,48,.04), transparent);">
+            <h3 style="font-size:13px; margin-bottom:14px; color:#ff3030;">🔥 SHATS CYBER PRO BOSHQARUVI</h3>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <label style="font-size:11px; display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" name="vip_enabled" value="1" {{ 'checked' if plan_settings.vip_enabled in [1,'1',True] }}>
+                    SHATS CYBER PRO versiyani saytda yoqish (o'chirilsa hech kim sotib ololmaydi)
+                </label>
+                <label style="font-size:11px;">VIP xush kelibsiz bonusi
+                    <input type="number" name="vip_welcome_bonus" value="{{ plan_settings.vip_welcome_bonus }}" class="cs-input">
+                </label>
+                <label style="font-size:11px;">VIP kurs bitirish bonusi
+                    <input type="number" name="vip_course_bonus" value="{{ plan_settings.vip_course_bonus }}" class="cs-input">
+                </label>
+                <p class="muted" style="font-size:11px;">
+                    SHATS CYBER PRO — Pro va Cyber Pro'dagi hamma narsa + ko'proq bonus, qizil-qora dizayn,
+                    maxsus 1-raqamli ID imkoniyati (alohida bo'limda beriladi).
+                </p>
+            </div>
+        </div>
+
+        <!-- Bonuslar va mukofotlar -->
+        <div class="cs-card" style="padding:18px;">
+            <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('award',14) }} BONUS & MUKOFOTLAR</h3>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <label style="font-size:11px;">Yangi foydalanuvchi bonusi (majburiy)
+                    <input type="number" name="welcome_bonus_code" value="{{ plan_settings.welcome_bonus_code }}" class="cs-input">
+                </label>
+                <label style="font-size:11px;">Cyber Pro xush kelibsiz bonusi
+                    <input type="number" name="cyber_pro_welcome_bonus" value="{{ plan_settings.cyber_pro_welcome_bonus }}" class="cs-input">
+                </label>
+                <label style="font-size:11px;">Kurs bitirish mukofoti (oddiy)
+                    <input type="number" name="course_reward_code" value="{{ plan_settings.course_reward_code }}" class="cs-input">
+                </label>
+                <label style="font-size:11px;">Kurs bitirish bonusi (Cyber Pro)
+                    <input type="number" name="cyber_pro_course_bonus" value="{{ plan_settings.cyber_pro_course_bonus }}" class="cs-input">
+                </label>
+                <label style="font-size:11px;">AI ishlatish narxi (1 xabar)
+                    <input type="number" name="ai_cost_per_msg" value="{{ plan_settings.ai_cost_per_msg }}" class="cs-input">
+                </label>
+            </div>
+        </div>
+
+        <!-- Sertifikat -->
+        <div class="cs-card" style="padding:18px;">
+            <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('book',14) }} SERTIFIKAT</h3>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <label style="font-size:11px;">Sertifikat imtihoni to'lovi
+                    <input type="number" name="certificate_exam_fee" value="{{ plan_settings.certificate_exam_fee }}" class="cs-input">
+                </label>
+                <p class="muted" style="font-size:11px;">Foydalanuvchi yo'nalish oxiri sertifikat olish uchun shu miqdorni to'laydi (g'aznaga tushadi).</p>
+            </div>
+        </div>
+
+        <!-- Ping test (Pentesting) -->
+        <div class="cs-card" style="padding:18px;">
+            <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('wifi',14) }} PING TEST (PENTESTING)</h3>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <label style="font-size:11px;">Free: tekin limit
+                    <input type="number" name="ping_test_free_quota" value="{{ plan_settings.ping_test_free_quota }}" class="cs-input">
+                </label>
+                <label style="font-size:11px;">Free: 1 ta narxi
+                    <input type="number" name="ping_test_cost_free" value="{{ plan_settings.ping_test_cost_free }}" class="cs-input">
+                </label>
+                <label style="font-size:11px;">Pro: tekin limit
+                    <input type="number" name="ping_test_pro_quota" value="{{ plan_settings.ping_test_pro_quota }}" class="cs-input">
+                </label>
+                <label style="font-size:11px;">Pro: 1 ta narxi
+                    <input type="number" name="ping_test_cost_pro" value="{{ plan_settings.ping_test_cost_pro }}" class="cs-input">
+                </label>
+                <label style="font-size:11px;">Cyber Pro: tekin limit
+                    <input type="number" name="ping_test_cyber_pro_quota" value="{{ plan_settings.ping_test_cyber_pro_quota }}" class="cs-input">
+                </label>
+                <label style="font-size:11px;">Cyber Pro: 1 ta narxi
+                    <input type="number" name="ping_test_cost_cyber_pro" value="{{ plan_settings.ping_test_cost_cyber_pro }}" class="cs-input">
+                </label>
+                <label style="font-size:11px; color:#ff3030;">🔥 PRO+: tekin limit
+                    <input type="number" name="ping_test_vip_quota" value="{{ plan_settings.ping_test_vip_quota }}" class="cs-input" style="border-color:rgba(255,48,48,.4);">
+                </label>
+                <label style="font-size:11px; color:#ff3030;">🔥 PRO+: 1 ta narxi
+                    <input type="number" name="ping_test_cost_vip" value="{{ plan_settings.ping_test_cost_vip }}" class="cs-input" style="border-color:rgba(255,48,48,.4);">
+                </label>
+            </div>
+        </div>
+
+        <!-- ID toifalari -->
+        <div class="cs-card" style="padding:18px; grid-column:1/-1;">
+            <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('hash',14) }} ID TOIFA NARXLARI (AUKSION)</h3>
+            <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:12px;">
+                {% for tier in ['A','B','C','D','E'] %}
+                <div>
+                    <strong style="font-size:12px;">Toifa {{ tier }}</strong>
+                    <label style="font-size:11px; display:block; margin-top:6px;">Min
+                        <input type="number" name="id_tier_{{ tier }}_min" value="{{ plan_settings['id_tier_'+tier+'_min'] }}" class="cs-input">
+                    </label>
+                    <label style="font-size:11px; display:block; margin-top:6px;">Max
+                        <input type="number" name="id_tier_{{ tier }}_max" value="{{ plan_settings['id_tier_'+tier+'_max'] }}" class="cs-input">
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="cs-btn cs-btn-primary" style="font-size:13px; padding:10px 24px;">
+        {{ icon('save',14) }} Barcha narxlarni saqlash
+    </button>
+    </form>
+</div>
+
+<!-- ===== TAB: ADMINLAR ===== -->
+<div class="tab-panel" id="tab-admins" style="display:none;">
+
+    {% if not is_super_admin %}
+    <div class="cs-card" style="padding:14px 18px; margin-bottom:18px; border-color:rgba(255,210,63,.4); background:rgba(255,210,63,.05);">
+        <span style="font-size:12px; color:#ffd23f;">{{ icon('info',13) }} Siz Super Admin emassiz — Admin ID raqamlarini faqat Super Admin o'zgartira oladi. Boshqa amallarni bajarishingiz mumkin.</span>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-2" style="gap:20px; margin-bottom:20px;">
+        <!-- Yangi admin yaratish (login/parol) -->
+        <div class="cs-card" style="padding:20px;">
+            <h3 style="font-size:13px; margin-bottom:14px; letter-spacing:1px;">{{ icon('user-plus',14) }} YANGI ADMIN YARATISH</h3>
+            <p class="muted" style="font-size:11px; margin-bottom:14px;">Yangi login (email) va parol bilan administrator hisobi yaratiladi. 4 xonali Admin ID avtomatik beriladi.</p>
+            <form method="post" action="{{ url_for('admin_create_admin') }}" style="display:flex; flex-direction:column; gap:10px;">
+                <div class="grid grid-2" style="gap:10px;">
+                    <input type="text" name="ism" placeholder="Ism" required class="cs-input">
+                    <input type="text" name="familiya" placeholder="Familiya">
+                </div>
+                <input type="text" name="email" placeholder="Email (login)" required class="cs-input">
+                <input type="password" name="password" placeholder="Parol (kamida 6 belgi)" required minlength="6" class="cs-input">
+                <select name="role" class="cs-input">
+                    <option value="admin">Admin</option>
+                    <option value="mentor">Mentor</option>
+                    {% if is_super_admin %}
+                    <option value="super_admin">Super Admin</option>
+                    {% endif %}
+                </select>
+                <button type="submit" class="cs-btn cs-btn-primary">{{ icon('plus',13) }} Admin yaratish</button>
+            </form>
+        </div>
+
+        <!-- Mavjud foydalanuvchini admin qilish -->
+        <div class="cs-card" style="padding:20px;">
+            <h3 style="font-size:13px; margin-bottom:14px; letter-spacing:1px;">{{ icon('shield',14) }} MAVJUD FOYDALANUVCHINI ADMIN QILISH</h3>
+            <p class="muted" style="font-size:11px; margin-bottom:14px;">Tizimda ro'yxatdan o'tgan foydalanuvchining ID raqamini kiritib, unga admin/mentor huquqi beriladi.</p>
+            <form method="post" action="{{ url_for('admin_promote_user') }}" style="display:flex; flex-direction:column; gap:10px;">
+                <input type="number" name="user_id" placeholder="Foydalanuvchi ID (raqam)" required class="cs-input">
+                <select name="role" class="cs-input">
+                    <option value="admin">Admin</option>
+                    <option value="mentor">Mentor</option>
+                    {% if is_super_admin %}
+                    <option value="super_admin">Super Admin</option>
+                    {% endif %}
+                </select>
+                <button type="submit" class="cs-btn cs-btn-primary">{{ icon('shield',13) }} Admin qilib tayinlash</button>
+            </form>
+            <p class="muted" style="font-size:10.5px; margin-top:10px;">Foydalanuvchilar ro'yxatidan kerakli ID raqamini "Foydalanuvchilar" tabidan topishingiz mumkin.</p>
+        </div>
+    </div>
+
+    <!-- Mavjud adminlar ro'yxati -->
+    <div class="cs-card" style="padding:20px;">
+        <h3 style="font-size:13px; margin-bottom:14px; letter-spacing:1px;">{{ icon('users',14) }} ADMINISTRATORLAR RO'YXATI ({{ all_admins|length }})</h3>
+        <div style="overflow-x:auto;">
+            <table class="cs-table">
+                <thead>
+                    <tr><th>Admin ID</th><th>Ism</th><th>Email</th><th>Rol</th><th>Holat</th>{% if is_super_admin %}<th>Admin ID o'zgartirish</th>{% endif %}<th>Amal</th></tr>
+                </thead>
+                <tbody>
+                {% for a in all_admins %}
+                <tr>
+                    <td style="font-family:monospace; font-size:15px; letter-spacing:2px; color:var(--cs-text-primary);">
+                        {% if a.admin_id %}#{{ a.admin_id }}{% else %}—{% endif %}
+                    </td>
+                    <td><strong style="font-size:12px;">{{ a.ism }} {{ a.familiya }}</strong></td>
+                    <td class="muted" style="font-size:11.5px;">{{ a.email }}</td>
+                    <td>
+                        {% if a.role == 'super_admin' %}
+                        <span class="cs-chip solid" style="color:#ffd23f;">{{ icon('crown',11) }} SUPER ADMIN</span>
+                        {% elif a.role == 'admin' %}
+                        <span class="cs-chip" style="color:var(--cs-text-primary);">ADMIN</span>
+                        {% else %}
+                        <span class="cs-chip">MENTOR</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if a.is_blocked %}<span style="color:#ff5555; font-size:11px;">Bloklangan</span>
+                        {% else %}<span style="color:#00ff41; font-size:11px;">Faol</span>{% endif %}
+                    </td>
+                    {% if is_super_admin %}
+                    <td>
+                        <form method="post" action="{{ url_for('admin_change_admin_id', user_id=a.id) }}" style="display:flex; gap:4px;">
+                            <input type="text" name="admin_id" pattern="[0-9]{4}" minlength="4" maxlength="4"
+                                   value="{{ a.admin_id }}" class="cs-input" style="width:80px; font-family:monospace;">
+                            <button type="submit" class="cs-btn" style="font-size:11px; padding:4px 8px;">{{ icon('save',11) }}</button>
+                        </form>
+                    </td>
+                    {% endif %}
+                    <td>
+                        {% if a.role != 'super_admin' and a.id != current_user.id %}
+                        <form method="post" action="{{ url_for('admin_demote_admin', user_id=a.id) }}"
+                              onsubmit="return confirm('{{ a.ism }} admin huquqidan mahrum qilinsinmi?');">
+                            <button type="submit" class="cs-btn cs-btn-sm" style="font-size:10.5px; padding:3px 8px; color:#ff5555; border-color:rgba(255,85,85,.3);">
+                                {{ icon('x',11) }} Tushirish
+                            </button>
+                        </form>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="muted" style="text-align:center; padding:24px;">Adminlar topilmadi</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="muted" style="font-size:10.5px; margin-top:12px;">
+            {{ icon('lock',10) }} Admin ID — 4 xonali, o'zgarmas identifikator. Uni faqat <strong>Super Admin</strong> o'zgartira oladi.
+        </p>
     </div>
 </div>
 

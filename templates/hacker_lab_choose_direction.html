@@ -1,0 +1,31 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Hacker Lab — Yo'nalish tanlash{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <div>
+    <h1 style="font-size:20px;">{{ icon('layers',18) }} Yo'nalish tanlang</h1>
+    <p class="muted" style="font-size:11.5px; margin-top:4px;">
+      Tanlangan yo'nalishga qarab Hacker Lab paneli to'liq moslashadi: material, terminal va amaliy mashqlar.
+    </p>
+  </div>
+</div>
+
+<div class="grid grid-4" style="gap:14px;">
+  {% for d in directions %}
+  <form method="post" action="{{ url_for('hacker_lab_choose_direction') }}">
+    <input type="hidden" name="direction_id" value="{{ d.id }}">
+    <button type="submit" class="cs-card" style="width:100%; text-align:left; cursor:pointer; padding:20px; border:1px solid var(--cs-border); background:var(--cs-bg-card);
+                  {{ 'border-color:var(--cs-text-primary); box-shadow:var(--cs-glow);' if current_user.selected_direction_id == d.id }}">
+      <div class="hex-icon" style="margin-bottom:10px;">{{ icon(d.icon, 24) }}</div>
+      <h3 style="font-size:14px; color:var(--cs-text-white);">{{ d.name_uz }}</h3>
+      {% if current_user.selected_direction_id == d.id %}
+      <span class="cs-chip solid" style="font-size:9px; margin-top:8px; display:inline-block;">{{ icon('check',10) }} Joriy tanlov</span>
+      {% endif %}
+    </button>
+  </form>
+  {% endfor %}
+</div>
+
+{% endblock %}

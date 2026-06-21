@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Bot to'lov so'rovlari — G'azna{% endblock %}
+{% block content %}
+
+<div style="max-width:1400px; margin:24px auto; padding:0 20px;">
+
+  <div class="flex-between" style="margin-bottom:20px;">
+    <div>
+      <h1 style="font-size:20px; color:#ffd23f;">{{ icon('zap',18) }} TELEGRAM BOT — TO'LOV SO'ROVLARI</h1>
+      <p class="muted" style="font-size:11.5px; margin-top:4px;">
+        Foydalanuvchilar bot orqali yuborgan to'lovlarni tekshirib tasdiqlash
+      </p>
+    </div>
+    <a href="{{ url_for('treasury_dashboard') }}" class="cs-btn cs-btn-sm">← G'azna paneli</a>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="cs-card" style="padding:10px 14px; margin-bottom:14px; border-color:{{ '#ff5555' if category=='error' else 'var(--cs-text-primary)' }};">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- FILTER -->
+  <div style="display:flex; gap:8px; margin-bottom:16px;">
+    <a href="?status=pending" class="cs-btn cs-btn-sm {{ 'cs-btn-primary' if status=='pending' }}">
+      {{ icon('clock',12) }} Kutilmoqda
+    </a>
+    <a href="?status=completed" class="cs-btn cs-btn-sm {{ 'cs-btn-primary' if status=='completed' }}">
+      {{ icon('check',12) }} Bajarildi
+    </a>
+    <a href="?status=rejected" class="cs-btn cs-btn-sm {{ 'cs-btn-primary' if status=='rejected' }}">
+      {{ icon('x',12) }} Rad etilgan
+    </a>
+    <a href="?status=all" class="cs-btn cs-btn-sm {{ 'cs-btn-primary' if status=='all' }}">Hammasi</a>
+  </div>
+
+  <div class="cs-card">
+    <table class="cs-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Manba</th><th>Tur</th><th>Tafsilot</th><th>ID</th>
+          <th>Summa</th><th>Chek</th><th>Holat</th><th>Sana</th><th>Amallar</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="muted">#{{ r.id }}</td>
+        <td>
+          {% if r.source == 'site' %}
+            <span class="cs-chip" style="font-size:9px; color:var(--cs-text-primary);">{{ icon('globe',10) }} Sayt</span>
+          {% else %}
+            <span class="cs-chip" style="font-size:9px; color:#0088cc;">{{ icon('send',10) }} Bot</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if r.request_type == 'code' %}
+            <span class="cs-chip solid" style="background:linear-gradient(135deg,#ffd23f,#ffb800); color:#000; border:0; font-size:10px;">⚡ CODE</span>
+          {% else %}
+            <span class="cs-chip solid" style="background:linear-gradient(135deg,#3366ff,#6633ff); color:#fff; border:0; font-size:10px;">📚 KURS</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if r.request_type == 'code' %}
+            <strong>⚡ {{ "{:,}".format(r.code_amount) }} CODE</strong>
+            <div class="muted" style="font-size:10px;">{{ "{:,}".format(r.price_uzs) }} so'm</div>
+          {% else %}
+            {% set courses = r.courses_json|fromjson_safe %}
+            <strong>{{ courses|length }} ta kurs</strong>
+            <div class="muted" style="font-size:10px; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              {% for c in courses %}{{ c.title }}{% if not loop.last %}, {% endif %}{% endfor %}
+            </div>
+          {% endif %}
+        </td>
+        <td><code>#{{ r.target_custom_id }}</code></td>
+        <td style="font-family:var(--cs-font-display); font-weight:700; color:var(--cs-text-primary);">
+          {% if r.request_type == 'code' %}
+            ⚡ {{ "{:,}".format(r.code_amount) }}
+          {% else %}
+            ⚡ {{ "{:,}".format(r.price_uzs) }}
+          {% endif %}
+        </td>
+        <td>
+          {% if r.receipt_file_id %}
+            <a href="{{ url_for('treasury_bot_receipt', req_id=r.id) }}" target="_blank" class="cs-btn cs-btn-sm">
+              {{ icon('eye',12) }} Ko'rish
+            </a>
+          {% else %}
+            <span class="muted">—</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if r.status == 'pending' %}<span class="cs-chip" style="color:#ffd23f;">Kutilmoqda</span>
+          {% elif r.status == 'completed' %}<span class="cs-chip solid" style="color:var(--cs-text-primary);">{{ icon('check',11) }} Bajarildi</span>
+          {% elif r.status == 'rejected' %}<span class="cs-chip" style="color:#ff5555;">Rad etildi</span>
+          {% else %}{{ r.status }}{% endif %}
+          {% if r.admin_note %}<div class="muted" style="font-size:10px; margin-top:3px;">{{ r.admin_note }}</div>{% endif %}
+        </td>
+        <td class="muted" style="font-size:10px;">{{ r.created_at|tashkent_time }}</td>
+        <td>
+          {% if r.status == 'pending' %}
+          <div style="display:flex; flex-direction:column; gap:4px; min-width:140px;">
+            <form method="post" action="{{ url_for('treasury_bot_approve', req_id=r.id) }}"
+                  onsubmit="return confirm('Chek tasdig\'i: g\'aznadan code chiqarib foydalanuvchiga beriladi. Davom etamizmi?');">
+              <button class="cs-btn cs-btn-sm cs-btn-primary" style="width:100%; font-size:10px;">
+                ✓ Tasdiqlash
+              </button>
+            </form>
+            <form method="post" action="{{ url_for('treasury_bot_reject', req_id=r.id) }}" style="display:flex; gap:3px;">
+              <input type="text" name="reason" placeholder="Sabab" class="cs-input"
+                     style="font-size:10px; padding:3px 6px; height:24px; flex:1;" required>
+              <button class="cs-btn cs-btn-sm cs-btn-danger" style="font-size:10px;">✗</button>
+            </form>
+          </div>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="10" class="muted" style="text-align:center; padding:30px;">
+        Bu holat bo'yicha so'rovlar yo'q
+      </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+{% endblock %}

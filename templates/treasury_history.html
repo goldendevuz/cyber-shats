@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}G'azna — Kirim-Chiqim tarixi{% endblock %}
+{% block content %}
+
+<div style="max-width:1400px; margin:24px auto; padding:0 20px;">
+
+  <div class="flex-between" style="margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+    <div>
+      <h1 style="font-size:20px; color:#ffd23f;">{{ icon('clock',18) }} G'azna — Kirim-Chiqim tarixi</h1>
+      <p class="muted" style="font-size:11.5px; margin-top:4px;">
+        Loyiha boshlanganidan beri barcha harakatlar
+      </p>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <a href="{{ url_for('treasury_dashboard') }}" class="cs-btn cs-btn-sm">← G'azna paneli</a>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="cs-card" style="padding:10px 14px; margin-bottom:14px;">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- STATISTIKA -->
+  <div class="grid grid-4" style="gap:14px; margin-bottom:20px;">
+    <div class="stat-card">
+      <div class="label">Hozirgi balans</div>
+      <div class="num" style="color:#ffd23f;">⚡ {{ "{:,}".format(balance) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Jami yozuvlar (filtr bo'yicha)</div>
+      <div class="num" style="color:var(--cs-text-primary);">{{ total }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Jami kirim (filtrdagi)</div>
+      <div class="num" style="color:var(--cs-text-primary); font-size:18px;">+{{ "{:,}".format(sum_in) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Jami chiqim (filtrdagi)</div>
+      <div class="num" style="color:#ff9900; font-size:18px;">−{{ "{:,}".format(sum_out) }}</div>
+    </div>
+  </div>
+
+  <!-- FILTRLAR -->
+  <form method="get" action="{{ url_for('treasury_history') }}" class="cs-card" style="padding:16px; margin-bottom:20px;">
+    <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:10px; align-items:end;">
+      <div>
+        <label class="muted" style="font-size:11px;">Yo'nalish</label>
+        <select name="direction" class="cs-input">
+          <option value="">Hammasi</option>
+          <option value="in" {{ 'selected' if filters.direction=='in' }}>Faqat kirim</option>
+          <option value="out" {{ 'selected' if filters.direction=='out' }}>Faqat chiqim</option>
+        </select>
+      </div>
+      <div>
+        <label class="muted" style="font-size:11px;">Sabab</label>
+        <select name="reason" class="cs-input">
+          <option value="">Hammasi</option>
+          {% for r in reasons %}
+          <option value="{{ r }}" {{ 'selected' if filters.reason==r }}>
+            {% if r == 'buy_pro' %}Pro sotib olish
+            {% elif r == 'buy_cyber_pro' %}Cyber Pro sotib olish
+            {% elif r == 'buy_course' %}Kurs sotib olish
+            {% elif r == 'ai_usage' %}AI ishlatish
+            {% elif r == 'transfer_fee' %}P2P komissiya
+            {% elif r == 'issue_to_user' %}Foydalanuvchiga chiqarish
+            {% elif r == 'certificate_fee' %}Sertifikat to'lovi
+            {% elif r == 'ping_test' %}Ping test
+            {% elif r == 'admin_deposit' %}Admin to'ldirgan
+            {% elif r == 'id_sale' %}ID auksion sotuvi
+            {% else %}{{ r }}{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="muted" style="font-size:11px;">Sana — boshlanish</label>
+        <input type="date" name="date_from" value="{{ filters.date_from }}" class="cs-input">
+      </div>
+      <div>
+        <label class="muted" style="font-size:11px;">Sana — tugash</label>
+        <input type="date" name="date_to" value="{{ filters.date_to }}" class="cs-input">
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button type="submit" class="cs-btn cs-btn-primary" style="flex:1;">{{ icon('search',13) }} Filtr</button>
+        <a href="{{ url_for('treasury_history') }}" class="cs-btn cs-btn-sm">Tozalash</a>
+      </div>
+    </div>
+  </form>
+
+  <!-- JADVAL -->
+  <div class="cs-card">
+    <table class="cs-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Yo'nalish</th>
+          <th>Miqdor</th>
+          <th>Sabab</th>
+          <th>Foydalanuvchi</th>
+          <th>G'azna xodimi</th>
+          <th>Sana va vaqt</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="muted">#{{ r.id }}</td>
+        <td>
+          {% if r.direction == 'in' %}
+          <span class="cs-chip" style="color:var(--cs-text-primary); font-size:10px;">↓ KIRIM</span>
+          {% else %}
+          <span class="cs-chip" style="color:#ff9900; font-size:10px;">↑ CHIQIM</span>
+          {% endif %}
+        </td>
+        <td style="font-family:var(--cs-font-display); font-weight:700; color:{{ 'var(--cs-text-primary)' if r.direction=='in' else '#ff9900' }};">
+          {{ '+' if r.direction=='in' else '−' }}{{ "{:,}".format(r.amount) }}
+        </td>
+        <td class="muted" style="font-size:11px;">
+          {% if r.reason == 'buy_pro' %}Pro sotib olish
+          {% elif r.reason == 'buy_cyber_pro' %}Cyber Pro sotib olish
+          {% elif r.reason == 'buy_course' %}Kurs sotib olish
+          {% elif r.reason == 'ai_usage' %}AI ishlatish
+          {% elif r.reason == 'transfer_fee' %}P2P komissiya
+          {% elif r.reason == 'issue_to_user' %}Foydalanuvchiga chiqarish
+          {% elif r.reason == 'certificate_fee' %}Sertifikat to'lovi
+          {% elif r.reason == 'ping_test' %}Ping test
+          {% elif r.reason.startswith('admin_deposit') %}Admin to'ldirgan{% if ':' in r.reason %} ({{ r.reason.split(':',1)[1] }}){% endif %}
+          {% elif r.reason.startswith('id_sale') %}ID sotuvi{% if ':' in r.reason %} (#{{ r.reason.split(':',1)[1] }}){% endif %}
+          {% else %}{{ r.reason }}{% endif %}
+        </td>
+        <td style="font-size:11px;">
+          {% if r.user_ism %}
+            {{ r.user_ism }} {{ r.user_familiya }}
+            {% if r.user_custom_id %}<div class="muted" style="font-size:10px;">#{{ r.user_custom_id }}</div>{% endif %}
+          {% else %}—{% endif %}
+        </td>
+        <td style="font-size:11px;">{{ r.treasury_ism or '—' }}</td>
+        <td class="muted" style="font-size:11px;">{{ r.created_at|tashkent_time }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="muted" style="text-align:center; padding:30px;">Hech qanday yozuv topilmadi</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINATION -->
+  {% if pages > 1 %}
+  <div style="display:flex; justify-content:center; gap:6px; margin-top:18px;">
+    {% if page > 1 %}
+    <a href="?{% for k,v in filters.items() %}{% if v %}{{k}}={{v}}&{% endif %}{% endfor %}page={{ page-1 }}" class="cs-btn cs-btn-sm">← Oldingi</a>
+    {% endif %}
+    <span class="cs-chip" style="padding:6px 12px;">{{ page }} / {{ pages }}</span>
+    {% if page < pages %}
+    <a href="?{% for k,v in filters.items() %}{% if v %}{{k}}={{v}}&{% endif %}{% endfor %}page={{ page+1 }}" class="cs-btn cs-btn-sm">Keyingi →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}

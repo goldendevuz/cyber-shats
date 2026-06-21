@@ -1,0 +1,58 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Hikoyalar — CYBER SHATS{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <h1 style="font-size:20px;">{{ icon('zap',18) }} Hikoyalar (Stories)</h1>
+  <p class="muted" style="font-size:11px;">24 soatdan keyin avtomatik o'chadi</p>
+</div>
+
+<!-- Hikoyalar doiralari (story circles) -->
+<div style="display:flex; gap:14px; overflow-x:auto; padding-bottom:12px; margin-bottom:24px;">
+
+  <!-- Yangi hikoya qo'shish -->
+  <div style="flex-shrink:0; text-align:center; width:76px;">
+    <form method="post" action="{{ url_for('stories_create') }}" enctype="multipart/form-data" id="storyUploadForm">
+      <label style="cursor:pointer; display:block;">
+        <input type="file" name="file" accept=".png,.jpg,.jpeg,.gif,.webp,.mp4,.mov" onchange="document.getElementById('storyUploadForm').submit();" style="display:none;">
+        <div style="width:64px; height:64px; border-radius:50%; border:2px dashed var(--cs-text-primary); display:flex; align-items:center; justify-content:center; margin:0 auto;">
+          {{ icon('plus',24) }}
+        </div>
+      </label>
+    </form>
+    <div class="muted" style="font-size:10px; margin-top:6px;">Qo'shish</div>
+  </div>
+
+  {% if my_stories %}
+  <div style="flex-shrink:0; text-align:center; width:76px;">
+    <a href="{{ url_for('stories_view_user', target_user_id=current_user.id) }}">
+      <div style="width:64px; height:64px; border-radius:50%; border:2px solid var(--cs-text-primary); padding:2px; margin:0 auto;">
+        <div class="avatar-fallback flex-center" style="width:100%; height:100%; border-radius:50%; background:rgba(0,255,65,.1); color:var(--cs-text-primary); font-family:var(--cs-font-display);">{{ current_user.ism[0]|upper }}</div>
+      </div>
+    </a>
+    <div class="muted" style="font-size:10px; margin-top:6px;">Sizniki ({{ my_stories|length }})</div>
+  </div>
+  {% endif %}
+
+  {% for g in grouped %}
+  {% if g.user_id != current_user.id %}
+  <div style="flex-shrink:0; text-align:center; width:76px;">
+    <a href="{{ url_for('stories_view_user', target_user_id=g.user_id) }}">
+      <div style="width:64px; height:64px; border-radius:50%; border:2px solid var(--cs-text-cyan); padding:2px; margin:0 auto;">
+        <div class="avatar-fallback flex-center" style="width:100%; height:100%; border-radius:50%; background:rgba(0,204,255,.1); color:var(--cs-text-cyan); font-family:var(--cs-font-display);">{{ g.ism[0]|upper }}</div>
+      </div>
+    </a>
+    <div class="muted" style="font-size:10px; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ g.ism }}</div>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
+
+{% if not grouped and not my_stories %}
+<div class="cs-card" style="text-align:center; padding:50px;">
+  <p class="muted">Hali hech kim hikoya joylamagan. Birinchi bo'ling!</p>
+</div>
+{% endif %}
+
+{% endblock %}

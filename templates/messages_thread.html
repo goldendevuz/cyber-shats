@@ -1,0 +1,173 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}{{ peer.ism }} {{ peer.familiya }} — Xabarlar{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:14px;">
+  <div style="display:flex; align-items:center; gap:10px;">
+    <a href="{{ url_for('messages_page') }}" style="color:var(--cs-text-muted);">{{ icon('arrow-left',16) }}</a>
+    <div class="avatar-fallback flex-center" style="width:34px;height:34px;background:rgba(0,255,65,.1); color:var(--cs-text-primary); font-family:var(--cs-font-display);">{{ peer.ism[0]|upper }}</div>
+    <div>
+      <h1 style="font-size:16px; display:flex; align-items:center; gap:6px;">
+        {{ peer.ism }} {{ peer.familiya }}
+        {% if peer.plan == 'vip' %}<span class="cs-chip solid" style="font-size:9px; background:linear-gradient(135deg,#ff4d4d,#00ff41); color:#ffe0e0; border:0;">🔥 PRO+</span>{% elif peer.plan == 'cyber_pro' %}<span class="cs-chip solid" style="font-size:9px; background:linear-gradient(135deg,#ff3366,#3366ff); color:#fff; border:0;">CYBER PRO</span>{% elif peer.plan == 'pro' %}<span class="cs-chip solid" style="font-size:9px;">{{ icon('crown',10) }} PRO</span>{% endif %}
+      </h1>
+      {% if peer.custom_id %}<span class="muted" style="font-size:11px;">#{{ peer.custom_id }}</span>{% endif %}
+    </div>
+  </div>
+  <button type="button" class="cs-btn cs-btn-sm" onclick="document.getElementById('coinSendBox').classList.toggle('open')">{{ icon('zap',13) }} Tanga jo'natish</button>
+</div>
+
+<!-- Inline coin transfer panel -->
+<div id="coinSendBox" class="cs-card" style="padding:14px; margin-bottom:14px; display:none;">
+  <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+    <div style="width:160px;">
+      <label class="muted" style="font-size:11px; display:block; margin-bottom:5px;">Miqdor (CODE)</label>
+      <input type="number" id="coinAmount" min="1" class="cs-input" placeholder="masalan 500">
+    </div>
+    <button type="button" class="cs-btn cs-btn-primary" id="coinSendBtn">{{ icon('send',13) }} {{ peer.ism }}ga jo'natish</button>
+    <span class="muted" style="font-size:11px;">
+      {% if transfer_fee_percent and transfer_fee_percent > 0 %}
+      Komissiya: {{ transfer_fee_percent }}%
+      {% else %}
+      Pro: komissiyasiz
+      {% endif %}
+    </span>
+  </div>
+  <div id="coinSendMsg" class="muted" style="font-size:11.5px; margin-top:8px;"></div>
+</div>
+
+<div class="chat-shell" style="height: calc(100vh - 230px);">
+  <div class="chat-side">
+    {% for c in conversations %}
+    <a href="{{ url_for('messages_thread', peer_id=c.id) }}" class="ai-item {{ 'active' if c.id==peer.id }}" style="display:flex; justify-content:space-between; align-items:center; text-decoration:none;">
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ icon('user',13) }} {{ c.ism }} {{ c.familiya }}</span>
+      {% if c.unread_count and c.unread_count > 0 %}<span class="cs-chip solid" style="background:#ff5555;border-color:#ff5555;color:#fff;font-size:9px;">{{ c.unread_count }}</span>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  <div class="chat-main">
+    <div class="chat-msgs" data-chat-msgs id="threadMsgs">
+      {% for m in thread %}
+      <div class="msg {{ 'user' if m.sender_id == current_user.id else 'bot' }}" data-msg-id="{{ m.id }}">
+        {{ m.body }}
+        <div style="font-size:9.5px; opacity:.6; margin-top:4px;">{{ m.created_at[11:16] }}</div>
+      </div>
+      {% else %}
+      <div class="muted" style="text-align:center; padding:30px;">Hali xabar yo'q. Birinchi xabarni yozing!</div>
+      {% endfor %}
+    </div>
+    <form class="chat-input-row" id="threadForm">
+      <input type="hidden" id="peerId" value="{{ peer.id }}">
+      <input type="text" id="threadInput" placeholder="Xabar yozing..." autocomplete="off">
+      <button type="submit">{{ icon('send',16) }}</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+#coinSendBox.open { display:block !important; }
+</style>
+<script>
+(function(){
+    var peerId = document.getElementById('peerId').value;
+    var msgsBox = document.getElementById('threadMsgs');
+    var lastId = 0;
+    document.querySelectorAll('[data-msg-id]').forEach(function(el){
+        var id = parseInt(el.getAttribute('data-msg-id'), 10);
+        if (id > lastId) lastId = id;
+    });
+    msgsBox.scrollTop = msgsBox.scrollHeight;
+
+    function escapeHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function appendMsg(m, mine) {
+        var div = document.createElement('div');
+        div.className = 'msg ' + (mine ? 'user' : 'bot');
+        div.setAttribute('data-msg-id', m.id);
+        var time = (m.created_at || '').slice(11,16);
+        div.innerHTML = escapeHtml(m.body) + '<div style="font-size:9.5px;opacity:.6;margin-top:4px;">' + time + '</div>';
+        msgsBox.appendChild(div);
+    }
+
+    // Xabar yuborish
+    document.getElementById('threadForm').addEventListener('submit', async function(e){
+        e.preventDefault();
+        var input = document.getElementById('threadInput');
+        var body = input.value.trim();
+        if (!body) return;
+        input.value = '';
+        try {
+            var r = await fetch('/api/messages/' + peerId + '/send', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({body: body})
+            });
+            var d = await r.json();
+            if (!d.success) {
+                alert(d.error || 'Xatolik yuz berdi');
+            }
+        } catch(err) {
+            console.error(err);
+        }
+        // Darhol poll qilib yangilanishni olib kelamiz
+        poll();
+    });
+
+    // Real-vaqt yangilanish uchun polling
+    async function poll() {
+        try {
+            var r = await fetch('/api/messages/' + peerId + '/poll?after_id=' + lastId);
+            var d = await r.json();
+            if (d.success && d.data.messages.length) {
+                var nearBottom = msgsBox.scrollHeight - msgsBox.scrollTop - msgsBox.clientHeight < 80;
+                d.data.messages.forEach(function(m){
+                    appendMsg(m, m.sender_id == {{ current_user.id }});
+                    if (m.id > lastId) lastId = m.id;
+                });
+                if (nearBottom) msgsBox.scrollTop = msgsBox.scrollHeight;
+            }
+        } catch(err) {
+            // jim ravishda keyingi pollingda urinib ko'ramiz
+        }
+    }
+    setInterval(poll, 3000);
+
+    // Chat ichidan tanga jo'natish
+    document.getElementById('coinSendBtn').addEventListener('click', async function(){
+        var amountInput = document.getElementById('coinAmount');
+        var amount = parseInt(amountInput.value, 10);
+        var msgEl = document.getElementById('coinSendMsg');
+        if (!amount || amount <= 0) {
+            msgEl.style.color = '#ff5555';
+            msgEl.textContent = "Miqdorni to'g'ri kiriting.";
+            return;
+        }
+        try {
+            var r = await fetch('/api/coins/transfer', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({to_user_id: parseInt(peerId,10), amount: amount})
+            });
+            var d = await r.json();
+            if (d.success) {
+                msgEl.style.color = 'var(--cs-text-primary)';
+                msgEl.textContent = d.data.message + ' Yangi balans: ' + d.data.new_balance.toLocaleString() + ' CODE';
+                amountInput.value = '';
+            } else {
+                msgEl.style.color = '#ff5555';
+                msgEl.textContent = d.error || 'Xatolik yuz berdi';
+            }
+        } catch(err) {
+            msgEl.style.color = '#ff5555';
+            msgEl.textContent = "Ulanish xatoligi";
+        }
+    });
+})();
+</script>
+{% endblock %}

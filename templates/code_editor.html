@@ -1,0 +1,137 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Code Editor — Cyber Pro{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:14px;">
+  <div>
+    <h1 style="font-size:20px;">{{ icon('code',18) }} Code Editor</h1>
+    <p class="muted" style="font-size:11.5px;">HTML / CSS / JavaScript real-vaqt preview · Cyber Pro</p>
+  </div>
+  <div style="display:flex; gap:6px;">
+    <button id="runBtn" class="cs-btn cs-btn-primary cs-btn-sm">{{ icon('play',12) }} Ishga tushirish (Ctrl+S)</button>
+    <button id="clearBtn" class="cs-btn cs-btn-sm cs-btn-danger">{{ icon('trash-2',12) }} Tozalash</button>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; height:calc(100vh - 220px); min-height:480px;">
+  <!-- TAHRIRLOVCHI -->
+  <div style="display:flex; flex-direction:column; gap:8px;">
+    <div class="cs-card" style="padding:0; flex:1; display:flex; flex-direction:column;">
+      <div class="cs-card-title" style="padding:8px 12px; display:flex; gap:8px;">
+        <button class="tab-btn active" data-tab="html" style="background:rgba(255,107,107,.15); color:#ff6b6b; border:1px solid #ff6b6b40; padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer;">HTML</button>
+        <button class="tab-btn" data-tab="css" style="background:rgba(102,170,255,.15); color:#66aaff; border:1px solid #66aaff40; padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer;">CSS</button>
+        <button class="tab-btn" data-tab="js" style="background:rgba(255,210,63,.15); color:#ffd23f; border:1px solid #ffd23f40; padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer;">JavaScript</button>
+      </div>
+      <textarea id="htmlCode" class="code-area active" spellcheck="false"
+                style="flex:1; resize:none; background:#0a0a14; color:#e0e0e0; border:0; padding:14px; font-family:'Consolas','Courier New',monospace; font-size:13px; line-height:1.5; outline:none;">&lt;div class=&quot;greeting&quot;&gt;
+  &lt;h1&gt;Salom CYBER PRO!&lt;/h1&gt;
+  &lt;p&gt;HTML, CSS, JavaScript yozishni boshlang.&lt;/p&gt;
+  &lt;button id=&quot;clickMe&quot;&gt;Bosing&lt;/button&gt;
+&lt;/div&gt;</textarea>
+      <textarea id="cssCode" class="code-area" spellcheck="false"
+                style="display:none; flex:1; resize:none; background:#0a0a14; color:#e0e0e0; border:0; padding:14px; font-family:'Consolas','Courier New',monospace; font-size:13px; line-height:1.5; outline:none;">.greeting {
+  font-family: sans-serif;
+  text-align: center;
+  padding: 40px;
+  background: linear-gradient(135deg, #ff3366, #3366ff);
+  color: white;
+  border-radius: 12px;
+}
+button {
+  background: white;
+  color: #ff3366;
+  padding: 10px 22px;
+  border: 0;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 15px;
+}
+button:hover { transform: scale(1.05); }</textarea>
+      <textarea id="jsCode" class="code-area" spellcheck="false"
+                style="display:none; flex:1; resize:none; background:#0a0a14; color:#e0e0e0; border:0; padding:14px; font-family:'Consolas','Courier New',monospace; font-size:13px; line-height:1.5; outline:none;">document.getElementById('clickMe').addEventListener('click', function() {
+  alert('Tabriklaymiz, JavaScript ishlayapti!');
+});</textarea>
+    </div>
+  </div>
+
+  <!-- KO'RINISH -->
+  <div class="cs-card" style="padding:0; display:flex; flex-direction:column;">
+    <div class="cs-card-title" style="padding:8px 12px;">
+      <h3 style="font-size:12px;">{{ icon('eye',12) }} KO'RINISH</h3>
+    </div>
+    <iframe id="preview" style="flex:1; border:0; background:#fff; border-radius:0 0 6px 6px;"></iframe>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+var tabs = document.querySelectorAll('.tab-btn');
+var areas = {
+    html: document.getElementById('htmlCode'),
+    css: document.getElementById('cssCode'),
+    js: document.getElementById('jsCode')
+};
+
+tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        tabs.forEach(function(t) { t.classList.remove('active'); t.style.opacity = '.55'; });
+        this.classList.add('active'); this.style.opacity = '1';
+        var key = this.dataset.tab;
+        Object.keys(areas).forEach(function(k) {
+            areas[k].style.display = (k === key) ? 'block' : 'none';
+        });
+    });
+});
+tabs.forEach(function(t) { if (!t.classList.contains('active')) t.style.opacity = '.55'; });
+
+function run() {
+    var preview = document.getElementById('preview');
+    var doc = preview.contentDocument || preview.contentWindow.document;
+    var html = areas.html.value;
+    var css = areas.css.value;
+    var js = areas.js.value;
+    var content =
+        '<!DOCTYPE html><html><head><style>' + css + '</style></head>' +
+        '<body>' + html +
+        '<script>try{' + js + '}catch(e){document.body.innerHTML+="<pre style=\\"color:red;background:#fee;padding:8px;\\">"+e.message+"</pre>";}<\/script>' +
+        '</body></html>';
+    doc.open();
+    doc.write(content);
+    doc.close();
+}
+
+document.getElementById('runBtn').addEventListener('click', run);
+
+document.getElementById('clearBtn').addEventListener('click', function() {
+    if (!confirm('Hamma kodni tozalashni tasdiqlaysizmi?')) return;
+    areas.html.value = '';
+    areas.css.value = '';
+    areas.js.value = '';
+    run();
+});
+
+// Ctrl+S
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        run();
+    }
+});
+
+// Auto-run kod yozilganda (debounced)
+var timer;
+Object.values(areas).forEach(function(area) {
+    area.addEventListener('input', function() {
+        clearTimeout(timer);
+        timer = setTimeout(run, 800);
+    });
+});
+
+// Boshlang'ich ishga tushirish
+run();
+</script>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Guruhlar — CYBER SHATS{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <h1 style="font-size:20px;">{{ icon('users',18) }} Guruhlar</h1>
+</div>
+
+<!-- YANGI GURUH -->
+<div class="cs-card" style="margin-bottom:20px;">
+  <h3 style="font-size:13px; margin-bottom:12px;">{{ icon('plus',14) }} YANGI GURUH YARATISH</h3>
+  <form method="post" action="{{ url_for('groups_create') }}">
+    <input type="text" name="name" placeholder="Guruh nomi..." required class="cs-input" style="margin-bottom:10px;">
+    <textarea name="description" rows="2" placeholder="Tavsif (ixtiyoriy)..." class="cs-input" style="margin-bottom:10px; resize:vertical;"></textarea>
+    <label style="font-size:12px; display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+      <input type="checkbox" name="is_public" value="1" checked> Ochiq guruh (har kim qo'shilishi mumkin)
+    </label>
+    <button type="submit" class="cs-btn cs-btn-primary">{{ icon('plus',13) }} Yaratish</button>
+  </form>
+</div>
+
+<!-- MENING GURUHLARIM -->
+{% if my_groups %}
+<div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('check',14) }} MENING GURUHLARIM</h3></div>
+<div class="grid grid-3" style="gap:12px; margin-bottom:24px;">
+  {% for g in my_groups %}
+  <a href="{{ url_for('group_detail', group_id=g.id) }}" class="cs-card" style="text-decoration:none; color:inherit;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="hex-icon">{{ icon('users',18) }}</div>
+      <div>
+        <strong style="font-size:13px;">{{ g.name }}</strong>
+        <div class="muted" style="font-size:10.5px;">{{ g.member_count }} a'zo</div>
+      </div>
+    </div>
+    {% if g.role == 'owner' %}<span class="cs-chip" style="font-size:9px; margin-top:8px; display:inline-block;">Egasi</span>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- BARCHA GURUHLAR -->
+<div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('layers',14) }} BARCHA OCHIQ GURUHLAR</h3></div>
+<div class="grid grid-3" style="gap:12px;">
+  {% for g in all_groups %}
+  {% if g.id not in my_group_ids %}
+  <div class="cs-card">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+      <div class="hex-icon">{{ icon('users',18) }}</div>
+      <div>
+        <strong style="font-size:13px;">{{ g.name }}</strong>
+        <div class="muted" style="font-size:10.5px;">{{ g.member_count }} a'zo · {{ g.owner_ism }}</div>
+      </div>
+    </div>
+    {% if g.description %}<p class="muted" style="font-size:11.5px; margin-bottom:10px;">{{ g.description[:80] }}</p>{% endif %}
+    {% if g.is_public %}
+    <form method="post" action="{{ url_for('group_join', group_id=g.id) }}">
+      <button class="cs-btn cs-btn-sm cs-btn-primary cs-btn-full">{{ icon('plus',12) }} Qo'shilish</button>
+    </form>
+    {% else %}
+    <span class="cs-chip" style="font-size:10px;">{{ icon('lock',10) }} Yopiq guruh</span>
+    {% endif %}
+  </div>
+  {% endif %}
+  {% else %}
+  <p class="muted" style="grid-column:1/-1; text-align:center; padding:30px;">Hali guruhlar yo'q</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

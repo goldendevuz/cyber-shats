@@ -10,6 +10,19 @@
     <span class="cs-chip solid">{{ icon('zap',12) }} LIVE — Claude API faol</span>
     {% endif %}
 </div>
+
+<!-- Boshqa tekin AI chatlarga tezkor havolalar -->
+<div class="cs-card" style="padding:14px; margin-bottom:16px;">
+    <div class="muted" style="font-size:11px; margin-bottom:10px;">{{ icon('globe',12) }} BOSHQA TEKIN AI CHATLAR (tashqi havolalar)</div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a href="https://gemini.google.com" target="_blank" rel="noopener" class="cs-btn cs-btn-sm">{{ icon('zap',12) }} Google Gemini</a>
+        <a href="https://chat.openai.com" target="_blank" rel="noopener" class="cs-btn cs-btn-sm">{{ icon('bot',12) }} ChatGPT</a>
+        <a href="https://claude.ai" target="_blank" rel="noopener" class="cs-btn cs-btn-sm">{{ icon('bot',12) }} Claude.ai</a>
+        <a href="https://www.perplexity.ai" target="_blank" rel="noopener" class="cs-btn cs-btn-sm">{{ icon('search',12) }} Perplexity</a>
+        <a href="https://copilot.microsoft.com" target="_blank" rel="noopener" class="cs-btn cs-btn-sm">{{ icon('code',12) }} Copilot</a>
+    </div>
+</div>
+
 <div class="chat-shell">
     <div class="chat-side">
         {% for t in ai_types %}

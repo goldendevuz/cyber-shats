@@ -1,0 +1,148 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Reels — CYBER SHATS{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:18px;">
+  <h1 style="font-size:20px;">{{ icon('play',18) }} Reels</h1>
+  <a href="{{ url_for('reels_create') }}" class="cs-btn cs-btn-primary cs-btn-sm">{{ icon('plus',13) }} Reel yaratish</a>
+</div>
+
+<div style="max-width:420px; margin:0 auto; display:flex; flex-direction:column; gap:24px;">
+  {% for r in reels %}
+  <div class="cs-card" id="reel-{{ r.id }}" style="padding:0; overflow:hidden;">
+    <div style="position:relative; background:#000; aspect-ratio:9/16;">
+      <video src="{{ r.file_path }}" loop muted playsinline class="reel-video" data-reel-id="{{ r.id }}"
+             style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="toggleReelPlay(this)"></video>
+
+      <!-- O'ng tomondagi amallar -->
+      <div style="position:absolute; right:10px; bottom:60px; display:flex; flex-direction:column; gap:18px; align-items:center;">
+        <button onclick="toggleLike({{ r.id }}, this)" data-liked="{{ '1' if r.id in liked_ids else '0' }}"
+                style="background:none; border:0; color:{{ '#ff5555' if r.id in liked_ids else '#fff' }}; cursor:pointer; text-align:center;">
+          <div style="font-size:24px;">{{ '❤️' if r.id in liked_ids else '🤍' }}</div>
+          <div class="like-count" style="font-size:11px;">{{ r.like_count }}</div>
+        </button>
+        <button onclick="toggleComments({{ r.id }})" style="background:none; border:0; color:#fff; cursor:pointer; text-align:center;">
+          <div style="font-size:22px;">💬</div>
+          <div style="font-size:11px;">Izoh</div>
+        </button>
+        {% if r.user_id == current_user.id %}
+        <form method="post" action="{{ url_for('reel_delete', reel_id=r.id) }}" onsubmit="return confirm('Reelni o\'chirasizmi?');">
+          <button type="submit" style="background:none; border:0; color:#fff; cursor:pointer; font-size:20px;">{{ icon('trash-2',18) }}</button>
+        </form>
+        {% endif %}
+      </div>
+
+      <!-- Pastdagi ma'lumot -->
+      <div style="position:absolute; bottom:10px; left:10px; right:60px; color:#fff;">
+        <strong style="font-size:13px; text-shadow:0 1px 4px rgba(0,0,0,.8);">{{ r.ism }} {{ r.familiya }}</strong>
+        {% if r.caption %}<p style="font-size:12px; margin-top:4px; text-shadow:0 1px 4px rgba(0,0,0,.8);">{{ r.caption }}</p>{% endif %}
+        <div style="font-size:10.5px; opacity:.85; margin-top:4px;">{{ icon('eye',10) }} {{ r.view_count }} ko'rish</div>
+      </div>
+    </div>
+
+    <!-- Izohlar bo'limi (yashirin, bosilganda ochiladi) -->
+    <div id="comments-{{ r.id }}" style="display:none; padding:14px; border-top:1px solid rgba(0,255,65,.08);">
+      <div id="commentsList-{{ r.id }}" style="max-height:200px; overflow-y:auto; margin-bottom:10px;"></div>
+      <form onsubmit="return submitComment(event, {{ r.id }});" style="display:flex; gap:6px;">
+        <input type="text" placeholder="Izoh yozing..." class="cs-input" style="flex:1; font-size:12px; padding:6px 10px;">
+        <button type="submit" class="cs-btn cs-btn-sm cs-btn-primary">{{ icon('send',12) }}</button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="cs-card" style="text-align:center; padding:50px;">
+    <p class="muted">Hali reel yo'q. Birinchi bo'lib joylang!</p>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleReelPlay(video) {
+    if (video.paused) { video.play(); } else { video.pause(); }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var videos = document.querySelectorAll('.reel-video');
+    var viewedSet = new Set();
+    var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            var video = entry.target;
+            if (entry.isIntersecting) {
+                video.play().catch(function(){});
+                var reelId = video.dataset.reelId;
+                if (!viewedSet.has(reelId)) {
+                    viewedSet.add(reelId);
+                    fetch('/api/reels/' + reelId + '/view', { method: 'POST', credentials: 'same-origin' });
+                }
+            } else {
+                video.pause();
+            }
+        });
+    }, { threshold: 0.6 });
+    videos.forEach(function(v) { observer.observe(v); });
+});
+
+function toggleLike(reelId, btn) {
+    fetch('/api/reels/' + reelId + '/like', { method: 'POST', credentials: 'same-origin' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (!d.success) return;
+            btn.dataset.liked = d.data.liked ? '1' : '0';
+            btn.style.color = d.data.liked ? '#ff5555' : '#fff';
+            btn.querySelector('div:first-child').textContent = d.data.liked ? '❤️' : '🤍';
+            btn.querySelector('.like-count').textContent = d.data.like_count;
+        });
+}
+
+function toggleComments(reelId) {
+    var box = document.getElementById('comments-' + reelId);
+    var isOpening = box.style.display === 'none';
+    box.style.display = isOpening ? 'block' : 'none';
+    if (isOpening) loadComments(reelId);
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function loadComments(reelId) {
+    fetch('/api/reels/' + reelId + '/comments', { credentials: 'same-origin' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (!d.success) return;
+            var list = document.getElementById('commentsList-' + reelId);
+            list.innerHTML = '';
+            d.data.comments.forEach(function(c) {
+                var div = document.createElement('div');
+                div.style.cssText = 'padding:6px 0; font-size:12px;';
+                div.innerHTML = '<strong>' + esc(c.ism + ' ' + c.familiya) + '</strong>: ' + esc(c.body);
+                list.appendChild(div);
+            });
+            if (!d.data.comments.length) {
+                list.innerHTML = '<p class="muted" style="font-size:11px; text-align:center; padding:10px;">Hali izoh yo\'q</p>';
+            }
+        });
+}
+
+function submitComment(e, reelId) {
+    e.preventDefault();
+    var input = e.target.querySelector('input');
+    var body = input.value.trim();
+    if (!body) return false;
+    var formData = new URLSearchParams();
+    formData.append('body', body);
+    fetch('/reels/' + reelId + '/comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData,
+        credentials: 'same-origin'
+    }).then(function() {
+        input.value = '';
+        loadComments(reelId);
+    });
+    return false;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}G'azna — Kirish{% endblock %}
+{% block content %}
+
+<div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div class="cs-card" style="max-width:440px; width:100%; padding:36px; border-color:rgba(255,210,63,.4); box-shadow:0 0 40px rgba(255,210,63,.08);">
+    <div style="text-align:center; margin-bottom:24px;">
+      <div style="font-size:46px; color:#ffd23f;">{{ icon('zap',46) }}</div>
+      <h2 style="font-size:20px; margin-top:8px;">CYBER SHATS — G'AZNA</h2>
+      <p class="muted" style="font-size:11.5px; margin-top:6px;">
+        Code tangalari jamg'armasi boshqaruvi
+      </p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="cs-card" style="padding:10px; margin-bottom:14px; border-color:{{ '#ff5555' if category=='error' else 'var(--cs-text-primary)' }}; font-size:12px;">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    {% if no_accounts_yet %}
+    <div class="cs-card" style="padding:12px; margin-bottom:18px; font-size:11.5px; color:var(--cs-text-muted);">
+      {{ icon('info',13) }} Tizimda hali G'azna xodimi yo'q. Birinchi hisobni shu yerda yarating.
+    </div>
+    <form method="post" action="{{ url_for('treasury_login') }}">
+      <input type="hidden" name="next" value="{{ next_url }}">
+      <div class="form-group">
+        <label style="font-size:11.5px; color:var(--cs-text-muted);">Ism</label>
+        <input type="text" name="ism" class="cs-input" required autofocus>
+      </div>
+      <div class="form-group" style="margin-top:10px;">
+        <label style="font-size:11.5px; color:var(--cs-text-muted);">Email</label>
+        <input type="text" name="email" class="cs-input" required>
+      </div>
+      <div class="form-group" style="margin-top:10px;">
+        <label style="font-size:11.5px; color:var(--cs-text-muted);">Parol (min 6 belgi)</label>
+        <input type="password" name="password" class="cs-input" minlength="6" required>
+      </div>
+      <div class="form-group" style="margin-top:10px;">
+        <label style="font-size:11.5px; color:var(--cs-text-muted);">Parolni tasdiqlang</label>
+        <input type="password" name="confirm_password" class="cs-input" minlength="6" required>
+      </div>
+      <button type="submit" class="cs-btn cs-btn-primary cs-btn-full" style="margin-top:18px;">
+        {{ icon('check',14) }} Hisobni yaratish va kirish
+      </button>
+    </form>
+    {% else %}
+    <form method="post" action="{{ url_for('treasury_login') }}">
+      <input type="hidden" name="next" value="{{ next_url }}">
+      <div class="form-group">
+        <label style="font-size:11.5px; color:var(--cs-text-muted);">Email</label>
+        <input type="text" name="email" class="cs-input" required autofocus placeholder="kassa@shats">
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label style="font-size:11.5px; color:var(--cs-text-muted);">Parol</label>
+        <input type="password" name="password" class="cs-input" required placeholder="••••••••">
+      </div>
+      <button type="submit" class="cs-btn cs-btn-primary cs-btn-full" style="margin-top:18px;">
+        {{ icon('unlock',14) }} G'aznaga kirish
+      </button>
+    </form>
+    {% endif %}
+
+    <a href="{{ url_for('index') }}" class="muted" style="display:block; text-align:center; margin-top:18px; font-size:11.5px;">
+      ← Asosiy sahifaga qaytish
+    </a>
+  </div>
+</div>
+
+{% endblock %}

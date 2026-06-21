@@ -1,0 +1,127 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Sertifikat imtihoni — {{ direction.name_uz }}{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <div>
+    <h1 style="font-size:18px;">{{ icon('award',16) }} Sertifikat imtihoni — {{ direction.name_uz }}</h1>
+    <p class="muted" style="font-size:11.5px;">
+      50 test ({{ test_duration_min }} daqiqa) + {{ practice_count }} amaliy ({{ practice_duration_min }} daqiqa)
+    </p>
+  </div>
+  <div id="timer" style="font-family:var(--cs-font-display); font-size:22px; color:#ff5555; padding:10px 16px; border:1px solid #ff5555; border-radius:6px;">
+    <span id="timer-display">--:--</span>
+  </div>
+</div>
+
+<div class="cs-card" style="padding:14px; margin-bottom:18px; border-color:rgba(255,85,85,.4);">
+  <p style="font-size:12px; color:#ff5555;">
+    {{ icon('info',13) }} <strong>Ogohlantirish:</strong> Vaqt tugaganda imtihon avtomatik yakunlanadi.
+    Sahifani yopmang yoki yangilamang — barcha javoblaringiz yo'qoladi.
+  </p>
+</div>
+
+<form method="post" action="{{ url_for('certificates_submit', direction_id=direction.id) }}" id="examForm">
+
+<!-- TEST QISMI -->
+<div class="cs-card" style="margin-bottom:20px;">
+  <div class="cs-card-title">
+    <h3 style="font-size:13px;">{{ icon('list',14) }} 1-QISM: TEST ({{ questions|length }} ta savol)</h3>
+  </div>
+
+  {% for q in questions %}
+  <div class="cs-card" style="padding:14px; margin-bottom:10px; background:rgba(0,255,65,.02);">
+    <p style="font-size:13px; margin-bottom:10px;"><strong>{{ loop.index }}.</strong> {{ q.question_text }}</p>
+    {% for opt in ['a','b','c','d'] %}
+    <label style="display:flex; align-items:center; gap:8px; padding:6px 0; cursor:pointer; font-size:12px;">
+      <input type="radio" name="q_{{ q.id }}" value="{{ opt }}" required>
+      <span><strong>{{ opt|upper }})</strong> {{ q['option_' + opt] }}</span>
+    </label>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="muted" style="text-align:center; padding:30px;">
+    Bu yo'nalish uchun test savollari hali tayyor emas. Iltimos, admin bilan bog'laning.
+  </p>
+  {% endfor %}
+</div>
+
+<!-- AMALIY QISMI -->
+<div class="cs-card" style="margin-bottom:20px;">
+  <div class="cs-card-title">
+    <h3 style="font-size:13px;">{{ icon('terminal',14) }} 2-QISM: AMALIY VAZIFALAR ({{ practice_count }} ta)</h3>
+  </div>
+  <p class="muted" style="font-size:11px; margin-bottom:14px;">
+    Har bir vazifaga qisqacha javob yozing va o'zingizning bajarish darajangizni 0-10 oraliqda baholang
+    (real loyihada mentor baholaydi — bu demo).
+  </p>
+
+  {% for i in range(1, practice_count+1) %}
+  <div class="cs-card" style="padding:14px; margin-bottom:10px; background:rgba(0,255,65,.02);">
+    <p style="font-size:13px; margin-bottom:8px;"><strong>Amaliy {{ i }}.</strong>
+      {% if i == 1 %}{{ direction.name_uz }} yo'nalishida real loyihada qanday muammo yechgansiz? Tasvirlab bering.
+      {% elif i == 2 %}Asosiy tushunchalardan birini misol bilan tushuntiring.
+      {% elif i == 3 %}Yo'nalishingizdagi eng muhim 3 ta texnologiyani ranking qiling.
+      {% elif i == 4 %}Real misoldan boshlab biror loyiha arxitekturasini tasvirlang.
+      {% elif i == 5 %}Xavfsizlik nuqtai nazaridan eng muhim qoidalarni sanab bering.
+      {% elif i == 6 %}Versiya nazorati (Git) tizimida branch strategiyani tushuntiring.
+      {% elif i == 7 %}API endpoint dizayni uchun RESTful prinsiplarni keltiring.
+      {% elif i == 8 %}Database normalizatsiyasini misol bilan tushuntiring.
+      {% elif i == 9 %}Performance optimizatsiyasi uchun qanday metodlardan foydalanasiz?
+      {% elif i == 10 %}Code review jarayonida nimalarga e'tibor berasiz?
+      {% elif i == 11 %}Production-da deployment qanday amalga oshirasiz?
+      {% elif i == 12 %}Monitoring va logging tizimini qanday quroli kerak?
+      {% elif i == 13 %}Microservices vs Monolith — qachon qaysisini tanlash kerak?
+      {% elif i == 14 %}CI/CD pipeline-da minimal kerakli bosqichlarni sanab bering.
+      {% else %}Agar bu yo'nalishda yangi loyiha boshlasangiz, birinchi 5 ta qadamingiz qanday bo'ladi?
+      {% endif %}
+    </p>
+    <textarea name="practice_answer_{{ i }}" rows="3" class="cs-input"
+              placeholder="Javobingiz..." style="resize:vertical;"></textarea>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+      <span style="font-size:11px;">O'z bahoyingiz (0-10):</span>
+      <input type="number" name="practice_{{ i }}" min="0" max="10" value="5" required
+             class="cs-input" style="width:80px;">
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<button type="submit" class="cs-btn cs-btn-primary cs-btn-full" style="font-size:14px; padding:14px;">
+  {{ icon('check',16) }} Imtihonni yakunlash va yuborish
+</button>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Vaqt cheklovi (test + amaliy = 45 daqiqa umuman)
+var totalSec = ({{ test_duration_min }} + {{ practice_duration_min }}) * 60;
+var deadline = Date.now() + totalSec * 1000;
+
+function updateTimer() {
+    var remain = Math.max(0, Math.floor((deadline - Date.now()) / 1000));
+    var m = Math.floor(remain / 60);
+    var s = remain % 60;
+    document.getElementById('timer-display').textContent =
+        (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    if (remain <= 0) {
+        alert("Vaqt tugadi! Imtihon avtomatik yuborilmoqda.");
+        document.getElementById('examForm').submit();
+    }
+}
+setInterval(updateTimer, 1000);
+updateTimer();
+
+// Yopishdan oldin ogohlantirish
+window.addEventListener('beforeunload', function(e) {
+    e.preventDefault();
+    e.returnValue = '';
+});
+document.getElementById('examForm').addEventListener('submit', function() {
+    window.removeEventListener('beforeunload', arguments.callee);
+});
+</script>
+{% endblock %}

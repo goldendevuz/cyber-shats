@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Telegram tasdiqlash — CYBER SHATS{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card" style="max-width:480px;">
+    <div class="auth-logo">{{ icon('shield',32) }}<span>CYBER SHATS</span></div>
+    <h2 class="auth-title">Telegram orqali tasdiqlash</h2>
+    <p class="muted" style="font-size:12.5px; text-align:center; margin-top:-10px; margin-bottom:18px;">
+      Xavfsizlik maqsadida ro'yxatdan o'tish Telegram orqali tasdiqlanishi shart.
+    </p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+      <div class="cs-card" style="padding:10px 14px; margin-bottom:14px; border-color:{{ '#ff5555' if category=='error' else 'var(--cs-text-primary)' }}; font-size:12px;">
+        {{ message }}
+      </div>
+      {% endfor %}
+    {% endwith %}
+
+    {% if not pending %}
+    <!-- 1-qadam: Telegram username kiritish -->
+    <form method="post" action="{{ url_for('telegram_verify_page') }}">
+      <label class="muted" style="font-size:11.5px; display:block; margin-bottom:6px;">Telegram username</label>
+      <input type="text" name="telegram_username" placeholder="@username yoki username" required class="cs-input" style="margin-bottom:16px;">
+      <button type="submit" class="cs-btn cs-btn-primary cs-btn-full">{{ icon('send',14) }} Kod yaratish</button>
+    </form>
+    <p class="muted" style="font-size:11px; margin-top:14px; text-align:center;">
+      Telegram'da username'ingiz yo'q bo'lsa: Sozlamalar → Username qo'shing.
+    </p>
+    {% else %}
+    <!-- 2-qadam: botga o'tish va kutish -->
+    <div class="cs-card" style="padding:18px; text-align:center; border-color:rgba(0,255,65,.3);">
+      <p style="font-size:13px; margin-bottom:14px;">
+        Quyidagi tugma orqali botimizga o'ting va <strong>/start</strong> bosing.
+        Hisobingiz avtomatik tasdiqlanadi.
+      </p>
+      {% if bot_username %}
+      <a href="https://t.me/{{ bot_username }}" target="_blank" class="cs-btn cs-btn-primary cs-btn-full" style="margin-bottom:14px;">
+        {{ icon('send',14) }} @{{ bot_username }} ga o'tish
+      </a>
+      {% endif %}
+      <div class="muted" style="font-size:11px;">
+        Username: <strong>@{{ pending.telegram_username }}</strong><br>
+        Agar avtomatik ishlamasa, botga shu buyruqni yuboring:<br>
+        <code style="background:rgba(0,255,65,.08); padding:2px 8px; border-radius:4px;">/verify {{ pending.code }}</code>
+      </div>
+    </div>
+
+    <div id="statusBox" style="text-align:center; margin-top:18px;">
+      <div class="muted" style="font-size:12px;">{{ icon('clock',13) }} Tasdiqlanishini kutmoqdamiz...</div>
+    </div>
+
+    <form method="post" action="{{ url_for('telegram_verify_resend') }}" style="margin-top:14px;">
+      <button type="submit" class="cs-btn cs-btn-sm cs-btn-full">{{ icon('send',12) }} Yangi kod so'rash</button>
+    </form>
+    {% endif %}
+
+    <a href="{{ url_for('logout') }}" class="muted" style="display:block; text-align:center; margin-top:18px; font-size:11.5px;">
+      Chiqish
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if pending %}
+<script>
+function checkVerification() {
+    fetch('/verify-telegram/check', { credentials: 'same-origin' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success && d.data.verified) {
+                document.getElementById('statusBox').innerHTML =
+                    '<div style="color:var(--cs-text-primary); font-size:13px;">✅ Tasdiqlandi! Yo\'naltirilmoqda...</div>';
+                setTimeout(function() { window.location.href = "{{ url_for('dashboard') }}"; }, 1200);
+            }
+        }).catch(function() {});
+}
+setInterval(checkVerification, 3000);
+</script>
+{% endif %}
+{% endblock %}

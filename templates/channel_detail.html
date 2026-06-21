@@ -1,0 +1,78 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}{{ channel.name }} — Kanal{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:18px;">
+  <div style="display:flex; align-items:center; gap:10px;">
+    <a href="{{ url_for('channels_list') }}" style="color:var(--cs-text-muted);">{{ icon('arrow-left',16) }}</a>
+    <div class="hex-icon">{{ icon('send',18) }}</div>
+    <div>
+      <h1 style="font-size:16px;">{{ channel.name }}</h1>
+      <span class="muted" style="font-size:11px;">{{ channel.subscriber_count }} obunachi</span>
+    </div>
+  </div>
+  <div style="display:flex; gap:6px;">
+    {% if is_owner %}
+    <form method="post" action="{{ url_for('channel_delete', channel_id=channel.id) }}" onsubmit="return confirm('Kanalni butunlay o\'chirasizmi?');">
+      <button class="cs-btn cs-btn-sm cs-btn-danger">{{ icon('trash-2',12) }} O'chirish</button>
+    </form>
+    {% elif subscribed %}
+    <form method="post" action="{{ url_for('channel_unsubscribe', channel_id=channel.id) }}">
+      <button class="cs-btn cs-btn-sm cs-btn-danger">{{ icon('x',12) }} Obunani bekor qilish</button>
+    </form>
+    {% else %}
+    <form method="post" action="{{ url_for('channel_subscribe', channel_id=channel.id) }}">
+      <button class="cs-btn cs-btn-sm cs-btn-primary">{{ icon('plus',12) }} Obuna bo'lish</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if channel.description %}
+<div class="cs-card" style="padding:14px; margin-bottom:18px;">
+  <p style="font-size:13px;">{{ channel.description }}</p>
+</div>
+{% endif %}
+
+<!-- YANGI E'LON (faqat egasi) -->
+{% if is_owner %}
+<div class="cs-card" style="margin-bottom:20px;">
+  <h3 style="font-size:13px; margin-bottom:12px;">{{ icon('plus',14) }} YANGI E'LON</h3>
+  <form method="post" action="{{ url_for('channel_post_create', channel_id=channel.id) }}" enctype="multipart/form-data">
+    <textarea name="body" rows="3" placeholder="E'lon matni..." class="cs-input" style="margin-bottom:10px; resize:vertical;"></textarea>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <input type="file" name="file" accept=".png,.jpg,.jpeg,.gif,.webp,.mp4,.mov" style="font-size:12px;">
+      <button type="submit" class="cs-btn cs-btn-primary" style="margin-left:auto;">{{ icon('send',13) }} Joylash</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+<!-- E'LONLAR LENTASI -->
+<div class="cs-card">
+  {% for p in posts %}
+  <a href="{{ url_for('channel_post_detail', post_id=p.id) }}" style="display:block; padding:16px 4px; text-decoration:none; color:inherit; border-bottom:1px solid rgba(0,255,65,.06);">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div class="hex-icon" style="width:28px; height:28px; font-size:13px;">{{ icon('send',13) }}</div>
+      <strong style="font-size:12.5px;">{{ channel.name }}</strong>
+      <span class="muted" style="font-size:10.5px;">· {{ p.created_at[:16] }}</span>
+    </div>
+    {% if p.body %}<p style="font-size:13.5px; line-height:1.6; white-space:pre-wrap;">{{ p.body[:300] }}</p>{% endif %}
+    {% if p.file_path %}
+      {% if p.file_type == 'image' %}
+      <img src="{{ p.file_path }}" style="max-width:100%; max-height:300px; border-radius:8px; margin-top:10px;">
+      {% else %}
+      <video src="{{ p.file_path }}" style="max-width:100%; max-height:300px; border-radius:8px; margin-top:10px;"></video>
+      {% endif %}
+    {% endif %}
+    <div class="muted" style="font-size:11px; margin-top:10px;">
+      {{ icon('eye',11) }} {{ p.views }} · {{ icon('message',11) }} {{ p.comments_count }} izoh
+    </div>
+  </a>
+  {% else %}
+  <p class="muted" style="text-align:center; padding:40px;">Hali e'lonlar yo'q</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

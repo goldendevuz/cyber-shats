@@ -1,0 +1,53 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Jamoa — {{ direction.name_uz }}{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:18px;">
+  <div>
+    <h1 style="font-size:20px;">{{ icon('users',18) }} Jamoa — {{ direction.name_uz }}</h1>
+    <p class="muted" style="font-size:11.5px; margin-top:4px;">
+      Shu yo'nalishdagi foydalanuvchilar bilan fikr almashing, loyiha taqdimotlari ulashing.
+    </p>
+  </div>
+  <a href="{{ url_for('hacker_lab') }}" class="cs-btn cs-btn-sm">{{ icon('arrow-left',13) }} Panelga qaytish</a>
+</div>
+
+<!-- YANGI POST -->
+<div class="cs-card" style="margin-bottom:20px;">
+  <h3 style="font-size:13px; margin-bottom:12px;">{{ icon('plus',14) }} YANGI MAVZU OCHISH</h3>
+  <form method="post" action="{{ url_for('hacker_lab_team_new') }}" enctype="multipart/form-data">
+    <input type="text" name="title" placeholder="Sarlavha..." required class="cs-input" style="margin-bottom:10px;">
+    <textarea name="body" rows="3" placeholder="Fikringiz, loyiha tavsifi yoki savol..." class="cs-input" style="margin-bottom:10px; resize:vertical;"></textarea>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <input type="file" name="file" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.doc,.docx,.zip,.txt,.mp4,.mov" style="font-size:12px;">
+      <button type="submit" class="cs-btn cs-btn-primary" style="margin-left:auto;">{{ icon('send',13) }} Joylash</button>
+    </div>
+    <p class="muted" style="font-size:10.5px; margin-top:6px;">Ruxsat etilgan: rasm, video, hujjat, zip arxiv</p>
+  </form>
+</div>
+
+<!-- MAVZULAR ROYXATI -->
+<div class="cs-card">
+  {% for p in posts %}
+  <a href="{{ url_for('hacker_lab_team_post', post_id=p.id) }}" style="display:flex; gap:12px; padding:14px 4px; text-decoration:none; color:inherit; border-bottom:1px solid rgba(0,255,65,.06);">
+    <div class="avatar-fallback flex-center" style="width:38px;height:38px;flex-shrink:0;background:rgba(0,255,65,.1); color:var(--cs-text-primary); font-family:var(--cs-font-display);">{{ p.ism[0]|upper }}</div>
+    <div style="flex:1; min-width:0;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <strong style="font-size:13.5px;">{{ p.title }}</strong>
+        {% if p.file_path %}
+          {% if p.file_type == 'image' %}🖼{% elif p.file_type == 'video' %}🎬{% else %}{{ icon('file-text',12) }}{% endif %}
+        {% endif %}
+      </div>
+      <div class="muted" style="font-size:11.5px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+        {{ p.ism }} {{ p.familiya }} · {{ p.created_at[:16] }}
+      </div>
+    </div>
+    <div class="muted" style="font-size:11px; flex-shrink:0;">{{ p.replies_count }} javob</div>
+  </a>
+  {% else %}
+  <p class="muted" style="text-align:center; padding:40px;">Hali mavzular yo'q. Birinchi bo'lib boshlang!</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

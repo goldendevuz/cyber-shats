@@ -1,0 +1,49 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}{{ post.channel_name }} — E'lon{% endblock %}
+{% block app_content %}
+
+<a href="{{ url_for('channel_detail', channel_id=post.channel_id) }}" class="muted" style="display:inline-block; margin-bottom:14px; font-size:12px;">{{ icon('arrow-left',13) }} {{ post.channel_name }}</a>
+
+<div class="cs-card" style="margin-bottom:20px;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+    <div class="hex-icon" style="width:32px; height:32px;">{{ icon('send',14) }}</div>
+    <div>
+      <strong style="font-size:13px;">{{ post.channel_name }}</strong>
+      <div class="muted" style="font-size:10.5px;">{{ post.created_at[:16] }}</div>
+    </div>
+  </div>
+  {% if post.body %}<p style="font-size:14px; line-height:1.7; white-space:pre-wrap;">{{ post.body }}</p>{% endif %}
+  {% if post.file_path %}
+    {% if post.file_type == 'image' %}
+    <img src="{{ post.file_path }}" style="max-width:100%; border-radius:8px; margin-top:14px;">
+    {% else %}
+    <video src="{{ post.file_path }}" controls style="max-width:100%; border-radius:8px; margin-top:14px;"></video>
+    {% endif %}
+  {% endif %}
+  <div class="muted" style="font-size:11px; margin-top:14px;">{{ icon('eye',11) }} {{ post.views }} ko'rildi</div>
+</div>
+
+<div class="cs-card" style="margin-bottom:16px;">
+  <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('message',14) }} IZOHLAR ({{ comments|length }})</h3>
+  {% for c in comments %}
+  <div style="display:flex; gap:10px; padding:12px 0; border-bottom:1px solid rgba(0,255,65,.06);">
+    <div class="avatar-fallback flex-center" style="width:32px;height:32px;flex-shrink:0;background:rgba(0,255,65,.08); color:var(--cs-text-primary); font-size:12px; font-family:var(--cs-font-display);">{{ c.ism[0]|upper }}</div>
+    <div style="flex:1;">
+      <div style="font-size:12px;"><strong>{{ c.ism }} {{ c.familiya }}</strong> <span class="muted">· {{ c.created_at[:16] }}</span></div>
+      <p style="font-size:13px; margin-top:4px; white-space:pre-wrap;">{{ c.body }}</p>
+    </div>
+  </div>
+  {% else %}
+  <p class="muted" style="text-align:center; padding:20px;">Hali izoh yo'q</p>
+  {% endfor %}
+</div>
+
+<div class="cs-card">
+  <form method="post" action="{{ url_for('channel_post_comment', post_id=post.id) }}">
+    <textarea name="body" rows="2" placeholder="Izohingiz..." required class="cs-input" style="resize:vertical;"></textarea>
+    <button type="submit" class="cs-btn cs-btn-primary" style="margin-top:10px;">{{ icon('send',13) }} Izoh qoldirish</button>
+  </form>
+</div>
+
+{% endblock %}

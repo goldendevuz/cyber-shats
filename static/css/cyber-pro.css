@@ -1,0 +1,61 @@
+/* ============================================================
+   CYBER PRO TEMASI — qizil / qora / ko'k
+   Faqat plan='cyber_pro' bo'lgan foydalanuvchilarga qo'llaniladi
+   (body class="cyber-pro-theme" orqali aktivlashadi)
+   ============================================================ */
+
+body.cyber-pro-theme {
+    --cs-text-primary: #ff3366;      /* asosiy yorqin qizil */
+    --cs-text-secondary: #3366ff;    /* ikkilamchi ko'k */
+    --cs-bg-primary: #0a0a14;        /* deyarli qora */
+    --cs-bg-card: #14141e;
+    --cs-border: #2a1530;
+    --cyber-pro-gradient: linear-gradient(135deg, #ff3366 0%, #3366ff 100%);
+}
+
+body.cyber-pro-theme .cs-btn-primary {
+    background: var(--cyber-pro-gradient);
+    border-color: transparent;
+    color: #fff;
+}
+
+body.cyber-pro-theme .cs-btn-primary:hover {
+    filter: brightness(1.15);
+    box-shadow: 0 0 22px rgba(255, 51, 102, 0.4);
+}
+
+body.cyber-pro-theme .cs-nav-item.active {
+    background: linear-gradient(90deg, rgba(255,51,102,.18), transparent);
+    border-left: 3px solid #ff3366;
+}
+
+body.cyber-pro-theme .cs-chip.solid {
+    background: var(--cyber-pro-gradient);
+    color: #fff;
+    border-color: transparent;
+}
+
+body.cyber-pro-theme .stat-card .num,
+body.cyber-pro-theme .cs-card-title h3 {
+    color: #ff3366;
+}
+
+body.cyber-pro-theme a {
+    color: #3366ff;
+}
+
+body.cyber-pro-theme .cs-card {
+    border-color: rgba(255, 51, 102, 0.2);
+}
+
+/* CYBER PRO badge */
+.cyber-pro-badge {
+    background: linear-gradient(135deg, #ff3366 0%, #3366ff 100%);
+    color: #fff !important;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    display: inline-block;
+}

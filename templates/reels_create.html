@@ -1,0 +1,28 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Reel yaratish{% endblock %}
+{% block app_content %}
+
+<div style="max-width:480px; margin:20px auto;">
+  <div class="flex-between" style="margin-bottom:18px;">
+    <h1 style="font-size:18px;">{{ icon('plus',16) }} Yangi Reel</h1>
+    <a href="{{ url_for('reels_feed') }}" class="cs-btn cs-btn-sm">← Reels</a>
+  </div>
+
+  <div class="cs-card">
+    <form method="post" action="{{ url_for('reels_create') }}" enctype="multipart/form-data">
+      <label class="muted" style="font-size:11px; display:block; margin-bottom:6px;">Video fayl (vertikal, qisqa)</label>
+      <input type="file" name="file" accept=".mp4,.mov" required class="cs-input" style="margin-bottom:14px;">
+
+      <label class="muted" style="font-size:11px; display:block; margin-bottom:6px;">Izoh (ixtiyoriy)</label>
+      <textarea name="caption" rows="3" placeholder="Reel haqida..." class="cs-input" style="margin-bottom:16px; resize:vertical;"></textarea>
+
+      <button type="submit" class="cs-btn cs-btn-primary cs-btn-full">{{ icon('send',14) }} Joylash</button>
+    </form>
+    <p class="muted" style="font-size:10.5px; margin-top:12px; text-align:center;">
+      Ruxsat etilgan format: MP4, MOV
+    </p>
+  </div>
+</div>
+
+{% endblock %}

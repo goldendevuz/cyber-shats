@@ -26,7 +26,7 @@
                 <a href="{{ url_for('lesson', slug=course.slug, lesson_id=modules[0].lessons[0].id) }}" class="cs-btn cs-btn-primary cs-btn-block">{{ icon('play',14) }} Davom ettirish</a>
                 {% endif %}
             {% else %}
-                {% if course.is_pro_only and (not current_user or current_user.plan not in ['pro','enterprise']) and current_user.role != 'admin' %}
+                {% if course.is_pro_only and (not current_user or current_user.plan not in ['pro','cyber_pro','vip','enterprise']) and current_user.role not in ['admin','super_admin','mentor'] %}
                 <div style="border:1px solid rgba(255,100,200,.3);border-radius:8px;padding:12px;text-align:center;margin-bottom:8px;">
                     <div style="color:#ff64c8;font-size:13px;margin-bottom:6px;">{{ icon('crown',14) }} Faqat Pro</div>
                     <div style="font-size:11px;color:var(--cs-text-muted);">Bu kurs Pro foydalanuvchilar uchun</div>

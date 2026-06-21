@@ -1,0 +1,107 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}E'lonlar — Admin{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <h1 style="font-size:20px;">{{ icon('message',18) }} ADMIN E'LONLARI</h1>
+  <a href="{{ url_for('admin_dashboard') }}" class="cs-btn cs-btn-sm">← Admin Panel</a>
+</div>
+
+<div class="cs-card" style="padding:12px; margin-bottom:18px; border-color:rgba(255,210,63,.3); background:rgba(255,210,63,.04);">
+  <p style="font-size:11.5px; color:var(--cs-text-muted);">
+    {{ icon('info',13) }} E'lon yuborilgandan keyin barcha (yoki tanlangan plan) foydalanuvchilarga
+    <strong style="color:#ffd23f;">avtomatik ovozli xabar</strong> kelib chiqadi.
+    Foydalanuvchilarning saytni ochib qo'ygan barcha sahifalarida ovoz bilan o'qiladi va kartochka ko'rsatiladi.
+  </p>
+</div>
+
+<!-- YANGI E'LON YARATISH -->
+<div class="cs-card" style="margin-bottom:20px;">
+  <div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('plus',14) }} YANGI E'LON YUBORISH</h3></div>
+  <form method="post" action="{{ url_for('admin_announcements_create') }}">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+      <div style="grid-column:1/-1;">
+        <label class="muted" style="font-size:11px;">Sarlavha</label>
+        <input type="text" name="title" required maxlength="200" class="cs-input"
+               placeholder="masalan: Tizim yangilandi" autofocus>
+      </div>
+      <div style="grid-column:1/-1;">
+        <label class="muted" style="font-size:11px;">Matn (ovoz bilan o'qiladi)</label>
+        <textarea name="body" rows="3" class="cs-input" style="resize:vertical;"
+                  placeholder="E'lon matni..."></textarea>
+      </div>
+      <div>
+        <label class="muted" style="font-size:11px;">Muhimligi</label>
+        <select name="priority" class="cs-input">
+          <option value="normal">Oddiy</option>
+          <option value="important">Muhim</option>
+          <option value="urgent">Shoshilinch</option>
+        </select>
+      </div>
+      <div>
+        <label class="muted" style="font-size:11px;">Kimga</label>
+        <select name="target_plans" class="cs-input">
+          <option value="all">Hammaga</option>
+          <option value="free">Faqat Free</option>
+          <option value="pro">Faqat Pro</option>
+          <option value="cyber_pro">Faqat Cyber Pro</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1;">
+        <label style="font-size:11.5px; display:flex; align-items:center; gap:6px;">
+          <input type="checkbox" name="voice_enabled" checked> Ovozli yuborilsin (matn ham o'qiladi)
+        </label>
+      </div>
+    </div>
+    <button type="submit" class="cs-btn cs-btn-primary" style="margin-top:14px;">
+      {{ icon('send',14) }} E'lonni yuborish
+    </button>
+  </form>
+</div>
+
+<!-- BARCHA E'LONLAR -->
+<div class="cs-card">
+  <div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('list',14) }} BARCHA E'LONLAR</h3></div>
+  <table class="cs-table">
+    <thead><tr><th>#</th><th>Sarlavha</th><th>Maqsad</th><th>Muhimligi</th><th>Holati</th><th>Ko'rgan</th><th>Sana</th><th>Amallar</th></tr></thead>
+    <tbody>
+    {% for a in announcements %}
+    <tr>
+      <td class="muted">{{ a.id }}</td>
+      <td>
+        <strong>{{ a.title }}</strong>
+        {% if a.body %}<div class="muted" style="font-size:10px; margin-top:3px;">{{ a.body[:80] }}{% if a.body|length > 80 %}...{% endif %}</div>{% endif %}
+      </td>
+      <td><span class="cs-chip" style="font-size:10px;">{{ a.target_plans|upper }}</span></td>
+      <td>
+        {% if a.priority == 'urgent' %}<span class="cs-chip" style="color:#ff5555;">Shoshilinch</span>
+        {% elif a.priority == 'important' %}<span class="cs-chip" style="color:#ffd23f;">Muhim</span>
+        {% else %}<span class="cs-chip">Oddiy</span>{% endif %}
+      </td>
+      <td>
+        {% if a.is_active %}<span style="color:var(--cs-text-primary); font-size:11px;">{{ icon('check',11) }} Faol</span>
+        {% else %}<span class="muted" style="font-size:11px;">{{ icon('x',11) }} Faolsiz</span>{% endif %}
+      </td>
+      <td style="font-size:11px;">{{ a.view_count }}</td>
+      <td class="muted" style="font-size:10px;">{{ a.created_at[:16] }}</td>
+      <td>
+        <div style="display:flex; gap:4px;">
+          <form method="post" action="{{ url_for('admin_announcements_toggle', ann_id=a.id) }}">
+            <button class="cs-btn cs-btn-sm" style="font-size:10px;">{{ 'Faolsizlantirish' if a.is_active else 'Faollantirish' }}</button>
+          </form>
+          <form method="post" action="{{ url_for('admin_announcements_delete', ann_id=a.id) }}"
+                onsubmit="return confirm('O\'chirishni tasdiqlaysizmi?')">
+            <button class="cs-btn cs-btn-sm cs-btn-danger" style="font-size:10px;">{{ icon('trash-2',10) }}</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8" class="muted" style="text-align:center; padding:30px;">Hozircha e'lonlar yo'q</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

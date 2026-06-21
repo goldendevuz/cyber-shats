@@ -1,0 +1,56 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}{{ post.title }}{% endblock %}
+{% block app_content %}
+
+<a href="{{ url_for('hacker_lab_team') }}" class="muted" style="display:inline-block; margin-bottom:14px; font-size:12px;">{{ icon('arrow-left',13) }} Jamoaga qaytish</a>
+
+<div class="cs-card" style="margin-bottom:20px;">
+  <div style="display:flex; gap:12px;">
+    <div class="avatar-fallback flex-center" style="width:42px;height:42px;flex-shrink:0;background:rgba(0,255,65,.1); color:var(--cs-text-primary); font-family:var(--cs-font-display);">{{ post.ism[0]|upper }}</div>
+    <div style="flex:1;">
+      <h1 style="font-size:18px;">{{ post.title }}</h1>
+      <div class="muted" style="font-size:11.5px; margin-top:4px;">{{ post.ism }} {{ post.familiya }} · {{ post.created_at[:16] }}</div>
+    </div>
+  </div>
+  {% if post.body %}
+  <p style="font-size:14px; margin-top:16px; line-height:1.7; white-space:pre-wrap;">{{ post.body }}</p>
+  {% endif %}
+
+  {% if post.file_path %}
+  <div style="margin-top:16px;">
+    {% if post.file_type == 'image' %}
+    <img src="{{ post.file_path }}" style="max-width:100%; border-radius:8px; border:1px solid var(--cs-border);">
+    {% elif post.file_type == 'video' %}
+    <video src="{{ post.file_path }}" controls style="max-width:100%; border-radius:8px;"></video>
+    {% else %}
+    <a href="{{ post.file_path }}" target="_blank" class="cs-btn cs-btn-sm">{{ icon('file-text',13) }} Faylni yuklab olish</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- JAVOBLAR -->
+<div class="cs-card" style="margin-bottom:16px;">
+  <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('message',14) }} JAVOBLAR ({{ replies|length }})</h3>
+  {% for r in replies %}
+  <div style="display:flex; gap:10px; padding:12px 0; border-bottom:1px solid rgba(0,255,65,.06);">
+    <div class="avatar-fallback flex-center" style="width:32px;height:32px;flex-shrink:0;background:rgba(0,255,65,.08); color:var(--cs-text-primary); font-size:12px; font-family:var(--cs-font-display);">{{ r.ism[0]|upper }}</div>
+    <div style="flex:1;">
+      <div style="font-size:12px;"><strong>{{ r.ism }} {{ r.familiya }}</strong> <span class="muted">· {{ r.created_at[:16] }}</span></div>
+      <p style="font-size:13px; margin-top:4px; white-space:pre-wrap;">{{ r.body }}</p>
+    </div>
+  </div>
+  {% else %}
+  <p class="muted" style="text-align:center; padding:20px;">Hali javob yo'q</p>
+  {% endfor %}
+</div>
+
+<div class="cs-card">
+  <form method="post" action="{{ url_for('hacker_lab_team_reply', post_id=post.id) }}">
+    <textarea name="body" rows="3" placeholder="Javobingiz..." required class="cs-input" style="resize:vertical;"></textarea>
+    <button type="submit" class="cs-btn cs-btn-primary" style="margin-top:10px;">{{ icon('send',13) }} Javob yozish</button>
+  </form>
+</div>
+
+{% endblock %}

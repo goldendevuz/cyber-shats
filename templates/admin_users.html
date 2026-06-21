@@ -18,6 +18,8 @@
     <option value="">Barcha plan</option>
     <option value="free" {{ 'selected' if plan=='free' }}>Free</option>
     <option value="pro" {{ 'selected' if plan=='pro' }}>Pro</option>
+    <option value="cyber_pro" {{ 'selected' if plan=='cyber_pro' }}>Cyber Pro</option>
+    <option value="vip" {{ 'selected' if plan=='vip' }}>🔥 PRO+</option>
     <option value="enterprise" {{ 'selected' if plan=='enterprise' }}>Enterprise</option>
   </select>
   <button type="submit" class="cs-btn cs-btn-primary">{{ icon('search',14) }} Qidirish</button>
@@ -66,12 +68,15 @@
             <select name="plan" class="cs-input" style="padding:4px 6px; font-size:11px; height:30px;">
               <option value="free" {{ 'selected' if u.plan=='free' }}>Free</option>
               <option value="pro" {{ 'selected' if u.plan=='pro' }}>Pro</option>
+              <option value="cyber_pro" {{ 'selected' if u.plan=='cyber_pro' }}>Cyber Pro</option>
+              <option value="vip" {{ 'selected' if u.plan=='vip' }}>🔥 PRO+</option>
               <option value="enterprise" {{ 'selected' if u.plan=='enterprise' }}>Ent.</option>
             </select>
             <button class="cs-btn cs-btn-sm cs-btn-primary">Set</button>
           </form>
           <!-- Coin qo'shish -->
           <form method="post" action="{{ url_for('admin_add_coins', user_id=u.id) }}" style="display:flex; gap:4px;">
+            <input type="hidden" name="redirect_to" value="{{ request.full_path }}">
             <input type="number" name="amount" min="1" value="1000" class="cs-input"
                    style="width:80px; padding:4px 6px; font-size:11px; height:30px;">
             <button class="cs-btn cs-btn-sm" style="background:rgba(0,255,65,.15); border-color:var(--cs-text-primary);">
@@ -79,8 +84,9 @@
             </button>
           </form>
           <!-- Coin ayirish -->
-          <form method="post" action="{{ url_for('admin_remove_coins', user_id=u.id) }}" style="display:flex; gap:4px;">
-            <input type="number" name="amount" min="1" value="1000" class="cs-input"
+          <form method="post" action="{{ url_for('admin_remove_coins', user_id=u.id) }}" style="display:flex; gap:4px;" onsubmit="return confirm('Tangalarni ayirishni tasdiqlaysizmi?')">
+            <input type="hidden" name="redirect_to" value="{{ request.full_path }}">
+            <input type="number" name="amount" min="1" value="500" class="cs-input"
                    style="width:80px; padding:4px 6px; font-size:11px; height:30px;">
             <button class="cs-btn cs-btn-sm cs-btn-danger">
               ⚡−Coin

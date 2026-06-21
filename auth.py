@@ -24,6 +24,13 @@ def login_required(view):
             session.clear()
             flash("Hisobingiz bloklangan yoki topilmadi.", "error")
             return redirect(url_for("login"))
+        # Telegram orqali tasdiqlanmagan foydalanuvchi faqat tasdiqlash
+        # sahifasiga va profil/chiqishga kira oladi, qolgan hammasidan chetlatiladi.
+        if not user.get("telegram_verified"):
+            allowed_endpoints = {"telegram_verify_page", "telegram_verify_check",
+                                 "telegram_verify_resend", "logout", "static"}
+            if request.endpoint not in allowed_endpoints:
+                return redirect(url_for("telegram_verify_page"))
         return view(*args, **kwargs)
     return wrapped
 
@@ -34,9 +41,23 @@ def admin_required(view):
         if not session.get("user_id"):
             return redirect(url_for("login"))
         user = get_current_user()
-        if not user or user["role"] not in ("admin", "mentor"):
+        if not user or user["role"] not in ("admin", "mentor", "super_admin"):
             flash("Bu sahifa faqat administratorlar uchun.", "error")
             return redirect(url_for("dashboard"))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def super_admin_required(view):
+    """Faqat super_admin kira oladigan sahifalar/amallar uchun (masalan: admin_id o'zgartirish)."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get("user_id"):
+            return redirect(url_for("login"))
+        user = get_current_user()
+        if not user or user["role"] != "super_admin":
+            flash("Bu amal faqat Super Admin uchun ruxsat etilgan.", "error")
+            return redirect(url_for("admin_dashboard"))
         return view(*args, **kwargs)
     return wrapped
 

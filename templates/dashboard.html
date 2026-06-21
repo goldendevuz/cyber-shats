@@ -16,7 +16,7 @@
 </div>
 
 <div class="orbit-stage">
-    <div class="orbit-globe-bg"></div>
+    <div id="dashGlobeBg" data-globe data-speed="0.0014" style="position:absolute; width:300px; height:300px; left:50%; top:50%; transform:translate(-50%,-50%); pointer-events:none;"></div>
     <div class="orbit-title">
         <div class="big">{{ icon('shield',34) }}</div>
         <div class="muted" style="font-size:10px; letter-spacing:3px; margin-top:6px;">CYBER SHATS HUB</div>
@@ -75,4 +75,23 @@
     <div class="stat-card"><div class="top">{{ icon('bell',16) }}</div><div class="num">{{ notif_count }}</div><div class="label">Yangi bildirishnoma</div></div>
     <div class="stat-card"><div class="top">{{ icon('users',16) }}</div><div class="num">{{ hud_online }}</div><div class="label">Hozir onlayn</div></div>
 </div>
+
+{% if daily_startups %}
+<div class="cs-card" style="margin-top:20px;">
+    <div class="cs-card-title"><h3>{{ icon('briefcase',16) }} FOYDALANUVCHILAR LOYIHALARI</h3><a href="{{ url_for('startups_list') }}" class="cyan" style="font-size:11px;">Barchasi →</a></div>
+    <div class="grid grid-3" style="margin-top:10px;">
+        {% for s in daily_startups %}
+        <a href="{{ url_for('startup_detail', startup_id=s.id) }}" style="text-decoration:none; color:inherit; display:block;">
+            {% if s.image_path %}
+            <img src="{{ s.image_path }}" style="width:100%; height:100px; object-fit:cover; border-radius:6px; margin-bottom:8px;">
+            {% else %}
+            <div style="width:100%; height:100px; background:rgba(0,255,65,.05); border-radius:6px; margin-bottom:8px; display:flex; align-items:center; justify-content:center;">{{ icon('briefcase',24) }}</div>
+            {% endif %}
+            <div style="font-size:12.5px; color:var(--cs-text-white);">{{ s.name }}</div>
+            <div class="muted" style="font-size:10.5px; margin-top:3px;">{{ s.ism }} {{ s.familiya }}</div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 {% endblock %}

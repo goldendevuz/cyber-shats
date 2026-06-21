@@ -7,12 +7,69 @@
     <a href="{{ url_for('admin_dashboard') }}" class="cs-btn" style="font-size:13px;">{{ icon('arrow-left',13) }} Admin</a>
 </div>
 
+<!-- SHATS CYBER PRO MAXSUS ID'LAR -->
+<div class="cs-card" id="vip" style="padding:20px; margin-bottom:20px; border-color:rgba(255,48,48,.4); background:linear-gradient(135deg, rgba(255,48,48,.04), transparent);">
+    <h3 style="font-size:14px; margin-bottom:6px; color:#ff3030;">🔥 SHATS CYBER PRO — MAXSUS ID'LAR (0-9)</h3>
+    <p class="muted" style="font-size:11.5px; margin-bottom:16px;">
+        Bu 10 ta bitta raqamli ID (0,1,2...9) faqat siz tomondan qo'lda beriladi.
+        Auksion yoki sotuv orqali sotilmaydi.
+    </p>
+    <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:10px;">
+        {% for v in vip_ids %}
+        <div class="cs-card" style="padding:14px; text-align:center; border-color:{{ 'rgba(255,48,48,.5)' if v.status=='assigned' else 'rgba(255,255,255,.1)' }};">
+            <div style="font-size:28px; font-weight:800; font-family:var(--cs-font-display); color:{{ '#ff3030' if v.status=='assigned' else 'var(--cs-text-muted)' }};">
+                #{{ v.digit }}
+            </div>
+            {% if v.status == 'assigned' %}
+            <div style="font-size:11px; margin-top:6px;">
+                <strong>{{ v.ism }} {{ v.familiya }}</strong>
+                <div class="muted" style="font-size:10px;">{{ v.email }}</div>
+            </div>
+            <form method="post" action="{{ url_for('admin_vip_revoke', digit=v.digit) }}" style="margin-top:8px;"
+                  onsubmit="return confirm('SHATS CYBER PRO ID #{{ v.digit }} ni qaytarib olasizmi?');">
+                <button class="cs-btn cs-btn-sm cs-btn-danger" style="font-size:10px; width:100%;">Qaytarib olish</button>
+            </form>
+            {% else %}
+            <div class="muted" style="font-size:10px; margin-top:6px;">Bo'sh</div>
+            <form method="post" action="{{ url_for('admin_vip_assign') }}" style="margin-top:8px; display:flex; flex-direction:column; gap:4px;">
+                <input type="hidden" name="digit" value="{{ v.digit }}">
+                <input type="number" name="user_id" placeholder="User ID" required
+                       class="cs-input" style="font-size:10px; padding:3px 6px; height:26px; text-align:center;">
+                <button class="cs-btn cs-btn-sm" style="font-size:10px; width:100%; background:rgba(255,48,48,.15); border-color:#ff3030; color:#ff3030;">Tayinlash</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Yangi premium ID qo'shish -->
+<div class="cs-card" style="padding:20px;margin-bottom:20px;border-color:rgba(0,255,65,.4);">
+    <h3 style="font-size:14px;margin-bottom:14px;">{{ icon('plus',14) }} Yangi Premium ID qo'shish (sotuvga chiqarish)</h3>
+    <form method="POST" action="{{ url_for('admin_create_premium_id_route') }}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;">
+        <label style="font-size:11px;color:var(--cs-text-muted);">
+            ID (7 raqam)
+            <input type="text" name="custom_id" pattern="[0-9]{7}" maxlength="7" minlength="7" required
+                   placeholder="masalan: 1357913" class="cs-input" style="display:block;width:160px;margin-top:4px;font-family:monospace;">
+        </label>
+        <label style="font-size:11px;color:var(--cs-text-muted);">
+            Narx (code)
+            <input type="number" name="base_price" min="0" required value="50000" class="cs-input" style="display:block;width:130px;margin-top:4px;">
+        </label>
+        <label style="font-size:11px;color:var(--cs-text-muted);">
+            Tur (ixtiyoriy yorliq)
+            <input type="text" name="id_type" placeholder="custom" class="cs-input" style="display:block;width:120px;margin-top:4px;">
+        </label>
+        <button type="submit" class="cs-btn cs-btn-primary">{{ icon('plus',14) }} Qo'shish</button>
+    </form>
+</div>
+
 <!-- Premium IDlar -->
 <div class="cs-card" style="padding:20px;margin-bottom:20px;">
-    <h3 style="font-size:14px;margin-bottom:14px;">{{ icon('star',14) }} Premium IDlar</h3>
+    <h3 style="font-size:14px;margin-bottom:14px;">{{ icon('star',14) }} Premium IDlar ({{ premium_ids|length }})</h3>
     <div style="overflow-x:auto;">
         <table class="cs-table">
-            <thead><tr><th>ID</th><th>Tur</th><th>Narx</th><th>Holat</th><th>Admin: Berish</th><th>Auktsion</th></tr></thead>
+            <thead><tr><th>ID</th><th>Tur</th><th>Narx</th><th>Holat</th><th>Narx o'zgartirish</th><th>Admin: Berish</th><th>Auktsion</th><th>O'chirish</th></tr></thead>
             <tbody>
             {% for pid in premium_ids %}
             <tr>
@@ -24,6 +81,12 @@
                     {% elif pid.status == 'sold' %}<span class="cs-chip" style="color:var(--cs-text-muted);">Sotilgan</span>
                     {% elif pid.status == 'auction' %}<span class="cs-chip" style="color:#ffd23f;">Auktsion</span>
                     {% endif %}
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin_set_premium_id_price', custom_id=pid.custom_id) }}" style="display:flex;gap:4px;">
+                        <input type="number" name="base_price" value="{{ pid.base_price }}" min="0" class="cs-input" style="width:100px;">
+                        <button type="submit" class="cs-btn" style="font-size:11px;padding:4px 8px;">{{ icon('save',11) }}</button>
+                    </form>
                 </td>
                 <td>
                     {% if pid.status == 'available' %}
@@ -44,7 +107,17 @@
                     </form>
                     {% else %}—{% endif %}
                 </td>
+                <td>
+                    {% if pid.status == 'available' %}
+                    <form method="POST" action="{{ url_for('admin_delete_premium_id_route', custom_id=pid.custom_id) }}"
+                          onsubmit="return confirm('#{{ pid.custom_id }} ID ro\'yxatdan o\'chirilsinmi?');">
+                        <button type="submit" class="cs-btn cs-btn-sm cs-btn-danger" style="font-size:11px;padding:4px 8px;">{{ icon('trash-2',11) }}</button>
+                    </form>
+                    {% else %}—{% endif %}
+                </td>
             </tr>
+            {% else %}
+            <tr><td colspan="8" class="muted" style="text-align:center;padding:24px;">Hali premium ID qo'shilmagan</td></tr>
             {% endfor %}
             </tbody>
         </table>

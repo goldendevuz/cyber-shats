@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}G'azna xodimlari{% endblock %}
+{% block content %}
+
+<div style="max-width:900px; margin:24px auto; padding:0 20px;">
+
+  <div class="flex-between" style="margin-bottom:20px;">
+    <h1 style="font-size:18px; color:#ffd23f;">{{ icon('users',18) }} G'AZNA XODIMLARI</h1>
+    <a href="{{ url_for('treasury_dashboard') }}" class="cs-btn cs-btn-sm">← Panelga qaytish</a>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="cs-card" style="padding:10px 14px; margin-bottom:14px; border-color:{{ '#ff5555' if category=='error' else 'var(--cs-text-primary)' }}; font-size:12px;">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="cs-card" style="margin-bottom:20px;">
+    <div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('user-plus',14) }} YANGI XODIM QO'SHISH</h3></div>
+    <form method="post" action="{{ url_for('treasury_accounts_create') }}" style="display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:8px; align-items:flex-end;">
+      <div>
+        <label class="muted" style="font-size:11px;">Ism</label>
+        <input type="text" name="ism" class="cs-input" required>
+      </div>
+      <div>
+        <label class="muted" style="font-size:11px;">Email</label>
+        <input type="text" name="email" class="cs-input" required>
+      </div>
+      <div>
+        <label class="muted" style="font-size:11px;">Parol (min 6)</label>
+        <input type="password" name="password" class="cs-input" minlength="6" required>
+      </div>
+      <button class="cs-btn cs-btn-primary">{{ icon('plus',13) }} Qo'shish</button>
+    </form>
+  </div>
+
+  <div class="cs-card">
+    <div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('list',14) }} BARCHA G'AZNA XODIMLARI</h3></div>
+    <table class="cs-table">
+      <thead>
+        <tr><th>#</th><th>Ism</th><th>Email</th><th>Holat</th><th>Oxirgi kirish</th><th>Amallar</th></tr>
+      </thead>
+      <tbody>
+      {% for a in accounts %}
+      <tr>
+        <td class="muted">{{ a.id }}</td>
+        <td><strong>{{ a.ism }}</strong></td>
+        <td class="muted" style="font-size:11px;">{{ a.email }}</td>
+        <td>
+          {% if a.is_active %}<span style="color:var(--cs-text-primary); font-size:11px;">{{ icon('check',11) }} Faol</span>
+          {% else %}<span style="color:#ff5555; font-size:11px;">{{ icon('x',11) }} Faolsiz</span>{% endif %}
+        </td>
+        <td class="muted" style="font-size:11px;">{{ a.last_login_at|tashkent_time if a.last_login_at else '—' }}</td>
+        <td>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <form method="post" action="{{ url_for('treasury_accounts_toggle', account_id=a.id) }}" onsubmit="return confirm('Bu hisob holatini o\'zgartirasizmi?')">
+              <button class="cs-btn cs-btn-sm">{{ 'Faolsizlantirish' if a.is_active else 'Faollantirish' }}</button>
+            </form>
+            <form method="post" action="{{ url_for('treasury_accounts_reset_password', account_id=a.id) }}" style="display:flex; gap:4px;">
+              <input type="password" name="new_password" placeholder="Yangi parol" minlength="6" class="cs-input" style="width:130px; font-size:11px; height:28px; padding:3px 6px;" required>
+              <button class="cs-btn cs-btn-sm" style="color:#ff9900; border-color:rgba(255,153,0,.3);">Reset</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+{% endblock %}

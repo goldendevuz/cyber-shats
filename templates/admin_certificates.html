@@ -1,0 +1,74 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Sertifikat arizalari — Admin{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <h1 style="font-size:18px;">{{ icon('award',16) }} SERTIFIKAT ARIZALARI</h1>
+  <a href="{{ url_for('admin_dashboard') }}" class="cs-btn cs-btn-sm">← Admin Panel</a>
+</div>
+
+<div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+  <a href="{{ url_for('admin_certificates') }}" class="cs-btn cs-btn-sm {{ 'cs-btn-primary' if not filter_status }}">Hammasi</a>
+  <a href="{{ url_for('admin_certificates', status='pending') }}" class="cs-btn cs-btn-sm {{ 'cs-btn-primary' if filter_status=='pending' }}">{{ icon('clock',12) }} Kutilmoqda</a>
+  <a href="{{ url_for('admin_certificates', status='issued') }}" class="cs-btn cs-btn-sm {{ 'cs-btn-primary' if filter_status=='issued' }}">{{ icon('check',12) }} Berilgan</a>
+  <a href="{{ url_for('admin_certificates', status='rejected') }}" class="cs-btn cs-btn-sm {{ 'cs-btn-primary' if filter_status=='rejected' }}">{{ icon('x',12) }} Rad etilgan</a>
+</div>
+
+<div class="cs-card">
+  <table class="cs-table">
+    <thead>
+      <tr><th>#</th><th>Foydalanuvchi</th><th>Yo'nalish</th><th>Ball</th><th>To'lov</th><th>Holat</th><th>Amal</th></tr>
+    </thead>
+    <tbody>
+    {% for a in applications %}
+    <tr>
+      <td class="muted">#{{ a.id }}</td>
+      <td>
+        <strong>{{ a.ism }} {{ a.familiya }}</strong>
+        <div class="muted" style="font-size:10px;">{{ a.email }} · ID #{{ a.custom_id }}</div>
+      </td>
+      <td>{{ a.direction_name }}</td>
+      <td>
+        <strong>{{ a.exam_score }}/{{ a.exam_total }}</strong>
+        <div class="muted" style="font-size:10px;">
+          {{ ((a.exam_score*100/a.exam_total)|round(1)) if a.exam_total > 0 else 0 }}%
+        </div>
+      </td>
+      <td class="muted" style="font-size:11px;">⚡ {{ "{:,}".format(a.paid_amount) }}</td>
+      <td>
+        {% if a.status == 'pending' %}<span class="cs-chip" style="color:#ffd23f;">Kutilmoqda</span>
+        {% elif a.status == 'issued' %}
+          <span class="cs-chip solid" style="color:var(--cs-text-primary);">{{ icon('check',11) }} Berildi</span>
+          <div style="font-size:10px; margin-top:4px;"><code>{{ a.certificate_number }}</code></div>
+        {% elif a.status == 'rejected' %}<span class="cs-chip" style="color:#ff5555;">Rad etildi</span>
+        {% else %}{{ a.status }}{% endif %}
+        <div class="muted" style="font-size:10px; margin-top:3px;">{{ a.created_at[:16] }}</div>
+      </td>
+      <td>
+        {% if a.status == 'pending' %}
+        <form method="post" action="{{ url_for('admin_certificates_review', app_id=a.id) }}" style="display:flex; flex-direction:column; gap:4px;">
+          <input type="text" name="note" placeholder="Izoh (ixtiyoriy)" class="cs-input" style="font-size:11px; padding:3px 6px; height:24px;">
+          <div style="display:flex; gap:4px;">
+            <button name="decision" value="approved" class="cs-btn cs-btn-sm cs-btn-primary" style="flex:1; font-size:10px;">
+              ✓ Tasdiqlash
+            </button>
+            <button name="decision" value="rejected" class="cs-btn cs-btn-sm cs-btn-danger" style="flex:1; font-size:10px;"
+                    onclick="return confirm('Rad etishni tasdiqlaysizmi?');">
+              ✗ Rad
+            </button>
+          </div>
+        </form>
+        {% else %}
+          {% if a.admin_note %}<div class="muted" style="font-size:10px;">{{ a.admin_note }}</div>{% endif %}
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="muted" style="text-align:center; padding:30px;">Arizalar topilmadi</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

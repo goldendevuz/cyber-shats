@@ -1,0 +1,59 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Xabarlar — CYBER SHATS{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+  <h1 style="font-size:20px;">{{ icon('send',18) }} Xabarlar</h1>
+</div>
+
+<form method="get" action="{{ url_for('messages_page') }}" class="cs-card" style="padding:14px; margin-bottom:18px; display:flex; gap:10px;">
+  <input type="text" name="q" value="{{ search_q }}" placeholder="Yangi suhbat uchun ism, ID yoki email qidiring..." class="cs-input" style="flex:1;">
+  <button type="submit" class="cs-btn cs-btn-primary">{{ icon('search',14) }} Qidirish</button>
+</form>
+
+{% if search_q %}
+<div class="cs-card" style="margin-bottom:18px;">
+  <div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('users',14) }} QIDIRUV NATIJALARI</h3></div>
+  {% for u in search_results %}
+  <a href="{{ url_for('messages_thread', peer_id=u.id) }}" style="display:flex; align-items:center; gap:12px; padding:10px 4px; text-decoration:none; color:inherit; border-bottom:1px solid rgba(0,255,65,.06);">
+    <div class="avatar-fallback flex-center" style="width:38px;height:38px;background:rgba(0,255,65,.1); color:var(--cs-text-primary); font-family:var(--cs-font-display);">{{ u.ism[0]|upper }}</div>
+    <div style="flex:1;">
+      <strong style="font-size:13px;">{{ u.ism }} {{ u.familiya }}</strong>
+      {% if u.custom_id %}<span class="muted" style="font-size:10px; margin-left:6px;">#{{ u.custom_id }}</span>{% endif %}
+    </div>
+    {% if u.plan == 'vip' %}<span class="cs-chip solid" style="font-size:9px; background:linear-gradient(135deg,#ff4d4d,#00ff41); color:#ffe0e0; border:0;">🔥 PRO+</span>{% elif u.plan == 'cyber_pro' %}<span class="cs-chip solid" style="font-size:9px; background:linear-gradient(135deg,#ff3366,#3366ff); color:#fff; border:0;">CYBER PRO</span>{% elif u.plan == 'pro' %}<span class="cs-chip solid" style="font-size:9px;">{{ icon('crown',10) }} PRO</span>{% endif %}
+  </a>
+  {% else %}
+  <p class="muted" style="text-align:center; padding:20px;">Foydalanuvchi topilmadi</p>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="cs-card">
+  <div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('message',14) }} SUHBATLAR</h3></div>
+  {% for c in conversations %}
+  <a href="{{ url_for('messages_thread', peer_id=c.id) }}" style="display:flex; align-items:center; gap:12px; padding:12px 4px; text-decoration:none; color:inherit; border-bottom:1px solid rgba(0,255,65,.06);">
+    <div class="avatar-fallback flex-center" style="width:42px;height:42px;flex-shrink:0;background:rgba(0,255,65,.1); color:var(--cs-text-primary); font-family:var(--cs-font-display);">{{ c.ism[0]|upper }}</div>
+    <div style="flex:1; min-width:0;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <strong style="font-size:13.5px;">{{ c.ism }} {{ c.familiya }}</strong>
+        {% if c.plan == 'vip' %}🔥{% elif c.plan == 'cyber_pro' %}{{ icon('crown',11) }}{% elif c.plan == 'pro' %}{{ icon('crown',11) }}{% endif %}
+      </div>
+      <div class="muted" style="font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:420px;">
+        {{ 'Siz: ' if c.last_sender_id == current_user.id else '' }}{{ c.last_body }}
+      </div>
+    </div>
+    <div style="text-align:right; flex-shrink:0;">
+      <div class="muted" style="font-size:10px;">{{ c.last_at[:16] if c.last_at else '' }}</div>
+      {% if c.unread_count and c.unread_count > 0 %}
+      <span class="cs-chip solid" style="background:#ff5555; border-color:#ff5555; color:#fff; font-size:10px; margin-top:4px; display:inline-block;">{{ c.unread_count }}</span>
+      {% endif %}
+    </div>
+  </a>
+  {% else %}
+  <p class="muted" style="text-align:center; padding:40px;">Hali suhbatlaringiz yo'q. Yuqoridan foydalanuvchi qidirib, suhbat boshlang.</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

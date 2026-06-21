@@ -21,9 +21,11 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cyber-pro.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/vip-theme.css') }}">
 {% block extra_head %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body class="{% block body_class %}{% endblock %} {{ 'cyber-pro-theme' if current_user and current_user.plan == 'cyber_pro' }} {{ 'vip-theme' if current_user and current_user.plan == 'vip' }} {{ 'treasury-session' if not current_user and session.get('treasury_account_id') }}">
 
 <canvas id="matrix-canvas"></canvas>
 <div class="scanline"></div>
@@ -37,9 +39,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="{{ url_for('static', filename='js/globe-core.js') }}"></script>
 <script src="{{ url_for('static', filename='js/globe-mini.js') }}"></script>
+<script src="{{ url_for('static', filename='js/crypto-cube.js') }}"></script>
 <script src="{{ url_for('static', filename='js/matrix-rain.js') }}"></script>
 <script src="{{ url_for('static', filename='js/hud.js') }}"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% if current_user or session.get('treasury_account_id') %}
+<script src="{{ url_for('static', filename='js/push-notifications.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voice-notifications.js') }}"></script>
+{% endif %}
 {% block scripts %}{% endblock %}
 </body>
 </html>

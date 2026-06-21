@@ -1,0 +1,63 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Kanallar — CYBER SHATS{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <h1 style="font-size:20px;">{{ icon('send',18) }} Kanallar</h1>
+</div>
+
+<!-- YANGI KANAL -->
+<div class="cs-card" style="margin-bottom:20px;">
+  <h3 style="font-size:13px; margin-bottom:12px;">{{ icon('plus',14) }} YANGI KANAL YARATISH</h3>
+  <form method="post" action="{{ url_for('channels_create') }}">
+    <input type="text" name="name" placeholder="Kanal nomi..." required class="cs-input" style="margin-bottom:10px;">
+    <textarea name="description" rows="2" placeholder="Tavsif (ixtiyoriy)..." class="cs-input" style="margin-bottom:10px; resize:vertical;"></textarea>
+    <button type="submit" class="cs-btn cs-btn-primary">{{ icon('plus',13) }} Yaratish</button>
+  </form>
+  <p class="muted" style="font-size:10.5px; margin-top:8px;">Kanalda faqat siz e'lon qila olasiz, boshqalar obuna bo'lib o'qiydi va izoh qoldiradi.</p>
+</div>
+
+<!-- OBUNALARIM -->
+{% if my_channels %}
+<div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('check',14) }} OBUNALARIM</h3></div>
+<div class="grid grid-3" style="gap:12px; margin-bottom:24px;">
+  {% for c in my_channels %}
+  <a href="{{ url_for('channel_detail', channel_id=c.id) }}" class="cs-card" style="text-decoration:none; color:inherit;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="hex-icon">{{ icon('send',18) }}</div>
+      <div>
+        <strong style="font-size:13px;">{{ c.name }}</strong>
+        <div class="muted" style="font-size:10.5px;">{{ c.subscriber_count }} obunachi</div>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- BARCHA KANALLAR -->
+<div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('layers',14) }} BARCHA KANALLAR</h3></div>
+<div class="grid grid-3" style="gap:12px;">
+  {% for c in all_channels %}
+  {% if c.id not in my_channel_ids %}
+  <div class="cs-card">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+      <div class="hex-icon">{{ icon('send',18) }}</div>
+      <div>
+        <strong style="font-size:13px;">{{ c.name }}</strong>
+        <div class="muted" style="font-size:10.5px;">{{ c.subscriber_count }} obunachi · {{ c.owner_ism }}</div>
+      </div>
+    </div>
+    {% if c.description %}<p class="muted" style="font-size:11.5px; margin-bottom:10px;">{{ c.description[:80] }}</p>{% endif %}
+    <form method="post" action="{{ url_for('channel_subscribe', channel_id=c.id) }}">
+      <button class="cs-btn cs-btn-sm cs-btn-primary cs-btn-full">{{ icon('plus',12) }} Obuna bo'lish</button>
+    </form>
+  </div>
+  {% endif %}
+  {% else %}
+  <p class="muted" style="grid-column:1/-1; text-align:center; padding:30px;">Hali kanallar yo'q</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

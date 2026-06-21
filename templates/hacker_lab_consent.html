@@ -1,0 +1,50 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Hacker Lab — Rozilik{% endblock %}
+{% block app_content %}
+
+<div style="max-width:680px; margin:20px auto;">
+  <div class="cs-card" style="padding:32px; border-color:rgba(255,85,85,.4);">
+    <div style="text-align:center; margin-bottom:20px;">
+      <div style="font-size:42px; color:#ff5555;">{{ icon('shield',42) }}</div>
+      <h2 style="font-size:19px; margin-top:10px;">Hacker Lab — Xavfsizlik Qoidalari</h2>
+    </div>
+
+    <div class="cs-card" style="padding:18px; margin-bottom:20px; background:rgba(255,85,85,.05); border-color:rgba(255,85,85,.3);">
+      <h3 style="font-size:13px; color:#ff5555; margin-bottom:12px;">⚠️ MUHIM — DIQQAT BILAN O'QING</h3>
+      <ul style="font-size:13px; line-height:1.8; padding-left:20px; color:var(--cs-text-white);">
+        <li>Bu panel — faqat <strong>ta'lim va amaliyot</strong> maqsadida. Terminal — xavfsiz simulyator, real tizimga ulanmaydi.</li>
+        <li>Terminalga <strong>xavfli yoki zararli buyruqlar</strong> (masalan, fayllarni yo'q qilish, ruxsatsiz tizimga kirish urinishlari) kiritish <strong>taqiqlanadi</strong>.</li>
+        <li>Bunday urinish aniqlansa, sizning <strong>ID raqamingiz bilan administratorga signal</strong> yuboriladi.</li>
+        <li>Agar administrator buzilishni tasdiqlasa: siz Hacker Lab'dan <strong>bloklanasiz</strong>, emailingizga xabar boradi, va hisobingizdan <strong style="color:#ff5555;">10,000,000 CODE jarima</strong> yoziladi.</li>
+        <li>Olingan bilim va vositalardan faqat <strong>qonuniy va ruxsat etilgan</strong> maqsadlarda foydalaning (o'z tizimingiz, CTF, sertifikatlangan laboratoriyalar).</li>
+        <li>Boshqa birovning tizimiga ruxsatsiz kirish — <strong>jinoiy javobgarlikka</strong> olib keladi. CYBER SHATS bunday harakatlar uchun javobgar emas.</li>
+      </ul>
+    </div>
+
+    <form method="post" action="{{ url_for('hacker_lab_consent') }}">
+      <label style="display:flex; align-items:flex-start; gap:10px; font-size:13px; cursor:pointer; margin-bottom:20px;">
+        <input type="checkbox" name="agree_checkbox" id="agreeCheckbox" required style="margin-top:3px;">
+        <span>Men yuqoridagi qoidalarni to'liq o'qib chiqdim, tushundim va ularga rioya qilishga roziman.
+        Qoidalarni buzsam, jarima va blok kabi oqibatlarga tayyor ekanligimni tasdiqlayman.</span>
+      </label>
+      <input type="hidden" name="agree" value="1">
+      <button type="submit" class="cs-btn cs-btn-primary cs-btn-full" id="submitBtn" disabled style="font-size:14px; padding:14px;">
+        {{ icon('check',16) }} Roziman — Hacker Lab'ga kirish
+      </button>
+    </form>
+    <p class="muted" style="font-size:11px; text-align:center; margin-top:14px;">
+      Roziligingiz bermasangiz, Hacker Lab paneli sizga ochilmaydi.
+    </p>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('agreeCheckbox').addEventListener('change', function() {
+    document.getElementById('submitBtn').disabled = !this.checked;
+});
+</script>
+{% endblock %}

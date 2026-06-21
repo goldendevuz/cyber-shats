@@ -13,7 +13,10 @@
     ⚡ {{ "{:,}".format(balance) }}
   </div>
   <div style="font-size:13px; color:var(--cs-text-muted); margin-top:8px;">CODE</div>
-  {% if current_user.plan != 'pro' %}
+  <a href="{{ url_for('coins_buy_page') }}" class="cs-btn cs-btn-primary" style="margin-top:18px; display:inline-flex;">
+    {{ icon('zap',14) }} CODE sotib olish
+  </a>
+  {% if current_user.plan not in ['pro','cyber_pro','vip'] %}
   <div style="margin-top:20px;">
     <form method="post" action="{{ url_for('coins_buy_pro') }}">
       <button class="cs-btn cs-btn-primary" {{ 'disabled' if balance < pro_cost }}>
@@ -26,8 +29,50 @@
     </div>
     {% endif %}
   </div>
-  {% else %}
-  <div class="cs-chip solid" style="margin-top:16px; display:inline-flex;">{{ icon('check',14) }} PRO FOYDALANUVCHI</div>
+  {% endif %}
+
+  {% if current_user.plan not in ['cyber_pro','vip'] %}
+  <div style="margin-top:14px;">
+    <form method="post" action="{{ url_for('coins_buy_cyber_pro') }}">
+      <button class="cs-btn" {{ 'disabled' if balance < cyber_pro_cost }}
+              style="background:linear-gradient(135deg,#ff3366,#3366ff); color:#fff; border:0; padding:12px 24px; font-weight:700;">
+        {{ icon('crown',16) }} CYBER PRO sotib olish — ⚡ {{ "{:,}".format(cyber_pro_cost) }} CODE
+      </button>
+    </form>
+    <div class="muted" style="margin-top:6px; font-size:11px;">
+      Ingliz tili · Matematika · Office · 10,000 bonus · 0% komissiya · Har kurs uchun +1,000 CODE
+    </div>
+  </div>
+  {% endif %}
+
+  {% if current_user.plan != 'vip' and vip_enabled %}
+  <div style="margin-top:14px;">
+    <form method="post" action="{{ url_for('coins_buy_vip') }}" onsubmit="return confirm('SHATS CYBER PRO sotib olishni tasdiqlaysizmi?');">
+      <button class="cs-btn" {{ 'disabled' if balance < vip_cost }}
+              style="background:linear-gradient(135deg,#ff3030,#8c0f0f); color:#ffe0e0; border:0; padding:12px 24px; font-weight:800;">
+        🔥 SHATS CYBER PRO sotib olish — ⚡ {{ "{:,}".format(vip_cost) }} CODE
+      </button>
+    </form>
+    <div class="muted" style="margin-top:6px; font-size:11px;">
+      CYBER PRO ning hammasi + 30,000 bonus + qizil-qora dizayn + har kurs uchun +2,000 CODE
+    </div>
+  </div>
+  {% elif current_user.plan == 'vip' %}
+  <div class="cs-chip solid" style="margin-top:16px; display:inline-flex; background:linear-gradient(135deg,#ff3030,#8c0f0f); color:#ffe0e0; border:0; font-weight:700;">
+    🔥 SHATS CYBER PRO FOYDALANUVCHI
+  </div>
+  {% endif %}
+
+  {% if current_user.plan == 'cyber_pro' %}
+  <div class="cs-chip solid" style="margin-top:16px; display:inline-flex; background:linear-gradient(135deg,#ff3366,#3366ff); color:#fff; border:0;">
+    {{ icon('crown',14) }} CYBER PRO FOYDALANUVCHI
+  </div>
+  {% endif %}
+
+  {% if current_user.plan_expires_at and current_user.plan in ['pro','cyber_pro','vip'] %}
+  <div class="muted" style="margin-top:10px; font-size:11px;">
+    {{ icon('clock',11) }} Obuna muddati: {{ current_user.plan_expires_at[:10] }} gacha
+  </div>
   {% endif %}
 </div>
 
@@ -60,6 +105,28 @@
     </div>
   </div>
 </div>
+<!-- Tanga o'tkazish (foydalanuvchidan-foydalanuvchiga) -->
+<div class="cs-card" style="margin-bottom:20px;">
+  <div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('send',14) }} BOSHQA FOYDALANUVCHIGA CODE O'TKAZISH</h3></div>
+  <form method="post" action="{{ url_for('coins_transfer') }}" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; padding:4px 0;">
+    <div style="flex:1; min-width:200px;">
+      <label class="muted" style="font-size:11px; display:block; margin-bottom:5px;">Qabul qiluvchi (ID #0000 yoki email)</label>
+      <input type="text" name="recipient" placeholder="#1234 yoki email@misol.uz" class="cs-input" required>
+    </div>
+    <div style="width:160px;">
+      <label class="muted" style="font-size:11px; display:block; margin-bottom:5px;">Miqdor (CODE)</label>
+      <input type="number" name="amount" min="1" class="cs-input" required>
+    </div>
+    <button type="submit" class="cs-btn cs-btn-primary">{{ icon('send',14) }} Jo'natish</button>
+  </form>
+  <div class="muted" style="font-size:11px; margin-top:10px;">
+    {% if is_pro %}
+    {{ icon('crown',12) }} Siz Pro foydalanuvchisiz — o'tkazmalar komissiyasiz amalga oshadi.
+    {% else %}
+    {{ icon('info',12) }} Har bir o'tkazmadan {{ transfer_fee_percent }}% komissiya olinadi (Pro foydalanuvchilar uchun komissiyasiz).
+    {% endif %}
+  </div>
+</div>
 
 <!-- Tranzaksiyalar tarixi -->
 <div class="cs-card">
@@ -68,7 +135,17 @@
   {% for t in txns %}
   <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(0,255,65,.07);">
     <div>
-      <span style="font-size:12px;">{{ t.reason }}</span>
+      <span style="font-size:12px;">
+        {% if t.reason == 'admin_add' %}G'azna chiqargan
+        {% elif t.reason == 'transfer_in' %}O'tkazma qabul qilindi
+        {% elif t.reason == 'transfer_out' %}O'tkazma jo'natildi
+        {% elif t.reason == 'buy_pro' %}Pro sotib olindi
+        {% elif t.reason == 'pro_bonus' %}Pro bonus
+        {% elif t.reason == 'course_complete' %}Kurs bitirildi
+        {% elif t.reason == 'buy_course' %}Kurs sotib olindi
+        {% elif t.reason == 'ai_usage' %}AI ishlatildi
+        {% else %}{{ t.reason }}{% endif %}
+      </span>
       <div class="muted" style="font-size:10px;">{{ t.created_at[:16] }}</div>
     </div>
     <span style="font-family:var(--cs-font-display); font-weight:700;

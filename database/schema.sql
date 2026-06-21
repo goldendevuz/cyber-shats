@@ -22,8 +22,11 @@ CREATE TABLE IF NOT EXISTS users (
     failed_login_count INTEGER NOT NULL DEFAULT 0,
     locked_until TEXT DEFAULT NULL,
     custom_id TEXT UNIQUE DEFAULT NULL,
+    admin_id TEXT DEFAULT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_admin_id ON users(admin_id) WHERE admin_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS directions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -328,3 +331,96 @@ CREATE TABLE IF NOT EXISTS course_access_codes (
     used_at TEXT DEFAULT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- ============================================================
+-- YANGI: Narxlar boshqaruvi (admin tahrirlay oladigan global sozlamalar)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS pricing_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_by INTEGER DEFAULT NULL REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS admin_action_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    actor_id INTEGER NOT NULL REFERENCES users(id),
+    target_id INTEGER DEFAULT NULL REFERENCES users(id),
+    action TEXT NOT NULL,
+    details TEXT DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ============================================================
+-- YANGI: Foydalanuvchilar orasida code tangasi o'tkazmasi (P2P)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS coin_transfers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    from_user_id INTEGER NOT NULL REFERENCES users(id),
+    to_user_id INTEGER NOT NULL REFERENCES users(id),
+    amount_sent INTEGER NOT NULL,      -- jo'natuvchi hisobidan yechilgan umumiy summa (komissiya bilan)
+    fee_amount INTEGER NOT NULL DEFAULT 0,
+    amount_received INTEGER NOT NULL,  -- qabul qiluvchiga tushgan summa (komissiyasiz)
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_coin_transfers_from ON coin_transfers(from_user_id);
+CREATE INDEX IF NOT EXISTS idx_coin_transfers_to ON coin_transfers(to_user_id);
+
+-- ============================================================
+-- YANGI: Foydalanuvchilar orasidagi shaxsiy xabarlashuv (Telegram uslubida)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS private_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender_id INTEGER NOT NULL REFERENCES users(id),
+    receiver_id INTEGER NOT NULL REFERENCES users(id),
+    body TEXT NOT NULL DEFAULT '',
+    is_read INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_pm_sender ON private_messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_pm_receiver ON private_messages(receiver_id);
+CREATE INDEX IF NOT EXISTS idx_pm_pair ON private_messages(sender_id, receiver_id, created_at);
+
+-- ============================================================
+-- YANGI: G'AZNA (Code Panel) — foydalanuvchilar tizimidan butunlay mustaqil.
+-- O'z login (email+parol) hisoblari, o'z jamg'arma balansi.
+-- ============================================================
+
+-- G'azna xodimlari (foydalanuvchilar emas — alohida login tizimi)
+CREATE TABLE IF NOT EXISTS treasury_accounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ism TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_login_at TEXT DEFAULT NULL
+);
+
+-- Jamg'arma balansi — bitta qator (singleton), 0 dan boshlanadi.
+-- Faqat foydalanuvchilar sarflagan/komissiya sifatida bergan coinlardan to'ladi.
+CREATE TABLE IF NOT EXISTS treasury_fund (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    balance INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+INSERT OR IGNORE INTO treasury_fund (id, balance) VALUES (1, 0);
+
+-- Jamg'arma harakatlari tarixi (kirim: foydalanuvchi sarfi/komissiya; chiqim: foydalanuvchiga chiqarilgan coin)
+CREATE TABLE IF NOT EXISTS treasury_fund_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    direction TEXT NOT NULL,              -- 'in' yoki 'out'
+    amount INTEGER NOT NULL,
+    reason TEXT NOT NULL DEFAULT '',      -- masalan: buy_pro, buy_course, ai_usage, transfer_fee, issue_to_user
+    user_id INTEGER DEFAULT NULL REFERENCES users(id),     -- tegishli bo'lgan foydalanuvchi (agar bor bo'lsa)
+    treasury_account_id INTEGER DEFAULT NULL REFERENCES treasury_accounts(id),  -- chiqarishni amalga oshirgan g'azna xodimi
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_treasury_log_user ON treasury_fund_log(user_id);
+CREATE INDEX IF NOT EXISTS idx_treasury_log_created ON treasury_fund_log(created_at);

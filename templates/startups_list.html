@@ -1,0 +1,67 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Startaplar — CYBER SHATS{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <h1 style="font-size:20px;">{{ icon('briefcase',18) }} Startaplar</h1>
+</div>
+
+<!-- YANGI LOYIHA -->
+<div class="cs-card" style="margin-bottom:20px;">
+  <h3 style="font-size:13px; margin-bottom:12px;">{{ icon('plus',14) }} LOYIHANGIZNI JOYLASH</h3>
+  <form method="post" action="{{ url_for('startups_create') }}" enctype="multipart/form-data">
+    <input type="text" name="name" placeholder="Loyiha nomi..." required class="cs-input" style="margin-bottom:10px;">
+    <textarea name="description" rows="3" placeholder="Loyiha haqida qisqacha..." class="cs-input" style="margin-bottom:10px; resize:vertical;"></textarea>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+      <select name="category" class="cs-input">
+        {% for slug, label in categories %}
+        <option value="{{ slug }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+      <input type="url" name="link_url" placeholder="Havola (ixtiyoriy) https://...">
+    </div>
+    <label class="muted" style="font-size:11px; display:block; margin-bottom:6px;">Loyiha rasmi (ixtiyoriy)</label>
+    <input type="file" name="image" accept=".png,.jpg,.jpeg,.gif,.webp" style="margin-bottom:14px; font-size:12px;">
+    <button type="submit" class="cs-btn cs-btn-primary">{{ icon('send',13) }} Yuborish (admin tasdiqlaydi)</button>
+  </form>
+</div>
+
+<!-- MENING LOYIHALARIM -->
+{% if my_startups %}
+<div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('check',14) }} MENING LOYIHALARIM</h3></div>
+<div class="grid grid-3" style="gap:12px; margin-bottom:24px;">
+  {% for s in my_startups %}
+  <div class="cs-card">
+    {% if s.image_path %}<img src="{{ s.image_path }}" style="width:100%; height:120px; object-fit:cover; border-radius:6px; margin-bottom:10px;">{% endif %}
+    <strong style="font-size:13px;">{{ s.name }}</strong>
+    <div style="margin-top:6px;">
+      {% if s.status == 'pending' %}<span class="cs-chip" style="font-size:9px; color:#ffd23f;">Kutilmoqda</span>
+      {% elif s.status == 'approved' %}<span class="cs-chip solid" style="font-size:9px;">{{ icon('check',9) }} Tasdiqlandi</span>
+      {% else %}<span class="cs-chip" style="font-size:9px; color:#ff5555;">Rad etildi</span>{% endif %}
+    </div>
+    <form method="post" action="{{ url_for('startup_delete', startup_id=s.id) }}" style="margin-top:8px;" onsubmit="return confirm('O\'chirasizmi?');">
+      <button class="cs-btn cs-btn-sm cs-btn-danger cs-btn-full" style="font-size:10px;">{{ icon('trash-2',10) }} O'chirish</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- BARCHA TASDIQLANGAN LOYIHALAR -->
+<div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('layers',14) }} BARCHA LOYIHALAR</h3></div>
+<div class="grid grid-3" style="gap:12px;">
+  {% for s in approved %}
+  <a href="{{ url_for('startup_detail', startup_id=s.id) }}" class="cs-card" style="text-decoration:none; color:inherit;">
+    {% if s.image_path %}<img src="{{ s.image_path }}" style="width:100%; height:140px; object-fit:cover; border-radius:6px; margin-bottom:10px;">
+    {% else %}<div style="width:100%; height:140px; background:rgba(0,255,65,.05); border-radius:6px; margin-bottom:10px; display:flex; align-items:center; justify-content:center;">{{ icon('briefcase',32) }}</div>{% endif %}
+    <strong style="font-size:13px;">{{ s.name }}</strong>
+    <p class="muted" style="font-size:11px; margin-top:4px;">{{ s.description[:70] }}</p>
+    <div class="muted" style="font-size:10px; margin-top:8px;">{{ s.ism }} {{ s.familiya }} · {{ icon('eye',10) }} {{ s.view_count }}</div>
+  </a>
+  {% else %}
+  <p class="muted" style="grid-column:1/-1; text-align:center; padding:30px;">Hali tasdiqlangan loyihalar yo'q</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

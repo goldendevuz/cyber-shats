@@ -1,0 +1,99 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Sertifikatlar — CYBER SHATS{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <h1 style="font-size:20px;">{{ icon('award',18) }} Sertifikatlar</h1>
+</div>
+
+<div class="cs-card" style="padding:14px; margin-bottom:18px; border-color:rgba(255,210,63,.3);">
+  <p style="font-size:12px; color:var(--cs-text-muted);">
+    {{ icon('info',13) }} Sertifikat olish uchun yo'nalishdagi barcha kurslarni bitiring, so'ng
+    <strong style="color:var(--cs-text-primary);">{{ "{:,}".format(exam_fee) }} CODE</strong> to'lab imtihon topshiring.
+    Imtihon: 50 ta test (15 daqiqa) + 15 ta amaliy (30 daqiqa). 60%+ ball olganlar sertifikat oladi.
+    <br><strong>Eslatma:</strong> Sertifikat faqat IT yo'nalishlari uchun beriladi.
+  </p>
+</div>
+
+<!-- ARIZALAR ROYXATI -->
+{% if applications %}
+<div class="cs-card" style="margin-bottom:20px;">
+  <div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('file-text',14) }} MENING ARIZALARIM</h3></div>
+  <table class="cs-table">
+    <thead><tr><th>Yo'nalish</th><th>Ball</th><th>Holat</th><th>Sertifikat raqami</th><th>Sana</th></tr></thead>
+    <tbody>
+    {% for a in applications %}
+    <tr>
+      <td><strong>{{ a.direction_name }}</strong></td>
+      <td>{{ a.exam_score }}/{{ a.exam_total }} ({{ ((a.exam_score*100/a.exam_total)|round(0))|int if a.exam_total > 0 else 0 }}%)</td>
+      <td>
+        {% if a.status == 'pending' %}<span class="cs-chip" style="color:#ffd23f;">Kutilmoqda</span>
+        {% elif a.status == 'issued' %}<span class="cs-chip solid" style="color:var(--cs-text-primary);">{{ icon('check',11) }} Berildi</span>
+        {% elif a.status == 'rejected' %}<span class="cs-chip" style="color:#ff5555;">Rad etildi</span>
+        {% else %}{{ a.status }}{% endif %}
+      </td>
+      <td><code style="font-size:11px;">{{ a.certificate_number or '—' }}</code></td>
+      <td class="muted" style="font-size:11px;">{{ a.created_at[:16] }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- YO'NALISHLAR -->
+<div class="cs-card-title"><h3 style="font-size:13px;">{{ icon('layers',14) }} YO'NALISHLAR</h3></div>
+<div class="grid grid-2" style="gap:14px;">
+{% for dp in direction_progress %}
+  <div class="cs-card" style="padding:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+      <div>
+        <h4 style="font-size:14px;">{{ icon(dp.direction.icon, 16) }} {{ dp.direction.name_uz }}</h4>
+        <div class="muted" style="font-size:11px; margin-top:4px;">
+          Kurslar: {{ dp.progress.completed }}/{{ dp.progress.total_courses }}
+        </div>
+      </div>
+      {% if not dp.is_it %}
+        <span class="cs-chip" style="font-size:10px; color:#ff9900;">Sertifikatsiz</span>
+      {% endif %}
+    </div>
+
+    <!-- Progress bar -->
+    <div style="background:rgba(0,255,65,.08); height:8px; border-radius:4px; overflow:hidden; margin-bottom:12px;">
+      <div style="background:var(--cs-text-primary); height:100%;
+                  width:{{ (dp.progress.completed*100/dp.progress.total_courses)|int if dp.progress.total_courses else 0 }}%;"></div>
+    </div>
+
+    {% if dp.is_it %}
+      {% if dp.application and dp.application.status == 'issued' %}
+        <div style="background:rgba(0,255,65,.05); padding:10px; border-radius:6px; font-size:11.5px; color:var(--cs-text-primary);">
+          {{ icon('award',13) }} Sertifikat: <strong>{{ dp.application.certificate_number }}</strong>
+        </div>
+      {% elif dp.application and dp.application.status == 'pending' %}
+        <div style="font-size:11.5px; color:#ffd23f;">
+          {{ icon('clock',13) }} Arizangiz admin tasdig'ini kutmoqda
+        </div>
+      {% elif dp.progress.all_done %}
+        {% if dp.paid %}
+          <a href="{{ url_for('certificates_exam', direction_id=dp.direction.id) }}" class="cs-btn cs-btn-primary cs-btn-full">
+            {{ icon('play',13) }} Imtihonni boshlash
+          </a>
+        {% else %}
+          <form method="post" action="{{ url_for('certificates_pay', direction_id=dp.direction.id) }}">
+            <button class="cs-btn cs-btn-primary cs-btn-full" onclick="return confirm('{{ exam_fee }} CODE to\\'lash va imtihonga o\\'tishni tasdiqlaysizmi?')">
+              ⚡ {{ "{:,}".format(exam_fee) }} CODE to'lash va imtihonga kirish
+            </button>
+          </form>
+        {% endif %}
+      {% else %}
+        <p class="muted" style="font-size:11px;">
+          {{ icon('lock',12) }} Avval barcha kurslarni bitiring ({{ dp.progress.completed }}/{{ dp.progress.total_courses }})
+        </p>
+      {% endif %}
+    {% endif %}
+  </div>
+{% endfor %}
+</div>
+
+{% endblock %}

@@ -33,12 +33,22 @@ def _oauth_redirect(base, **params):
     return redirect(base + "?" + urllib.parse.urlencode(params))
 
 
+def _ensure_user_has_id(user_id: int):
+    """Himoya chorasi: agar foydalanuvchining custom_id'i yo'q bo'lsa, beradi."""
+    user = query_one("SELECT custom_id FROM users WHERE id=?", (user_id,))
+    if user and not user.get("custom_id"):
+        from ids import generate_unique_id
+        new_cid = generate_unique_id()
+        execute("UPDATE users SET custom_id=? WHERE id=?", (new_cid, user_id))
+
+
 def _get_or_create_oauth_user(provider, provider_id, email, name):
     """OAuth orqali foydalanuvchini topadi yoki yangi yaratadi."""
     # Allaqachon bog'langan bo'lsa
     link = query_one("SELECT * FROM oauth_links WHERE provider=? AND provider_id=?",
                      (provider, provider_id))
     if link:
+        _ensure_user_has_id(link["user_id"])
         return query_one("SELECT * FROM users WHERE id=?", (link["user_id"],))
 
     # Email orqali mavjud foydalanuvchini topish
@@ -48,7 +58,8 @@ def _get_or_create_oauth_user(provider, provider_id, email, name):
         execute("INSERT OR IGNORE INTO oauth_links (user_id, provider, provider_id, email, name) VALUES (?,?,?,?,?)",
                 (user["id"], provider, provider_id, email, name))
         execute("UPDATE users SET oauth_provider=? WHERE id=?", (provider, user["id"]))
-        return user
+        _ensure_user_has_id(user["id"])
+        return query_one("SELECT * FROM users WHERE id=?", (user["id"],))
 
     # Yangi foydalanuvchi yaratish
     parts = (name or "User").split(maxsplit=1)
@@ -60,10 +71,37 @@ def _get_or_create_oauth_user(provider, provider_id, email, name):
         (ism, familiya, email, fake_pass, "student", provider)
     )
     uid = query_one("SELECT id FROM users WHERE email=?", (email,))["id"]
+
+    # Majburiy unikal ID berish (oddiy ro'yxatdan o'tish bilan bir xil qoidada)
+    from ids import generate_unique_id
+    new_cid = generate_unique_id()
+    execute("UPDATE users SET custom_id=? WHERE id=?", (new_cid, uid))
+
     execute("INSERT OR IGNORE INTO oauth_links (user_id, provider, provider_id, email, name) VALUES (?,?,?,?,?)",
             (uid, provider, provider_id, email, name))
     execute("INSERT OR IGNORE INTO user_ratings (user_id, total_score, rank_position) VALUES (?,?,0)", (uid, 0))
-    log_action(uid, "oauth_register", details=f"provider:{provider}", ip=request.remote_addr)
+
+    # Xush kelibsiz bonusi (oddiy ro'yxatdan o'tish bilan bir xil)
+    try:
+        from pricing import get_price
+        from coins import add_coins
+        welcome_bonus = get_price("welcome_bonus_code")
+        if welcome_bonus > 0:
+            add_coins(uid, welcome_bonus, "welcome_bonus")
+    except Exception:
+        welcome_bonus = 0
+
+    execute("INSERT INTO notifications (user_id, title, body, type) VALUES (?,?,?,?)",
+            (uid, "Xush kelibsiz!", f"{provider.title()} orqali muvaffaqiyatli ro'yxatdan o'tdingiz.", "success"))
+    execute("INSERT INTO notifications (user_id, title, body, type) VALUES (?,?,?,?)",
+            (uid, f"Sizning ID: #{new_cid}",
+             f"Sizga avtomatik ID #{new_cid} berildi.", "info"))
+    if welcome_bonus:
+        execute("INSERT INTO notifications (user_id, title, body, type) VALUES (?,?,?,?)",
+                (uid, f"Sovg'a: {welcome_bonus:,} CODE",
+                 f"Xush kelibsiz bonusi sifatida sizga {welcome_bonus:,} code tangasi berildi!", "success"))
+
+    log_action(uid, "oauth_register", details=f"provider:{provider},id:{new_cid}", ip=request.remote_addr)
     return query_one("SELECT * FROM users WHERE id=?", (uid,))
 
 

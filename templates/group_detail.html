@@ -1,0 +1,138 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}{{ group.name }} — Guruh{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:14px;">
+  <div style="display:flex; align-items:center; gap:10px;">
+    <a href="{{ url_for('groups_list') }}" style="color:var(--cs-text-muted);">{{ icon('arrow-left',16) }}</a>
+    <div class="hex-icon">{{ icon('users',18) }}</div>
+    <div>
+      <h1 style="font-size:16px;">{{ group.name }}</h1>
+      <span class="muted" style="font-size:11px;">{{ group.member_count }} a'zo</span>
+    </div>
+  </div>
+  {% if is_member %}
+  <div style="display:flex; gap:6px;">
+    {% if my_role == 'owner' %}
+    <form method="post" action="{{ url_for('group_delete', group_id=group.id) }}" onsubmit="return confirm('Guruhni butunlay o\'chirasizmi?');">
+      <button class="cs-btn cs-btn-sm cs-btn-danger">{{ icon('trash-2',12) }} O'chirish</button>
+    </form>
+    {% else %}
+    <form method="post" action="{{ url_for('group_leave', group_id=group.id) }}">
+      <button class="cs-btn cs-btn-sm cs-btn-danger">{{ icon('logout',12) }} Chiqish</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% if not is_member %}
+<div class="cs-card" style="padding:30px; text-align:center;">
+  <p style="font-size:14px; margin-bottom:14px;">{{ group.description or "Bu guruh haqida tavsif yo'q." }}</p>
+  {% if group.is_public %}
+  <form method="post" action="{{ url_for('group_join', group_id=group.id) }}">
+    <button class="cs-btn cs-btn-primary">{{ icon('plus',13) }} Guruhga qo'shilish</button>
+  </form>
+  {% else %}
+  <p class="muted">{{ icon('lock',13) }} Bu yopiq guruh — faqat taklif orqali qo'shilish mumkin.</p>
+  {% endif %}
+</div>
+{% else %}
+
+<div class="chat-shell" style="height: calc(100vh - 230px);">
+  <div class="chat-side">
+    <div style="padding:10px; font-size:11px; color:var(--cs-text-muted); text-transform:uppercase;">A'zolar ({{ members|length }})</div>
+    {% for m in members %}
+    <div class="ai-item" style="display:flex; justify-content:space-between; align-items:center; cursor:default;">
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px;">
+        {{ icon('user',12) }} {{ m.ism }} {{ m.familiya }}
+        {% if m.role == 'owner' %}<span style="color:#ffd23f;">★</span>{% endif %}
+      </span>
+      {% if my_role in ['owner','admin'] and m.role != 'owner' and m.user_id != current_user.id %}
+      <form method="post" action="{{ url_for('group_kick', group_id=group.id, target_user_id=m.user_id) }}"
+            onsubmit="return confirm('{{ m.ism }} ni chiqarib yuborasizmi?');">
+        <button type="submit" style="background:none; border:0; color:#ff5555; cursor:pointer; font-size:11px;">✕</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="chat-main">
+    <div class="chat-msgs" data-chat-msgs id="groupMsgs">
+      {% for m in messages %}
+      <div class="msg {{ 'user' if m.user_id == current_user.id else 'bot' }}" data-msg-id="{{ m.id }}">
+        {% if m.user_id != current_user.id %}<div style="font-size:10px; opacity:.7; margin-bottom:3px;">{{ m.ism }} {{ m.familiya }}</div>{% endif %}
+        {% if m.body %}{{ m.body }}{% endif %}
+        {% if m.file_path %}
+          {% if m.file_type == 'image' %}
+          <img src="{{ m.file_path }}" style="max-width:220px; border-radius:6px; margin-top:6px; display:block;">
+          {% else %}
+          <video src="{{ m.file_path }}" controls style="max-width:220px; border-radius:6px; margin-top:6px; display:block;"></video>
+          {% endif %}
+        {% endif %}
+        <div style="font-size:9.5px; opacity:.6; margin-top:4px;">{{ m.created_at[11:16] }}</div>
+      </div>
+      {% else %}
+      <div class="muted" style="text-align:center; padding:30px;">Hali xabar yo'q. Birinchi bo'lib yozing!</div>
+      {% endfor %}
+    </div>
+    <form class="chat-input-row" id="groupForm" action="{{ url_for('group_send_message', group_id=group.id) }}" method="post" enctype="multipart/form-data">
+      <input type="file" name="file" id="groupFileInput" accept=".png,.jpg,.jpeg,.gif,.webp,.mp4,.mov" style="display:none;">
+      <button type="button" onclick="document.getElementById('groupFileInput').click();" style="background:none; border:0; color:var(--cs-text-muted); cursor:pointer; padding:0 8px;">{{ icon('upload',16) }}</button>
+      <input type="text" name="body" placeholder="Xabar yozing..." autocomplete="off">
+      <button type="submit">{{ icon('send',16) }}</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{% if is_member %}
+<script>
+(function() {
+    var groupId = {{ group.id }};
+    var msgsBox = document.getElementById('groupMsgs');
+    var lastId = 0;
+    document.querySelectorAll('[data-msg-id]').forEach(function(el) {
+        var id = parseInt(el.getAttribute('data-msg-id'), 10);
+        if (id > lastId) lastId = id;
+    });
+    msgsBox.scrollTop = msgsBox.scrollHeight;
+
+    function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function poll() {
+        fetch('/api/groups/' + groupId + '/messages?after_id=' + lastId, { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.success || !d.data.messages.length) return;
+                var nearBottom = msgsBox.scrollHeight - msgsBox.scrollTop - msgsBox.clientHeight < 80;
+                d.data.messages.forEach(function(m) {
+                    var mine = m.user_id === {{ current_user.id }};
+                    var div = document.createElement('div');
+                    div.className = 'msg ' + (mine ? 'user' : 'bot');
+                    var nameHtml = !mine ? '<div style="font-size:10px;opacity:.7;margin-bottom:3px;">' + esc(m.ism + ' ' + m.familiya) + '</div>' : '';
+                    var bodyHtml = m.body ? esc(m.body) : '';
+                    var fileHtml = '';
+                    if (m.file_path) {
+                        if (m.file_type === 'image') {
+                            fileHtml = '<img src="' + m.file_path + '" style="max-width:220px;border-radius:6px;margin-top:6px;display:block;">';
+                        } else {
+                            fileHtml = '<video src="' + m.file_path + '" controls style="max-width:220px;border-radius:6px;margin-top:6px;display:block;"></video>';
+                        }
+                    }
+                    div.innerHTML = nameHtml + bodyHtml + fileHtml + '<div style="font-size:9.5px;opacity:.6;margin-top:4px;">' + m.created_at.slice(11,16) + '</div>';
+                    msgsBox.appendChild(div);
+                    if (m.id > lastId) lastId = m.id;
+                });
+                if (nearBottom) msgsBox.scrollTop = msgsBox.scrollHeight;
+            }).catch(function() {});
+    }
+    setInterval(poll, 3000);
+})();
+</script>
+{% endif %}
+{% endblock %}

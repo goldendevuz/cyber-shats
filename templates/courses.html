@@ -40,7 +40,7 @@
                 </div>
                 <div style="text-align:right;">
                     <div class="cs-tag-level">{{ c.level }}</div>
-                    <div style="font-size:13px; color:var(--cs-text-primary); margin-top:6px;">{{ 'Bepul' if c.price==0 else c.price|string + " so'm" }}</div>
+                    <div style="font-size:13px; color:var(--cs-text-primary); margin-top:6px;">{{ 'Bepul' if c.price==0 else '⚡ ' + c.price|string + ' CODE' }}</div>
                 </div>
             </a>
             {% endfor %}

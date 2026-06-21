@@ -1,0 +1,192 @@
+/* ============================================================
+   SHATS CYBER PRO TEMASI — QIZIL + QORA (eng yuqori daraja)
+   Eng kuchli versiya — Pro va Cyber Pro'dan ham hashamatliroq.
+   Faqat plan='vip' bo'lgan foydalanuvchilarga qo'llaniladi
+   (body class="vip-theme" orqali aktivlashadi — texnik nom 'vip'
+   saqlanadi, lekin foydalanuvchiga "SHATS CYBER PRO" deb ko'rsatiladi)
+   ============================================================ */
+
+body.vip-theme {
+    /* Fonlar — chuqur qora, qizil nurlanish bilan */
+    --cs-bg-primary: #0d0606;
+    --cs-bg-secondary: #140808;
+    --cs-bg-card: #170909;
+    --cs-bg-glass: rgba(255, 30, 30, 0.06);
+    --cs-bg-sidebar: #120707;
+    --cs-bg-input: #1a0a0a;
+
+    /* Matnlar — qizil gammasida */
+    --cs-text-primary: #ff3030;
+    --cs-text-secondary: #ff5e5e;
+    --cs-text-muted: #a83838;
+    --cs-text-cyan: #ff6b6b;
+    --cs-text-white: #ffe0e0;
+    --cs-text-dark: #1a0a0a;
+    --cs-text-red: #ff3030;
+    --cs-text-yellow: #ff8c42;
+
+    /* Chegara va nurlanish */
+    --cs-border: rgba(255, 48, 48, 0.30);
+    --cs-border-active: rgba(255, 48, 48, 0.75);
+    --cs-glow: 0 0 12px rgba(255, 48, 48, 0.40);
+    --cs-glow-strong: 0 0 26px rgba(255, 48, 48, 0.65);
+    --cs-glow-red: 0 0 18px rgba(255, 48, 48, 0.5);
+    --cs-glow-cyan: 0 0 15px rgba(255, 107, 107, 0.4);
+
+    /* Gradientlar */
+    --cs-grad-main: linear-gradient(135deg, #0d0606 0%, #1a0a0a 50%, #120707 100%);
+    --cs-grad-card: linear-gradient(135deg, #170909 0%, #120707 100%);
+    --cs-grad-btn: linear-gradient(135deg, #ff3030 0%, #b81d1d 100%);
+    --cs-grad-sidebar: linear-gradient(180deg, #120707 0%, #0d0606 100%);
+
+    --vip-gold: #ff3030;
+    --vip-gold-deep: #b81d1d;
+    --vip-gradient: linear-gradient(135deg, #ff4d4d 0%, #ff3030 45%, #8c0f0f 100%);
+    --vip-glow: 0 0 30px rgba(255, 48, 48, 0.35);
+}
+
+/* Orqa fon — qora + qizil nurlanish, boshqa rang yo'q */
+body.vip-theme {
+    background: var(--cs-grad-main);
+}
+
+body.vip-theme .app-shell {
+    background: var(--cs-grad-main);
+}
+
+body.vip-theme .cs-btn-primary {
+    background: var(--vip-gradient);
+    border-color: transparent;
+    color: #ffe0e0;
+    font-weight: 700;
+    box-shadow: var(--vip-glow);
+}
+
+body.vip-theme .cs-btn-primary:hover {
+    filter: brightness(1.15);
+    box-shadow: 0 0 40px rgba(255, 48, 48, 0.55);
+}
+
+body.vip-theme .cs-nav-item.active {
+    background: linear-gradient(90deg, rgba(255,48,48,.20), transparent);
+    border-left: 3px solid var(--vip-gold);
+}
+
+body.vip-theme .cs-chip.solid {
+    background: var(--vip-gradient);
+    color: #ffe0e0;
+    border-color: transparent;
+    font-weight: 700;
+}
+
+body.vip-theme .stat-card .num,
+body.vip-theme .cs-card-title h3 {
+    color: var(--vip-gold);
+}
+
+body.vip-theme a {
+    color: var(--vip-gold);
+}
+
+body.vip-theme .cs-card {
+    border-color: var(--cs-border);
+    background: var(--cs-grad-card);
+}
+
+body.vip-theme .cs-card:hover {
+    box-shadow: var(--vip-glow);
+    border-color: var(--cs-border-active);
+}
+
+/* Sidebar — qizil/qora, boshqa rang yo'q */
+body.vip-theme .sidebar,
+body.vip-theme .app-sidebar {
+    border-color: var(--cs-border);
+    background: var(--cs-grad-sidebar);
+}
+
+/* Inputlar */
+body.vip-theme .cs-input {
+    background: var(--cs-bg-input);
+    border-color: var(--cs-border);
+    color: var(--cs-text-white);
+}
+
+body.vip-theme .cs-input:focus {
+    border-color: var(--vip-gold);
+    box-shadow: 0 0 0 2px rgba(255, 48, 48, 0.20);
+}
+
+/* Qattiq qora (#000) fon yozilgan komponentlar — bu yerda allaqachon
+   qora rang temaning bir qismi, shuning uchun faqat term-head va
+   bm-bar kabi ikkilamchi panellarni biroz farqlantiramiz */
+body.vip-theme .terminal-box {
+    background: var(--cs-bg-input) !important;
+    border-color: var(--cs-border) !important;
+}
+
+body.vip-theme .terminal-box .term-head,
+body.vip-theme .browser-mock .bm-bar {
+    background: var(--cs-bg-card) !important;
+}
+
+body.vip-theme .terminal-box .term-dot {
+    background: var(--vip-gold-deep) !important;
+}
+
+body.vip-theme .intercept-box .raw-req {
+    background: var(--cs-bg-input) !important;
+    color: var(--vip-gold) !important;
+}
+
+body.vip-theme .intercept-box .raw-req .hl {
+    background: rgba(255, 48, 48, 0.22) !important;
+}
+
+body.vip-theme .msg pre {
+    background: var(--cs-bg-input) !important;
+}
+
+body.vip-theme .msg.bot {
+    background: rgba(255, 48, 48, 0.07) !important;
+}
+
+/* Qattiq oq/qora MATN rangi yozilgan joylar — qizil gradient fon ustida
+   to'q matn kerak */
+body.vip-theme ::selection,
+body.vip-theme .cs-btn:hover,
+body.vip-theme .cs-btn-primary,
+body.vip-theme .cs-btn-primary:hover,
+body.vip-theme .cs-btn-danger:hover,
+body.vip-theme .msg.user,
+body.vip-theme .chat-input-row button,
+body.vip-theme .q-grid .q-num.current,
+body.vip-theme .price-card .ribbon {
+    color: #ffe0e0 !important;
+}
+
+/* VIP/SHATS CYBER PRO nishon */
+.vip-badge {
+    background: var(--vip-gradient, linear-gradient(135deg, #ff4d4d 0%, #8c0f0f 100%));
+    color: #ffe0e0 !important;
+    padding: 3px 12px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    display: inline-block;
+    box-shadow: 0 0 14px rgba(255, 48, 48, 0.4);
+}
+
+body.vip-theme ::selection {
+    background: rgba(255, 48, 48, 0.32);
+}
+
+/* Headerlarda gradient matn */
+body.vip-theme h1,
+body.vip-theme h2 {
+    background: var(--vip-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}

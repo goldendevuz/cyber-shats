@@ -1,0 +1,100 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}CODE sotib olish{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <div>
+    <h1 style="font-size:20px;">{{ icon('zap',18) }} CODE sotib olish</h1>
+    <p class="muted" style="font-size:11.5px; margin-top:4px;">1 CODE = 1 so'm. Kartadan to'lab, chek rasmini yuklang.</p>
+  </div>
+  <a href="{{ url_for('coins_page') }}" class="cs-btn cs-btn-sm">← Code Tangalar</a>
+</div>
+
+<div class="grid" style="grid-template-columns:1.2fr 1fr; gap:20px; align-items:start;">
+
+  <!-- TO'LOV FORMASI -->
+  <div class="cs-card">
+    <h3 style="font-size:13px; margin-bottom:14px;">🛒 BUYURTMA BERISH</h3>
+    <form method="post" action="{{ url_for('coins_buy_submit') }}" enctype="multipart/form-data" id="buyForm">
+
+      <label class="muted" style="font-size:11px; display:block; margin-bottom:5px;">Saytdagi ID raqamingiz</label>
+      <input type="text" name="custom_id" value="{{ my_custom_id or '' }}" required class="cs-input" style="margin-bottom:14px;" placeholder="masalan: 1234567">
+
+      <label class="muted" style="font-size:11px; display:block; margin-bottom:8px;">Tezkor paketlar</label>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:10px;">
+        {% for p in packages %}
+        <button type="button" class="cs-btn cs-btn-sm pkg-btn" data-amount="{{ p }}" style="font-size:11px;">
+          ⚡{{ "{:,}".format(p) }}
+        </button>
+        {% endfor %}
+      </div>
+
+      <label class="muted" style="font-size:11px; display:block; margin-bottom:5px;">Yoki o'zingiz miqdor kiriting (CODE)</label>
+      <input type="number" name="amount" id="amountInput" min="{{ min_amount }}" required class="cs-input" style="margin-bottom:6px;" placeholder="masalan: 15000">
+      <div class="muted" style="font-size:11px; margin-bottom:16px;">
+        To'lov summasi: <strong id="priceDisplay" style="color:var(--cs-text-primary);">0</strong> so'm
+      </div>
+
+      <div class="cs-card" style="padding:14px; margin-bottom:16px; background:rgba(255,210,63,.04); border-color:rgba(255,210,63,.3);">
+        <div class="muted" style="font-size:11px; margin-bottom:8px;">💳 Karta raqamlari (to'lovni shu kartalarga qiling)</div>
+        <div style="font-family:var(--cs-font-mono); font-size:14px; color:#ffd23f; margin-bottom:4px;">UZCARD: {{ cards.uzcard }}</div>
+        <div style="font-family:var(--cs-font-mono); font-size:14px; color:#ffd23f;">HUMO: {{ cards.humo }}</div>
+      </div>
+
+      <label class="muted" style="font-size:11px; display:block; margin-bottom:5px;">To'lov chekining rasmi (yoki PDF)</label>
+      <input type="file" name="receipt" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf" required style="margin-bottom:16px; font-size:12px;">
+
+      <button type="submit" class="cs-btn cs-btn-primary cs-btn-full" style="font-size:14px; padding:12px;">
+        {{ icon('send',14) }} So'rovni yuborish
+      </button>
+      <p class="muted" style="font-size:10.5px; margin-top:10px; text-align:center;">
+        G'azna tekshirib tasdiqlagandan keyin CODE hisobingizga tushadi.
+      </p>
+    </form>
+  </div>
+
+  <!-- MENING SO'ROVLARIM -->
+  <div class="cs-card">
+    <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('clock',14) }} MENING SO'ROVLARIM</h3>
+    <div id="requestsList">
+    {% for r in requests_list %}
+    <div style="padding:12px 0; border-bottom:1px solid rgba(0,255,65,.06);">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong style="font-size:13px;">⚡ {{ "{:,}".format(r.code_amount) }} CODE</strong>
+        {% if r.status == 'pending' %}<span class="cs-chip" style="color:#ffd23f; font-size:10px;">Kutilmoqda</span>
+        {% elif r.status == 'completed' %}<span class="cs-chip solid" style="font-size:10px;">{{ icon('check',10) }} Tasdiqlandi</span>
+        {% elif r.status == 'rejected' %}<span class="cs-chip" style="color:#ff5555; font-size:10px;">Rad etildi</span>
+        {% else %}{{ r.status }}{% endif %}
+      </div>
+      <div class="muted" style="font-size:10.5px; margin-top:3px;">{{ r.created_at[:16] }}</div>
+      {% if r.status == 'rejected' and r.admin_note %}
+      <div style="font-size:10.5px; color:#ff5555; margin-top:3px;">Sabab: {{ r.admin_note }}</div>
+      {% endif %}
+    </div>
+    {% else %}
+    <p class="muted" style="text-align:center; padding:30px;">Hali so'rov yo'q</p>
+    {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.pkg-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.getElementById('amountInput').value = this.dataset.amount;
+        updatePrice();
+    });
+});
+
+function updatePrice() {
+    var amount = parseInt(document.getElementById('amountInput').value, 10) || 0;
+    document.getElementById('priceDisplay').textContent = amount.toLocaleString('uz-UZ');
+}
+document.getElementById('amountInput').addEventListener('input', updatePrice);
+</script>
+{% endblock %}

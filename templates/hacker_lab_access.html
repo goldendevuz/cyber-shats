@@ -1,0 +1,54 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Hacker Lab — Kirish huquqi{% endblock %}
+{% block app_content %}
+
+<div style="max-width:560px; margin:30px auto;">
+  <div class="cs-card" style="padding:32px; text-align:center;">
+    <div style="font-size:42px; color:var(--cs-text-primary);">{{ icon('terminal',42) }}</div>
+    <h2 style="font-size:19px; margin-top:10px;">Hacker Lab — Amaliyot Paneli</h2>
+    <p class="muted" style="font-size:13px; margin-top:8px; line-height:1.6;">
+      Yo'nalishingizga moslashgan amaliy panel: terminal simulyatori, chuqur material,
+      jamoa bilan ishlash va startap loyihalar ustida mashq qilish.
+    </p>
+
+    {% if current_user.plan == 'pro' %}
+    <div class="cs-card" style="padding:20px; margin-top:24px; border-color:rgba(0,255,65,.3);">
+      <div class="muted" style="font-size:11px;">Pro foydalanuvchi uchun narx</div>
+      <div style="font-family:var(--cs-font-display); font-size:32px; font-weight:800; color:var(--cs-text-primary); margin-top:6px;">
+        ⚡ {{ "{:,}".format(price) }} CODE
+      </div>
+      <div class="muted" style="font-size:11px; margin-top:6px;">Sizning balansingiz: ⚡ {{ "{:,}".format(balance) }} CODE</div>
+      <form method="post" action="{{ url_for('hacker_lab_access_page') }}" style="margin-top:18px;">
+        <button class="cs-btn cs-btn-primary cs-btn-full" {{ 'disabled' if balance < price }}
+                onclick="return confirm('Hacker Lab kirish huquqini {{ \"{:,}\".format(price) }} CODE evaziga sotib olishni tasdiqlaysizmi?');">
+          {{ icon('unlock',14) }} Kirish huquqini sotib olish
+        </button>
+      </form>
+      {% if balance < price %}
+      <div class="muted" style="margin-top:10px; font-size:11px; color:#ff5555;">
+        Yetishmayapti: ⚡ {{ "{:,}".format(price - balance) }} CODE
+      </div>
+      {% endif %}
+    </div>
+    {% elif current_user.plan in ['cyber_pro', 'vip'] %}
+    <div class="cs-card" style="padding:20px; margin-top:24px; border-color:rgba(0,255,65,.3);">
+      <p style="font-size:13px; color:var(--cs-text-primary);">
+        {{ icon('check',14) }} Sizning planingiz uchun Hacker Lab <strong>bepul</strong>!
+      </p>
+      <form method="post" action="{{ url_for('hacker_lab_access_page') }}" style="margin-top:14px;">
+        <button class="cs-btn cs-btn-primary cs-btn-full">{{ icon('unlock',14) }} Faollashtirish</button>
+      </form>
+    </div>
+    {% else %}
+    <div class="cs-card" style="padding:20px; margin-top:24px; border-color:rgba(255,85,85,.3);">
+      <p style="font-size:13px; color:#ff5555;">Hacker Lab faqat Pro, Cyber Pro va SHATS CYBER PRO foydalanuvchilar uchun.</p>
+      <a href="{{ url_for('pricing') }}" class="cs-btn cs-btn-primary cs-btn-full" style="margin-top:14px;">Versiyani yangilash</a>
+    </div>
+    {% endif %}
+
+    <a href="{{ url_for('dashboard') }}" class="muted" style="display:block; margin-top:20px; font-size:11.5px;">← Bosh sahifaga qaytish</a>
+  </div>
+</div>
+
+{% endblock %}

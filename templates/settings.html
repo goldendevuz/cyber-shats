@@ -21,6 +21,25 @@
     <label class="cs-checkbox"><input type="checkbox"> Email orqali bildirishnomalar</label>
 </div>
 
+<div class="cs-card" style="margin-bottom:20px; max-width:560px;">
+    <h3 style="font-size:13px; margin-bottom:10px;">{{ icon('wifi',14) }} QURILMA BILDIRISHNOMALARI (PUSH)</h3>
+    <p class="muted" style="font-size:11.5px; margin-bottom:14px;">
+        Yoqsangiz, saytdan chiqib ketgan bo'lsangiz ham (brauzer yopiq bo'lsa ham)
+        qurilmangizga muhim bildirishnomalar keladi — masalan CODE qo'shilganda,
+        sertifikat tasdiqlanganda yoki yangi e'lon bo'lganda.
+    </p>
+    <div id="pushStatus" class="muted" style="font-size:11.5px; margin-bottom:10px;">Holat tekshirilmoqda...</div>
+    <button id="pushEnableBtn" class="cs-btn cs-btn-primary" style="display:none;">
+        {{ icon('bell',14) }} Qurilma bildirishnomalarini yoqish
+    </button>
+    <button id="pushTestBtn" class="cs-btn" style="display:none; margin-left:8px;">
+        {{ icon('send',14) }} Sinov xabar yuborish
+    </button>
+    <button id="pushDisableBtn" class="cs-btn cs-btn-danger" style="display:none;">
+        {{ icon('x',14) }} O'chirish
+    </button>
+</div>
+
 <div class="cs-card" style="max-width:560px; border-color: rgba(255,68,68,.3);">
     <h3 style="font-size:13px; margin-bottom:10px; color: var(--cs-text-red);">{{ icon('x',14) }} XAVFLI HUDUD</h3>
     <p class="muted" style="font-size:12px; margin-bottom:14px;">Hisobingizni o'chirish qaytarib bo'lmaydigan amal. Barcha progress, sertifikat va ma'lumotlar yo'qoladi.</p>
@@ -29,4 +48,59 @@
         <button type="submit" class="cs-btn cs-btn-danger">{{ icon('x',14) }} Hisobni o'chirish</button>
     </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var statusEl = document.getElementById('pushStatus');
+    var enableBtn = document.getElementById('pushEnableBtn');
+    var testBtn = document.getElementById('pushTestBtn');
+    var disableBtn = document.getElementById('pushDisableBtn');
+
+    function refreshStatus() {
+        if (!window.CyberShatsPush || !window.CyberShatsPush.isSupported) {
+            statusEl.textContent = "Bu brauzer qurilma bildirishnomalarini qo'llab-quvvatlamaydi.";
+            return;
+        }
+        if (Notification.permission === 'denied') {
+            statusEl.textContent = "Bildirishnomalar brauzer sozlamalarida bloklangan. Brauzer sozlamalaridan ruxsat bering.";
+            return;
+        }
+        navigator.serviceWorker.ready.then(function(reg) {
+            reg.pushManager.getSubscription().then(function(sub) {
+                if (sub) {
+                    statusEl.innerHTML = '<span style="color:var(--cs-text-primary);">✓ Yoqilgan — saytdan chiqib ketsangiz ham xabar olasiz</span>';
+                    enableBtn.style.display = 'none';
+                    testBtn.style.display = 'inline-block';
+                    disableBtn.style.display = 'inline-block';
+                } else {
+                    statusEl.textContent = "Hozircha o'chirilgan.";
+                    enableBtn.style.display = 'inline-block';
+                    testBtn.style.display = 'none';
+                    disableBtn.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    enableBtn.addEventListener('click', function() {
+        window.CyberShatsPush.subscribe().then(function(ok) {
+            if (ok) refreshStatus();
+            else alert("Yoqib bo'lmadi. Brauzer ruxsatini tekshiring.");
+        });
+    });
+
+    disableBtn.addEventListener('click', function() {
+        window.CyberShatsPush.unsubscribe().then(refreshStatus);
+    });
+
+    testBtn.addEventListener('click', function() {
+        fetch('/api/push/test', { method: 'POST', credentials: 'same-origin' })
+            .then(function() { location.reload(); });
+    });
+
+    setTimeout(refreshStatus, 800);
+})();
+</script>
 {% endblock %}

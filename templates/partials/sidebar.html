@@ -14,22 +14,42 @@
         <a href="{{ url_for('courses') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['courses','course_detail','lesson','lesson_materials'] }}">{{ icon('book') }} Kurslar</a>
         <a href="{{ url_for('hacker_lab') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['hacker_lab','practice'] }}">{{ icon('terminal') }} Amaliyot</a>
         <a href="{{ url_for('ai_assistant') }}" class="cs-nav-item {{ 'active' if request.endpoint=='ai_assistant' }}">{{ icon('bot') }} AI Yordamchi</a>
-        {% if current_user and current_user.plan in ['pro','enterprise'] or current_user and current_user.role=='admin' %}
+        {% if current_user and current_user.plan in ['pro','cyber_pro','vip','enterprise'] or current_user and current_user.role in ['admin','super_admin'] %}
         <a href="{{ url_for('smm_hub') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['smm_hub','smm_chat'] }}" style="color:#ff64c8;">{{ icon('share-2') }} SMM & Logistika</a>
         {% endif %}
         <a href="{{ url_for('my_id_page') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['my_id_page','change_my_id'] }}">{{ icon('hash') }} Mening ID</a>
         <a href="{{ url_for('auction_page') }}" class="cs-nav-item {{ 'active' if request.endpoint=='auction_page' }}">{{ icon('gavel') }} ID Auktsion</a>
         <a href="{{ url_for('tests') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['tests','test_take'] }}">{{ icon('file-text') }} Testlar</a>
         <a href="{{ url_for('forum') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['forum','forum_post'] }}">{{ icon('message') }} Forum</a>
+        <a href="{{ url_for('groups_list') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['groups_list','group_detail'] }}">{{ icon('users') }} Guruhlar</a>
+        <a href="{{ url_for('channels_list') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['channels_list','channel_detail','channel_post_detail'] }}">{{ icon('send') }} Kanallar</a>
+        <a href="{{ url_for('stories_feed') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['stories_feed','stories_view_user'] }}">{{ icon('zap') }} Hikoyalar</a>
+        <a href="{{ url_for('reels_feed') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['reels_feed','reels_create'] }}">{{ icon('play') }} Reels</a>
+        <a href="{{ url_for('startups_list') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['startups_list','startup_detail'] }}">{{ icon('briefcase') }} Startaplar</a>
+        <a href="{{ url_for('messages_page') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['messages_page','messages_thread'] }}" style="display:flex; align-items:center; justify-content:space-between;">
+            <span>{{ icon('send') }} Xabarlar</span>
+            {% if unread_msg_count and unread_msg_count > 0 %}
+            <span class="cs-chip solid" style="background:#ff5555; border-color:#ff5555; color:#fff; font-size:10px; padding:1px 6px; min-width:18px; text-align:center;">{{ unread_msg_count }}</span>
+            {% endif %}
+        </a>
         <a href="{{ url_for('results') }}" class="cs-nav-item {{ 'active' if request.endpoint=='results' }}">{{ icon('folder') }} Loyihalar</a>
         <a href="{{ url_for('news') }}" class="cs-nav-item {{ 'active' if request.endpoint=='news' }}">{{ icon('zap') }} Yangiliklar</a>
         <a href="{{ url_for('gamification') }}" class="cs-nav-item {{ 'active' if request.endpoint=='gamification' }}">{{ icon('award') }} Reyting</a>
         <a href="{{ url_for('leaderboard') }}" class="cs-nav-item {{ 'active' if request.endpoint=='leaderboard' }}">{{ icon('trending-up') }} Liderlar</a>
         <a href="{{ url_for('coins_page') }}" class="cs-nav-item {{ 'active' if request.endpoint=='coins_page' }}">{{ icon('zap') }} Code Tangalar</a>
-        {% if current_user and current_user.role in ['admin','mentor'] %}
+        <a href="{{ url_for('certificates_page') }}" class="cs-nav-item {{ 'active' if request.endpoint=='certificates_page' }}">{{ icon('award') }} Sertifikatlar</a>
+        <a href="{{ url_for('pentesting_ping_page') }}" class="cs-nav-item {{ 'active' if request.endpoint=='pentesting_ping_page' }}">{{ icon('wifi') }} Ping Test</a>
+        {% if current_user and (current_user.plan in ['cyber_pro','vip'] or current_user.role in ['admin','super_admin']) %}
+        <a href="{{ url_for('code_editor_page') }}" class="cs-nav-item {{ 'active' if request.endpoint=='code_editor_page' }}" style="color:#ff3366;">{{ icon('code') }} Code Editor</a>
+        {% endif %}
+        {% if current_user and current_user.role in ['admin','mentor','super_admin'] %}
         <div class="cs-nav-divider" style="height:1px; background:rgba(0,255,65,.08); margin:6px 0;"></div>
         <a href="{{ url_for('mentor') }}" class="cs-nav-item {{ 'active' if request.endpoint=='mentor' }}">{{ icon('users') }} Mentor</a>
         <a href="{{ url_for('admin_dashboard') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['admin_dashboard','admin_users','admin_security','admin_payments','admin_leaderboard'] }}" style="color:var(--cs-text-primary);">{{ icon('cpu') }} Admin Panel</a>
+        <a href="{{ url_for('admin_announcements') }}" class="cs-nav-item {{ 'active' if request.endpoint=='admin_announcements' }}" style="color:#ffd23f;">{{ icon('message') }} E'lonlar</a>
+        <a href="{{ url_for('admin_certificates') }}" class="cs-nav-item {{ 'active' if request.endpoint=='admin_certificates' }}" style="color:#3366ff;">{{ icon('award') }} Sertifikat arizalari</a>
+        <a href="{{ url_for('admin_hacker_lab_security') }}" class="cs-nav-item {{ 'active' if request.endpoint=='admin_hacker_lab_security' }}" style="color:#ff5555;">{{ icon('shield') }} Hacker Lab Xavfsizlik</a>
+        <a href="{{ url_for('admin_startups') }}" class="cs-nav-item {{ 'active' if request.endpoint=='admin_startups' }}" style="color:#3366ff;">{{ icon('briefcase') }} Startaplar tasdiqlash</a>
         <a href="{{ url_for('admin_ids') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['admin_ids'] }}" style="color:#ffd23f;">{{ icon('hash') }} ID Boshqaruvi</a>
         {% endif %}
         <a href="{{ url_for('profile') }}" class="cs-nav-item {{ 'active' if request.endpoint=='profile' }}">{{ icon('user') }} Profil</a>

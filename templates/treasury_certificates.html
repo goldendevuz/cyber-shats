@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Sertifikat arizalari — G'azna{% endblock %}
+{% block content %}
+
+<div style="max-width:1200px; margin:24px auto; padding:0 20px;">
+  <div class="flex-between" style="margin-bottom:20px;">
+    <h1 style="font-size:18px; color:#ffd23f;">{{ icon('award',16) }} SERTIFIKAT ARIZALARI</h1>
+    <a href="{{ url_for('treasury_dashboard') }}" class="cs-btn cs-btn-sm">← G'azna paneli</a>
+  </div>
+
+  <div class="cs-card" style="padding:12px; margin-bottom:16px; font-size:11.5px; color:var(--cs-text-muted);">
+    {{ icon('info',13) }} G'azna xodimi sifatida bu sahifada barcha arizalarni va to'lovlarni ko'rishingiz mumkin (tasdiqlash huquqi adminda).
+  </div>
+
+  <div class="cs-card">
+    <table class="cs-table">
+      <thead>
+        <tr><th>#</th><th>Foydalanuvchi</th><th>Yo'nalish</th><th>Ball</th><th>To'lov (g'aznaga)</th><th>Holat</th><th>Sana</th></tr>
+      </thead>
+      <tbody>
+      {% for a in applications %}
+      <tr>
+        <td class="muted">{{ a.id }}</td>
+        <td><strong>{{ a.ism }} {{ a.familiya }}</strong><div class="muted" style="font-size:10px;">#{{ a.custom_id }}</div></td>
+        <td>{{ a.direction_name }}</td>
+        <td>{{ a.exam_score }}/{{ a.exam_total }}</td>
+        <td style="color:#ffd23f; font-weight:700;">⚡ {{ "{:,}".format(a.paid_amount) }}</td>
+        <td>
+          {% if a.status == 'pending' %}<span class="cs-chip" style="color:#ffd23f;">Kutilmoqda</span>
+          {% elif a.status == 'issued' %}<span class="cs-chip solid" style="color:var(--cs-text-primary);">Berildi</span>
+          {% else %}<span class="cs-chip" style="color:#ff5555;">Rad etildi</span>{% endif %}
+        </td>
+        <td class="muted" style="font-size:11px;">{{ a.created_at|tashkent_time }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="muted" style="text-align:center; padding:30px;">Hozircha arizalar yo'q</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

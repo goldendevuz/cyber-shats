@@ -36,19 +36,22 @@ python3 database/migrate.py
 python3 app.py
 ```
 
-Brauzerda oching: **http://127.0.0.1:8080**
+Brauzerda oching: **http://127.0.0.1:5000**
 
-## 3. Tayyor kirish ma'lumotlari (demo hisoblar)
+## 3. Kirish ma'lumotlari
 
-| Rol | Email | Parol |
-|---|---|---|
-| Administrator | admin@cybershats.uz | admin123 |
-| Mentor | mentor@cybershats.uz | mentor123 |
-| O'quvchi | jasur@example.com | demo1234 |
-| O'quvchi | dilnoza@example.com | demo1234 |
-| O'quvchi | sardor@example.com | demo1234 |
+⚠️ **Demo/sinov hisoblar endi mavjud emas.** Tizim faqat real ro'yxatdan o'tgan
+foydalanuvchilar bilan ishlaydi. Admin va g'aznachi hisoblarini yaratish uchun:
 
-Yangi hisob yaratish uchun `/register` sahifasidan ham foydalanishingiz mumkin.
+```bash
+python3 database/bootstrap_v13.py
+```
+
+Bu skript sizning real admin va g'aznachi login/parolingizni o'rnatadi
+(skript ichida `admin_email`/`admin_password` va `treasury_email`/`treasury_password`
+o'zgaruvchilarini o'zingizning ma'lumotlaringizga moslang).
+
+Yangi foydalanuvchi sifatida ro'yxatdan o'tish uchun `/register` sahifasidan foydalaning.
 
 ## 4. Loyiha tarkibi
 
