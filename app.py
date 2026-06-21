@@ -7,7 +7,7 @@ import random
 import string
 import datetime
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, abort, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, abort, jsonify, request
 from markupsafe import Markup
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -3621,6 +3621,16 @@ def activate_course_code(slug):
     flash(f"«{course['title']}» kursiga muvaffaqiyatli kirish berildi!", "success")
     log_action(user["id"], "activate_course_code", details=f"course:{course['id']}", ip=request.remote_addr)
     return redirect(url_for("course_detail", slug=slug))
+
+@app.route("/debug")
+def debug():
+    return {
+        "url": request.url,
+        "host": request.host,
+        "scheme": request.scheme,
+        "is_secure": request.is_secure,
+        "x_forwarded_proto": request.headers.get("X-Forwarded-Proto"),
+    }
 
 
 # =================================================================
