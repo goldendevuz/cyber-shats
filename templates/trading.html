@@ -1,0 +1,355 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Trading — CODE Tangalari{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+  <div>
+    <h1 style="font-size:20px;">{{ icon('trending-up',18) }} CODE Trading</h1>
+    <p class="muted" style="font-size:11.5px; margin-top:3px;">SHATS CYBER CODE tangasi narxiga tiklov qo'ying — real vaqtda</p>
+  </div>
+  <div style="text-align:right;">
+    <div id="livePriceDisplay" style="font-family:var(--cs-font-display); font-size:30px; font-weight:800; line-height:1;">1.0000</div>
+    <div id="liveChangeDisplay" class="muted" style="font-size:12px;">+0.000%</div>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:1fr 320px; gap:14px; align-items:start;">
+
+  <!-- CHAP: GRAFIK + NAZARIY -->
+  <div>
+    <!-- GRAFIK -->
+    <div class="cs-card" style="padding:0; overflow:hidden; margin-bottom:14px;">
+      <div style="padding:8px 14px; border-bottom:1px solid var(--cs-border); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,.2);">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:12px; font-weight:700;">SHATS CODE / SO'M</span>
+          <span class="cs-chip solid" style="font-size:8px; padding:2px 6px; animation:pulse 1.5s infinite;">● LIVE</span>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <span class="cs-chip" id="highLabel" style="font-size:9px; color:var(--cs-text-primary);">MAX: —</span>
+          <span class="cs-chip" id="lowLabel" style="font-size:9px; color:#ff5555;">MIN: —</span>
+        </div>
+      </div>
+      <canvas id="priceChart" height="280" style="width:100%; display:block;"></canvas>
+    </div>
+
+    <!-- STATISTIKA -->
+    <div class="grid grid-4" style="gap:10px; margin-bottom:14px;">
+      <div class="cs-card" style="padding:12px; text-align:center;">
+        <div class="muted" style="font-size:10px;">JAMI O'YIN</div>
+        <div style="font-size:18px; font-weight:800; margin-top:4px;">{{ stats.total_trades if stats else 0 }}</div>
+      </div>
+      <div class="cs-card" style="padding:12px; text-align:center;">
+        <div class="muted" style="font-size:10px;">G'ALABA</div>
+        <div style="font-size:18px; font-weight:800; color:var(--cs-text-primary); margin-top:4px;">{{ stats.total_won if stats else 0 }}</div>
+      </div>
+      <div class="cs-card" style="padding:12px; text-align:center;">
+        <div class="muted" style="font-size:10px;">ZARAR</div>
+        <div style="font-size:18px; font-weight:800; color:#ff5555; margin-top:4px;">{{ (stats.total_trades - stats.total_won) if stats else 0 }}</div>
+      </div>
+      <div class="cs-card" style="padding:12px; text-align:center;">
+        <div class="muted" style="font-size:10px;">PLATFORMA DAROMADI</div>
+        <div style="font-size:15px; font-weight:800; color:#ffd23f; margin-top:4px;">⚡ {{ "{:,}".format(stats.platform_commission if stats else 0) }}</div>
+      </div>
+    </div>
+
+    <!-- NAZARIY BO'LIM -->
+    <div class="cs-card">
+      <h3 style="font-size:14px; margin-bottom:14px;">{{ icon('book-open',14) }} TRADING NAZARIYASI</h3>
+      <div class="grid grid-3" style="gap:10px;">
+        <div>
+          <div style="font-size:12px; font-weight:700; color:var(--cs-text-primary); margin-bottom:6px;">Binary Options nima?</div>
+          <p class="muted" style="font-size:11.5px; line-height:1.65;">Narx ko'tariladi yoki tushadi deb taxmin qilasiz. To'g'ri bo'lsa — foyda, noto'g'ri bo'lsa — tiklov yo'qoladi. Oddiy, lekin ko'nikmani talab qiladi.</p>
+        </div>
+        <div>
+          <div style="font-size:12px; font-weight:700; color:var(--cs-text-primary); margin-bottom:6px;">GBM narx modeli</div>
+          <p class="muted" style="font-size:11.5px; line-height:1.65;">Narx Geometric Brownian Motion asosida o'zgaradi — bu haqiqiy moliyaviy bozorlar uchun ishlatiladigan matematik model. Har 0.1 soniyada yangilanadi.</p>
+        </div>
+        <div>
+          <div style="font-size:12px; font-weight:700; color:var(--cs-text-primary); margin-bottom:6px;">Risk boshqaruvi</div>
+          <p class="muted" style="font-size:11.5px; line-height:1.65;">Hech qachon balansning 10% dan ko'pini bitta tiklovga qo'ymang. Bir ketma-ket yutilib ketsangiz, tiklov miqdorini kamaytiring. Disciplina — muvaffaqiyat kaliti.</p>
+        </div>
+        <div>
+          <div style="font-size:12px; font-weight:700; color:var(--cs-text-primary); margin-bottom:6px;">Texnik tahlil</div>
+          <p class="muted" style="font-size:11.5px; line-height:1.65;"><strong>Trend</strong> — narxning umumiy yo'nalishi. <strong>Support</strong> — pastki burilish nuqtasi. <strong>Resistance</strong> — yuqori to'siq. Grafikni diqqat bilan kuzating.</p>
+        </div>
+        <div>
+          <div style="font-size:12px; font-weight:700; color:var(--cs-text-primary); margin-bottom:6px;">Ko'rsatkichlar</div>
+          <p class="muted" style="font-size:11.5px; line-height:1.65;"><strong>RSI</strong> (overbought/oversold), <strong>MACD</strong> (trend kuchi), <strong>Bollinger Bands</strong> (volatillik ko'rsatkichi). Bir nechta ko'rsatkichni birga ishlating.</p>
+        </div>
+        <div>
+          <div style="font-size:12px; font-weight:700; color:var(--cs-text-primary); margin-bottom:6px;">Psixologiya</div>
+          <p class="muted" style="font-size:11.5px; line-height:1.65;">Qo'rquv va ochko'zlik — eng katta dushman. Zarar bo'lsa qasos olishga urinmang. G'alaba bo'lsa ortiqcha ishonmang. Har bir tiklov yangi, alohida qaror.</p>
+        </div>
+      </div>
+      <div style="margin-top:12px; padding:10px 12px; background:rgba(255,210,63,.06); border-radius:6px; border:1px solid rgba(255,210,63,.2); font-size:11px;" class="muted">
+        ⚠️ Bu ta'lim simulyatori. SHATS CYBER CODE tangasi haqiqiy bozor aktivi emas. Haqiqiy bozorlar ancha murakkab.
+      </div>
+    </div>
+  </div>
+
+  <!-- O'NG: TIKLOV PANELI -->
+  <div style="position:sticky; top:70px; display:flex; flex-direction:column; gap:12px;">
+
+    <!-- BALANS -->
+    <div class="cs-card" style="padding:12px 14px;">
+      <div class="flex-between">
+        <span class="muted" style="font-size:11px;">Balansingiz</span>
+        <strong style="font-size:15px; color:var(--cs-text-primary);">⚡ <span id="balanceDisplay">{{ "{:,}".format(current_user.code_balance or 0) }}</span></strong>
+      </div>
+    </div>
+
+    {% if open_pos %}
+    <!-- OCHIQ POZITSIYA -->
+    <div class="cs-card" style="border-color:{{ 'rgba(0,255,65,.5)' if open_pos.direction=='up' else 'rgba(255,85,85,.5)' }}; text-align:center;">
+      <div class="muted" style="font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Ochiq tiklov</div>
+      <div style="font-size:26px; font-weight:800; margin-bottom:6px;">{{ '⬆ YUQORI' if open_pos.direction=='up' else '⬇ PASTGA' }}</div>
+      <div style="font-size:13px; margin-bottom:12px;">⚡ <strong>{{ "{:,}".format(open_pos.amount) }}</strong> CODE</div>
+      <div style="display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:12px;">
+        <span class="muted">Kirish narxi</span>
+        <strong>{{ "%.4f"|format(open_pos.entry_price) }}</strong>
+      </div>
+      <div class="muted" style="font-size:10px; margin-bottom:4px;">Qolgan vaqt</div>
+      <div id="countdown" style="font-family:var(--cs-font-display); font-size:36px; font-weight:800;">—</div>
+      <div id="openProfitDisplay" style="font-size:12px; margin-top:8px;" class="muted">—</div>
+    </div>
+
+    {% else %}
+    <!-- TIKLOV QO'YISH -->
+    <div class="cs-card">
+      <h3 style="font-size:12px; margin-bottom:12px; text-align:center;">{{ icon('zap',13) }} TIKLOV QO'YISH</h3>
+
+      <div class="muted" style="font-size:10.5px; margin-bottom:5px;">Miqdor (CODE)</div>
+      <input type="number" id="betAmount" class="cs-input" value="500" min="100" max="100000" style="margin-bottom:8px; font-size:14px; font-weight:700; text-align:center;">
+
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin-bottom:12px;">
+        {% for v in [100, 500, 1000, 5000] %}
+        <button class="cs-btn cs-btn-sm" onclick="document.getElementById('betAmount').value='{{ v }}'" style="font-size:10px;">{{ v }}</button>
+        {% endfor %}
+      </div>
+
+      <div class="muted" style="font-size:10.5px; margin-bottom:5px;">Muddat</div>
+      <select id="betDuration" class="cs-input" style="margin-bottom:14px;">
+        <option value="15">15 soniya</option>
+        <option value="30" selected>30 soniya</option>
+        <option value="60">1 daqiqa</option>
+        <option value="120">2 daqiqa</option>
+      </select>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+        <button id="betUpBtn" class="cs-btn" style="background:rgba(0,200,83,.15); border-color:rgba(0,200,83,.4); color:#00c853; font-size:13px; font-weight:700; padding:16px 8px;" onclick="placeBet('up')">
+          ⬆<br><span style="font-size:10px;">YUQORI</span>
+        </button>
+        <button id="betDownBtn" class="cs-btn" style="background:rgba(255,85,85,.15); border-color:rgba(255,85,85,.4); color:#ff5555; font-size:13px; font-weight:700; padding:16px 8px;" onclick="placeBet('down')">
+          ⬇<br><span style="font-size:10px;">PASTGA</span>
+        </button>
+      </div>
+
+      <div style="font-size:10px; text-align:center; padding:8px; background:rgba(255,255,255,.03); border-radius:6px;">
+        <div class="muted">G'alaba: <span style="color:var(--cs-text-primary);">+95% foyda</span></div>
+        <div class="muted">Zarar: <span style="color:#ff5555;">-100% tiklov</span></div>
+        <div class="muted">Komisyon: 2%</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- TARIXI QO'YISH PANEL ICHIDA -->
+    <div class="cs-card" style="max-height:300px; overflow-y:auto;">
+      <div style="font-size:11px; font-weight:700; margin-bottom:10px;">{{ icon('clock',12) }} Oxirgi tiklovlar</div>
+      {% for h in history[:10] %}
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,.05);">
+        <div>
+          <div style="font-size:11px;">{{ '⬆' if h.direction=='up' else '⬇' }} ⚡{{ "{:,}".format(h.amount) }}</div>
+          <div class="muted" style="font-size:9.5px;">{{ h.opened_at|tashkent_time }}</div>
+        </div>
+        <div style="text-align:right;">
+          {% if h.status == 'open' %}<span style="color:#ffd23f; font-size:10px;">Ochiq</span>
+          {% elif h.status == 'won' %}<span style="color:var(--cs-text-primary); font-size:11px;">+{{ "{:,}".format(h.profit_loss) }}</span>
+          {% elif h.status == 'lost' %}<span style="color:#ff5555; font-size:11px;">{{ "{:,}".format(h.profit_loss) }}</span>
+          {% else %}<span class="muted" style="font-size:10px;">Bekor</span>{% endif %}
+        </div>
+      </div>
+      {% else %}
+      <p class="muted" style="font-size:11px; text-align:center; padding:16px;">Tiklovlar yo'q</p>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+</style>
+<script>
+var prices = [];
+var MAX_POINTS = 300;
+var canvas = document.getElementById('priceChart');
+var ctx = canvas.getContext('2d');
+var openPos = {{ open_pos | tojson if open_pos else 'null' }};
+var entryPrice = openPos ? parseFloat(openPos.entry_price) : null;
+var duration = openPos ? parseInt(openPos.duration_seconds) : 0;
+var openedAt = openPos ? new Date(openPos.opened_at.replace(' ', 'T') + '+05:00') : null;
+
+function resizeCanvas() {
+    var rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width * window.devicePixelRatio;
+    canvas.height = 280 * window.devicePixelRatio;
+    canvas.style.height = '280px';
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    drawChart();
+}
+window.addEventListener('resize', resizeCanvas);
+
+function drawChart() {
+    if (prices.length < 2) return;
+    var w = canvas.width / window.devicePixelRatio;
+    var h = 280;
+    ctx.clearRect(0, 0, w, h);
+
+    var vals = prices.map(function(p){ return p.price; });
+    var minV = Math.min.apply(null, vals), maxV = Math.max.apply(null, vals);
+    var pad = 0.002; minV = minV * (1-pad); maxV = maxV * (1+pad);
+    var range = maxV - minV || 0.001;
+    var PL = 52, PR = 8, PT = 12, PB = 22;
+    var cw = w - PL - PR, ch = h - PT - PB;
+
+    function toX(i){ return PL + (i/(prices.length-1||1))*cw; }
+    function toY(v){ return PT + ch - ((v-minV)/range)*ch; }
+
+    // Grid
+    ctx.strokeStyle='rgba(0,255,65,0.07)'; ctx.lineWidth=1;
+    for(var gi=0;gi<=4;gi++){
+        var gy=PT+(ch/4)*gi;
+        ctx.beginPath(); ctx.moveTo(PL,gy); ctx.lineTo(PL+cw,gy); ctx.stroke();
+        ctx.fillStyle='rgba(0,255,65,0.45)'; ctx.font='9px monospace'; ctx.textAlign='right';
+        ctx.fillText((maxV-(range/4)*gi).toFixed(4), PL-3, gy+3);
+    }
+
+    // Entry line
+    if (entryPrice !== null) {
+        var ey = toY(entryPrice);
+        ctx.save(); ctx.strokeStyle='rgba(255,210,63,0.7)';
+        ctx.setLineDash([4,3]); ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(PL,ey); ctx.lineTo(PL+cw,ey); ctx.stroke();
+        ctx.setLineDash([]); ctx.restore();
+        ctx.fillStyle='#ffd23f'; ctx.font='bold 9px monospace'; ctx.textAlign='right';
+        ctx.fillText('E:'+entryPrice.toFixed(4), PL-2, ey-2);
+    }
+
+    // Narx chizig'i gradient rang (ko'tarilgan=yashil, tushgan=qizil)
+    var lastDir = prices.length > 1 ? (prices[prices.length-1].price >= prices[prices.length-2].price ? 1 : -1) : 0;
+    var lineColor = lastDir >= 0 ? '#00ff41' : '#ff5555';
+    ctx.strokeStyle = lineColor; ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    prices.forEach(function(p,i){ i===0 ? ctx.moveTo(toX(i),toY(p.price)) : ctx.lineTo(toX(i),toY(p.price)); });
+    ctx.stroke();
+
+    // Gradient to'ldirish
+    var grad = ctx.createLinearGradient(0,PT,0,PT+ch);
+    grad.addColorStop(0, lastDir>=0?'rgba(0,255,65,0.18)':'rgba(255,85,85,0.18)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.01)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    prices.forEach(function(p,i){ i===0?ctx.moveTo(toX(i),toY(p.price)):ctx.lineTo(toX(i),toY(p.price)); });
+    ctx.lineTo(PL+cw, PT+ch); ctx.lineTo(PL, PT+ch); ctx.fill();
+
+    // Oxirgi narx nuqtasi
+    var lp = prices[prices.length-1];
+    var lx=toX(prices.length-1), ly=toY(lp.price);
+    ctx.fillStyle=lineColor; ctx.beginPath(); ctx.arc(lx,ly,3,0,Math.PI*2); ctx.fill();
+
+    // Min/Max
+    var hi=document.getElementById('highLabel'), lo=document.getElementById('lowLabel');
+    if(hi) hi.textContent='MAX: '+maxV.toFixed(4);
+    if(lo) lo.textContent='MIN: '+minV.toFixed(4);
+}
+
+var tickRunning = false;
+function tickPrice() {
+    if (tickRunning) return;
+    tickRunning = true;
+    fetch('/api/trading/tick', {credentials:'same-origin'})
+        .then(function(r){return r.json();})
+        .then(function(d){
+            tickRunning = false;
+            if(!d.success) return;
+            var p = d.data;
+            prices.push({price:p.price});
+            if(prices.length > MAX_POINTS) prices.shift();
+
+            var el=document.getElementById('livePriceDisplay');
+            var ce=document.getElementById('liveChangeDisplay');
+            if(el){
+                el.textContent = p.formatted;
+                el.style.color = p.direction>0?'#00ff41':(p.direction<0?'#ff5555':'inherit');
+            }
+            if(ce){
+                ce.textContent = p.change_str;
+                ce.style.color = p.direction>0?'#00ff41':(p.direction<0?'#ff5555':'#888');
+            }
+            drawChart();
+            updateCountdown(p.price);
+        }).catch(function(){ tickRunning=false; });
+}
+
+function updateCountdown(currentPrice) {
+    if (!openPos || !openedAt) return;
+    var elapsed = (Date.now() - openedAt.getTime()) / 1000;
+    var remaining = Math.max(0, duration - elapsed);
+    var el = document.getElementById('countdown');
+    if(el) el.textContent = remaining < 1 ? '⏳' : Math.ceil(remaining)+'s';
+
+    var profitEl = document.getElementById('openProfitDisplay');
+    if(profitEl && entryPrice && currentPrice) {
+        var diff = currentPrice - entryPrice;
+        var isWin = (openPos.direction==='up' && diff>0)||(openPos.direction==='down' && diff<0);
+        profitEl.textContent = isWin ? '✓ Hozircha g\'alaba tomonda' : '✗ Hozircha zarar tomonda';
+        profitEl.style.color = isWin ? '#00ff41' : '#ff5555';
+    }
+
+    if (remaining < 0.5) {
+        setTimeout(function(){ window.location.reload(); }, 1500);
+    }
+}
+
+window.placeBet = function(dir) {
+    var amount = parseInt(document.getElementById('betAmount').value, 10)||0;
+    var dur = parseInt(document.getElementById('betDuration').value, 10)||30;
+    if(amount < 100){ alert('Minimal 100 CODE'); return; }
+    document.getElementById('betUpBtn').disabled=true;
+    document.getElementById('betDownBtn').disabled=true;
+    fetch('/api/trading/open',{
+        method:'POST', credentials:'same-origin',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({direction:dir, amount:amount, duration:dur})
+    }).then(function(r){return r.json();})
+      .then(function(d){
+          if(d.success){ window.location.reload(); }
+          else{
+              alert(d.error||'Xato yuz berdi');
+              document.getElementById('betUpBtn').disabled=false;
+              document.getElementById('betDownBtn').disabled=false;
+          }
+      }).catch(function(){
+          document.getElementById('betUpBtn').disabled=false;
+          document.getElementById('betDownBtn').disabled=false;
+      });
+};
+
+// Boshlang'ich tarixi yuklash
+fetch('/api/trading/chart',{credentials:'same-origin'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+        if(d.success && d.data.prices){
+            prices = d.data.prices.map(function(p){return {price:p.price};});
+            resizeCanvas();
+        }
+    });
+
+resizeCanvas();
+setInterval(tickPrice, 100);
+</script>
+{% endblock %}

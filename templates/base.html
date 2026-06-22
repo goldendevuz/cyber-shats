@@ -24,6 +24,35 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/cyber-pro.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/vip-theme.css') }}">
 {% block extra_head %}{% endblock %}
+{% if current_user and current_user.plan in ('cyber_pro','vip','shats_cyber_pro','shats_pro') %}
+<style id="userThemeVars">/* Foydalanuvchi shaxsiy temasi yuklanmoqda... */</style>
+<script>
+(function(){
+    fetch('/api/user/theme',{credentials:'same-origin'})
+        .then(function(r){return r.json();})
+        .then(function(d){
+            if(!d.success || !d.data.has_theme) return;
+            var t = d.data.theme;
+            var css = ':root{' +
+                '--cs-text-primary:' + t.primary_color + ';' +
+                '--cs-text-secondary:' + t.secondary_color + ';' +
+                '--cs-text-accent:' + t.accent_color + ';' +
+                '--cs-bg-body:' + t.bg_color + ';' +
+                '--cs-bg-card:' + t.card_bg + ';' +
+                '--cs-border:' + t.border_color + ';' +
+            '}';
+            if(t.font_style === 'sans'){
+                css += 'body,p,span,div{font-family:system-ui,sans-serif!important;}';
+            }
+            var glow_map = {low:'2px',medium:'6px',high:'12px',off:'0'};
+            var glow = glow_map[t.glow_intensity] || '6px';
+            css += '.pulse-glow{box-shadow:0 0 ' + glow + ' ' + t.primary_color + '!important;}';
+            document.getElementById('userThemeVars').textContent = css;
+            document.body.style.backgroundColor = t.bg_color;
+        }).catch(function(){});
+})();
+</script>
+{% endif %}
 </head>
 <body class="{% block body_class %}{% endblock %} {{ 'cyber-pro-theme' if current_user and current_user.plan == 'cyber_pro' }} {{ 'vip-theme' if current_user and current_user.plan == 'vip' }} {{ 'treasury-session' if not current_user and session.get('treasury_account_id') }}">
 

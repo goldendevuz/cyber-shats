@@ -1,0 +1,80 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Trading Admin Paneli{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <h1 style="font-size:19px;">{{ icon('trending-up',18) }} TRADING — ADMIN BOSHQARUV</h1>
+  <a href="{{ url_for('admin_dashboard') }}" class="cs-btn cs-btn-sm">← Admin Panel</a>
+</div>
+
+<!-- STATISTIKA -->
+<div class="grid grid-4" style="gap:12px; margin-bottom:20px;">
+  <div class="cs-card" style="text-align:center;">
+    <div class="muted" style="font-size:10px;">JAMI TIKLOVLAR</div>
+    <div style="font-size:26px; font-weight:800; margin-top:6px;">{{ stats.total_trades if stats else 0 }}</div>
+  </div>
+  <div class="cs-card" style="text-align:center;">
+    <div class="muted" style="font-size:10px;">G'ALABA / ZARAR</div>
+    <div style="font-size:22px; font-weight:800; margin-top:6px;">
+      <span style="color:var(--cs-text-primary);">{{ stats.total_won if stats else 0 }}</span>
+      <span class="muted">/</span>
+      <span style="color:#ff5555;">{{ (stats.total_trades - stats.total_won) if stats else 0 }}</span>
+    </div>
+  </div>
+  <div class="cs-card" style="text-align:center;">
+    <div class="muted" style="font-size:10px;">PLATFORMA DAROMADI</div>
+    <div style="font-size:22px; font-weight:800; color:#ffd23f; margin-top:6px;">⚡ {{ "{:,}".format(stats.platform_commission if stats else 0) }}</div>
+  </div>
+  <div class="cs-card" style="text-align:center;">
+    <div class="muted" style="font-size:10px;">JORIY NARX</div>
+    <div style="font-size:22px; font-weight:800; color:var(--cs-text-primary); margin-top:6px;">{{ "%.4f"|format(current.price) }}</div>
+  </div>
+</div>
+
+<!-- BOSHQARUV TUGMALARI -->
+<div class="cs-card" style="margin-bottom:20px;">
+  <h3 style="font-size:13px; margin-bottom:12px;">{{ icon('settings',14) }} NAZORAT</h3>
+  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+    <form method="post" action="{{ url_for('admin_trading_reset_price') }}" onsubmit="return confirm('Narxni 1.0 ga qaytarasizmi?');">
+      <button class="cs-btn cs-btn-sm">{{ icon('refresh-cw',12) }} Narxni qaytarish (1.0)</button>
+    </form>
+    <form method="post" action="{{ url_for('admin_trading_close_all') }}" onsubmit="return confirm('Barcha ochiq pozitsiyalarni yopib, tiklovlarni qaytarasizmi?');">
+      <button class="cs-btn cs-btn-sm cs-btn-danger">{{ icon('x',12) }} Barcha ochiq pozitsiyalarni yopish</button>
+    </form>
+    <a href="{{ url_for('trading_page') }}" class="cs-btn cs-btn-sm" target="_blank">{{ icon('external-link',12) }} Trading sahifasini ko'rish</a>
+  </div>
+</div>
+
+<!-- OXIRGI TIKLOVLAR -->
+<div class="cs-card">
+  <h3 style="font-size:13px; margin-bottom:12px;">{{ icon('clock',14) }} OXIRGI 50 TA TIKLOV</h3>
+  <table class="cs-table">
+    <thead>
+      <tr><th>Foydalanuvchi</th><th>ID</th><th>Yo'nalish</th><th>Miqdor</th><th>Kirish</th><th>Chiqish</th><th>Natija</th><th>Vaqt</th></tr>
+    </thead>
+    <tbody>
+    {% for r in recent %}
+    <tr>
+      <td>{{ r.ism }} {{ r.familiya }}</td>
+      <td class="muted" style="font-size:10px;">#{{ r.custom_id }}</td>
+      <td>{{ '⬆ UP' if r.direction=='up' else '⬇ DOWN' }}</td>
+      <td>⚡ {{ "{:,}".format(r.amount) }}</td>
+      <td class="muted" style="font-size:11px;">{{ "%.4f"|format(r.entry_price) }}</td>
+      <td class="muted" style="font-size:11px;">{{ "%.4f"|format(r.exit_price) if r.exit_price else '—' }}</td>
+      <td>
+        {% if r.status == 'open' %}<span style="color:#ffd23f; font-size:10px;">Ochiq</span>
+        {% elif r.status == 'won' %}<span style="color:var(--cs-text-primary);">+{{ "{:,}".format(r.profit_loss) }}</span>
+        {% elif r.status == 'lost' %}<span style="color:#ff5555;">{{ "{:,}".format(r.profit_loss) }}</span>
+        {% else %}<span class="muted" style="font-size:10px;">Bekor</span>{% endif %}
+      </td>
+      <td class="muted" style="font-size:10px;">{{ r.opened_at|tashkent_time }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8" class="muted" style="text-align:center; padding:20px;">Hozircha tiklovlar yo'q</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

@@ -627,7 +627,6 @@ def handle_callback(callback):
     if data == "menu:help":
         tg_send_message(chat_id, t(lang, "help_text"), reply_markup=kb_main_menu(lang))
         return
-        return
 
     # Code paketi tanlandi
     if data.startswith("code:"):
@@ -698,10 +697,23 @@ def handle_text(chat_id, text, user_info):
     if state in ("awaiting_id_for_code", "awaiting_id_for_course"):
         cid = text.strip().lstrip("#").strip()
         if not cid.isdigit():
-            tg_send_message(chat_id, t(lang, "id_invalid")); return
+            tg_send_message(chat_id,
+                "❌ ID noto'g'ri formatda.\n\n"
+                "Saytdagi ID raqamingizni kiriting (faqat raqamlar).\n"
+                "Masalan: `1342835`\n\n"
+                "ID ni saytda Profil → ID raqamingiz bo'limidan topishingiz mumkin.",
+                reply_markup=kb_cancel_back(lang))
+            return
         site_user = find_site_user_by_custom_id(cid)
         if not site_user:
-            tg_send_message(chat_id, t(lang, "id_not_found")); return
+            tg_send_message(chat_id,
+                f"❌ #{cid} ID saytda topilmadi.\n\n"
+                "Ehtimoliy sabablar:\n"
+                "• ID noto'g'ri kiritilgan\n"
+                "• Saytda hali ro'yxatdan o'tilmagan\n\n"
+                "Saytdagi ID raqamingizni kiriting (profil sahifasida ko'rinadi):",
+                reply_markup=kb_cancel_back(lang))
+            return
         # ID tasdiqlandi
         full_name = f"{site_user['ism']} {site_user.get('familiya','')}".strip()
         tg_send_message(chat_id, t(lang, "id_confirmed", cid=cid, name=full_name))

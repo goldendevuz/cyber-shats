@@ -48,9 +48,141 @@
         <button type="submit" class="cs-btn cs-btn-danger">{{ icon('x',14) }} Hisobni o'chirish</button>
     </form>
 </div>
+
+{% if current_user.plan in ('cyber_pro','vip','shats_cyber_pro','shats_pro') %}
+<div class="cs-card" style="max-width:560px; border-color:rgba(255,210,63,.3);">
+  <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('sun',14) }} VIZUAL SOZLAMALAR — SHATS CYBER PRO</h3>
+  <form method="post" id="themeForm">
+    <input type="hidden" name="action" value="save_theme">
+    <div class="grid grid-3" style="gap:10px; margin-bottom:14px;">
+      <div>
+        <label class="muted" style="font-size:10px; display:block; margin-bottom:4px;">Asosiy rang</label>
+        <input type="color" name="primary_color" value="{{ user_theme.primary_color if user_theme else '#00ff41' }}" class="color-inp">
+        <div class="muted" style="font-size:9px;">Tugmalar, sarlavhalar</div>
+      </div>
+      <div>
+        <label class="muted" style="font-size:10px; display:block; margin-bottom:4px;">Ikkilamchi rang</label>
+        <input type="color" name="secondary_color" value="{{ user_theme.secondary_color if user_theme else '#00b8d9' }}" class="color-inp">
+        <div class="muted" style="font-size:9px;">Havolalar, dekorativ</div>
+      </div>
+      <div>
+        <label class="muted" style="font-size:10px; display:block; margin-bottom:4px;">Aksent</label>
+        <input type="color" name="accent_color" value="{{ user_theme.accent_color if user_theme else '#ffd23f' }}" class="color-inp">
+        <div class="muted" style="font-size:9px;">Belgilar, CODE</div>
+      </div>
+      <div>
+        <label class="muted" style="font-size:10px; display:block; margin-bottom:4px;">Fon rangi</label>
+        <input type="color" name="bg_color" value="{{ user_theme.bg_color if user_theme else '#0a0a0a' }}" class="color-inp">
+        <div class="muted" style="font-size:9px;">Sahifa foni</div>
+      </div>
+      <div>
+        <label class="muted" style="font-size:10px; display:block; margin-bottom:4px;">Karta foni</label>
+        <input type="color" name="card_bg" value="{{ user_theme.card_bg if user_theme else '#111111' }}" class="color-inp">
+        <div class="muted" style="font-size:9px;">Karta, panel foni</div>
+      </div>
+      <div>
+        <label class="muted" style="font-size:10px; display:block; margin-bottom:4px;">Chegara</label>
+        <input type="color" name="border_color" value="{{ user_theme.border_color if user_theme else '#1a1a1a' }}" class="color-inp">
+        <div class="muted" style="font-size:9px;">Karta chegarasi</div>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+      <div>
+        <label class="muted" style="font-size:10.5px; display:block; margin-bottom:6px;">Shrift uslubi</label>
+        <select name="font_style" class="cs-input">
+          <option value="mono" {{ 'selected' if not user_theme or user_theme.font_style=='mono' }}>Monospace (standart)</option>
+          <option value="sans" {{ 'selected' if user_theme and user_theme.font_style=='sans' }}>Sans-serif (zamonaviy)</option>
+        </select>
+      </div>
+      <div>
+        <label class="muted" style="font-size:10.5px; display:block; margin-bottom:6px;">Glow intensivligi</label>
+        <select name="glow_intensity" class="cs-input">
+          <option value="off" {{ 'selected' if user_theme and user_theme.glow_intensity=='off' }}>O'chirilgan</option>
+          <option value="low" {{ 'selected' if user_theme and user_theme.glow_intensity=='low' }}>Past</option>
+          <option value="medium" {{ 'selected' if not user_theme or user_theme.glow_intensity=='medium' }}>O'rta</option>
+          <option value="high" {{ 'selected' if user_theme and user_theme.glow_intensity=='high' }}>Yuqori</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Oldindan tayyorlangan temalar -->
+    <div class="muted" style="font-size:10.5px; margin-bottom:8px;">Tayyor temalar:</div>
+    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px;">
+      <button type="button" class="cs-btn cs-btn-sm" onclick="applyPreset('green')" style="background:rgba(0,255,65,.1); border-color:rgba(0,255,65,.4);">🟢 Standart</button>
+      <button type="button" class="cs-btn cs-btn-sm" onclick="applyPreset('blue')" style="background:rgba(0,150,255,.1); border-color:rgba(0,150,255,.4);">🔵 Ko'k</button>
+      <button type="button" class="cs-btn cs-btn-sm" onclick="applyPreset('red')" style="background:rgba(255,50,50,.1); border-color:rgba(255,50,50,.4);">🔴 Qizil</button>
+      <button type="button" class="cs-btn cs-btn-sm" onclick="applyPreset('purple')" style="background:rgba(150,50,255,.1); border-color:rgba(150,50,255,.4);">🟣 Binafsha</button>
+      <button type="button" class="cs-btn cs-btn-sm" onclick="applyPreset('gold')" style="background:rgba(255,180,0,.1); border-color:rgba(255,180,0,.4);">🟡 Oltin</button>
+      <button type="button" class="cs-btn cs-btn-sm" onclick="applyPreset('white')" style="background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.3);">⚪ Yorug'</button>
+    </div>
+
+    <button type="submit" class="cs-btn cs-btn-primary">{{ icon('save',13) }} Saqlash</button>
+    <button type="button" class="cs-btn cs-btn-sm" style="margin-left:8px;" onclick="applyPreset('green')">{{ icon('refresh-cw',12) }} Asl holat</button>
+  </form>
+</div>
+{% else %}
+<div class="cs-card" style="max-width:560px; background:rgba(255,210,63,.03); border-color:rgba(255,210,63,.2);">
+  <h3 style="font-size:13px; margin-bottom:8px;">{{ icon('sun',14) }} VIZUAL SOZLAMALAR</h3>
+  <p class="muted" style="font-size:12px;">O'zingizning ranglar va dizaynni sozlash — <strong>SHATS CYBER PRO</strong> foydalanuvchilar uchun. <a href="{{ url_for('pricing') }}" class="cyan">PRO'ga o'tish →</a></p>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
+<style>
+.color-inp {
+    width: 100%;
+    height: 40px;
+    border: 1px solid var(--cs-border);
+    border-radius: 6px;
+    padding: 2px;
+    background: var(--cs-bg-input);
+    cursor: pointer;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var PRESETS = {
+    green:  {primary:'#00ff41',secondary:'#00b8d9',accent:'#ffd23f',bg:'#0a0a0a',card:'#111111',border:'#1a1a1a'},
+    blue:   {primary:'#0096ff',secondary:'#00d9ff',accent:'#ffd23f',bg:'#050a10',card:'#0a1018',border:'#0f1e2a'},
+    red:    {primary:'#ff3232',secondary:'#ff6060',accent:'#ffd23f',bg:'#0a0505',card:'#140a0a',border:'#2a0f0f'},
+    purple: {primary:'#9632ff',secondary:'#c060ff',accent:'#00ff41',bg:'#080510',card:'#100a18',border:'#200a30'},
+    gold:   {primary:'#ffb400',secondary:'#ffd23f',accent:'#00ff41',bg:'#0a0800',card:'#141000',border:'#2a2000'},
+    white:  {primary:'#e0e0e0',secondary:'#b0c8ff',accent:'#ffd23f',bg:'#1a1a1a',card:'#242424',border:'#333333'},
+};
+
+function applyPreset(name) {
+    var p = PRESETS[name];
+    if (!p) return;
+    var form = document.getElementById('themeForm');
+    form.querySelector('[name=primary_color]').value = p.primary;
+    form.querySelector('[name=secondary_color]').value = p.secondary;
+    form.querySelector('[name=accent_color]').value = p.accent;
+    form.querySelector('[name=bg_color]').value = p.bg;
+    form.querySelector('[name=card_bg]').value = p.card;
+    form.querySelector('[name=border_color]').value = p.border;
+    // Live preview
+    document.getElementById('userThemeVars').textContent =
+        ':root{--cs-text-primary:'+p.primary+';--cs-text-secondary:'+p.secondary+
+        ';--cs-bg-body:'+p.bg+';--cs-bg-card:'+p.card+';--cs-border:'+p.border+';}';
+}
+
+// Live preview — rang o'zgarganda darhol ko'rsatish
+document.addEventListener('input', function(e) {
+    if (e.target.type !== 'color') return;
+    var form = document.getElementById('themeForm');
+    if (!form) return;
+    var css = ':root{' +
+        '--cs-text-primary:' + form.querySelector('[name=primary_color]').value + ';' +
+        '--cs-text-secondary:' + form.querySelector('[name=secondary_color]').value + ';' +
+        '--cs-bg-body:' + form.querySelector('[name=bg_color]').value + ';' +
+        '--cs-bg-card:' + form.querySelector('[name=card_bg]').value + ';' +
+        '--cs-border:' + form.querySelector('[name=border_color]').value + ';' +
+    '}';
+    var el = document.getElementById('userThemeVars');
+    if (el) el.textContent = css;
+});
+</script>
 <script>
 (function() {
     var statusEl = document.getElementById('pushStatus');

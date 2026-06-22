@@ -39,6 +39,7 @@ import coins_purchase
 import social
 import startups as startups_mod
 import code_runner
+import trading as trading_mod
 from oauth_routes import oauth_bp
 from ids import (generate_unique_id, set_user_id, get_premium_ids_list,
                  buy_premium_id, get_active_auctions, place_bid, finalize_auction,
@@ -1372,6 +1373,33 @@ def admin_startup_auction_cancel(auction_id):
     return redirect(url_for("startup_auctions_list"))
 
 
+@app.route("/admin/startup-auctions/<int:auction_id>/extend", methods=["POST"])
+@admin_required
+def admin_startup_auction_extend(auction_id):
+    """Auksion muddatini uzaytirish yoki qisqartirish (admin)."""
+    import datetime
+    try:
+        hours = int(request.form.get("hours", 0))
+    except ValueError:
+        hours = 0
+    if not hours:
+        flash("Soat miqdori noto'g'ri.", "error")
+        return redirect(url_for("startup_auctions_list"))
+    from db import execute as db_execute, query_one as db_q
+    auction = db_q("SELECT ends_at FROM startup_auctions WHERE id=?", (auction_id,))
+    if not auction:
+        flash("Auksion topilmadi.", "error")
+        return redirect(url_for("startup_auctions_list"))
+    try:
+        old_end = datetime.datetime.fromisoformat(auction["ends_at"])
+    except Exception:
+        old_end = datetime.datetime.now()
+    new_end = (old_end + datetime.timedelta(hours=hours)).isoformat()
+    db_execute("UPDATE startup_auctions SET ends_at=? WHERE id=?", (new_end, auction_id))
+    flash(f"Auksion muddati {'+' if hours>0 else ''}{hours} soat o'zgartirildi.", "success")
+    return redirect(url_for("startup_auctions_list"))
+
+
 # =================================================================
 # STARTAPLAR AUKSIONI — foydalanuvchi tomondan
 # =================================================================
@@ -1405,6 +1433,103 @@ def startup_auction_bid(auction_id):
     ok, msg = startups_mod.place_bid(auction_id, user["id"], amount)
     flash(msg, "success" if ok else "error")
     return redirect(url_for("startup_auction_detail", auction_id=auction_id))
+
+
+@app.route("/trading")
+@login_required
+def trading_page():
+    user = get_current_user()
+    open_pos = trading_mod.get_user_open_position(user["id"])
+    history = trading_mod.get_user_history(user["id"], 30)
+    current_price = trading_mod.get_current_price()
+    stats = trading_mod.get_trading_stats()
+    return render_template("trading.html", open_pos=open_pos, history=history,
+                           current_price=current_price, stats=stats)
+
+
+@app.route("/api/trading/tick")
+def api_trading_tick():
+    result = trading_mod.tick_price()
+    return api_response(True, data=result)
+
+
+@app.route("/api/trading/open", methods=["POST"])
+@api_login_required
+def api_trading_open():
+    user = get_current_user()
+    data = request.get_json(silent=True) or {}
+    direction = data.get("direction", "up")
+    try:
+        amount = int(data.get("amount", 0))
+    except (ValueError, TypeError):
+        amount = 0
+    try:
+        duration = int(data.get("duration", 30))
+    except (ValueError, TypeError):
+        duration = 30
+    ok, msg, pos_id = trading_mod.open_position(user["id"], direction, amount, duration)
+    return api_response(ok, data={"pos_id": pos_id} if ok else None,
+                        error=msg if not ok else None)
+
+
+@app.route("/api/trading/status")
+@api_login_required
+def api_trading_status():
+    user = get_current_user()
+    pos = trading_mod.get_user_open_position(user["id"])
+    current = trading_mod.get_current_price()
+    return api_response(True, data={
+        "current_price": current,
+        "open_position": dict(pos) if pos else None,
+        "balance": get_balance(user["id"]),
+    })
+
+
+@app.route("/api/trading/chart")
+def api_trading_chart():
+    history = trading_mod.get_price_history(300)
+    return api_response(True, data={"prices": history})
+
+
+# ---- Admin trading paneli ----
+@app.route("/admin/trading")
+@admin_required
+def admin_trading():
+    stats = trading_mod.get_trading_stats()
+    recent = query_all(
+        """SELECT p.*, u.ism, u.familiya, u.custom_id
+           FROM trading_positions p JOIN users u ON u.id=p.user_id
+           ORDER BY p.id DESC LIMIT 50"""
+    )
+    current = trading_mod.get_current_price()
+    return render_template("admin_trading.html", stats=stats, recent=recent, current=current)
+
+
+@app.route("/admin/trading/reset-price", methods=["POST"])
+@admin_required
+def admin_trading_reset_price():
+    """Narxni bazaviy 1.0 ga qaytaradi."""
+    from db import execute as db_execute
+    db_execute("INSERT INTO trading_prices (price, change_pct, direction) VALUES (1.0, 0, 0)")
+    flash("Narx 1.0 ga qaytarildi.", "success")
+    return redirect(url_for("admin_trading"))
+
+
+@app.route("/admin/trading/close-all", methods=["POST"])
+@admin_required
+def admin_trading_close_all():
+    """Barcha ochiq pozitsiyalarni majburiy yopadi (tiklov qaytariladi)."""
+    open_positions = query_all("SELECT * FROM trading_positions WHERE status='open'")
+    for pos in open_positions:
+        from coins import add_coins
+        add_coins(pos["user_id"], pos["amount"], "trading_admin_cancel")
+        query_all("UPDATE trading_positions SET status='cancelled', closed_at=datetime('now') WHERE id=?",
+                  (pos["id"],))
+    from db import execute as db_execute
+    db_execute("UPDATE trading_positions SET status='cancelled', closed_at=datetime('now') WHERE status='open'")
+    flash(f"{len(open_positions)} ta ochiq pozitsiya yopildi, tiklovlar qaytarildi.", "success")
+    return redirect(url_for("admin_trading"))
+
 
 
 @app.route("/tests")
@@ -1807,8 +1932,56 @@ def settings():
             session.clear()
             flash("Hisobingiz o'chirish so'rovi qabul qilindi.", "info")
             return redirect(url_for("index"))
+        elif action == "save_theme":
+            # PRO+ foydalanuvchilar uchun vizual tema
+            if user.get("plan") not in ("cyber_pro", "vip", "shats_cyber_pro", "shats_pro"):
+                flash("Vizual tema — SHATS CYBER PRO foydalanuvchilar uchun.", "error")
+            else:
+                primary = request.form.get("primary_color", "#00ff41")[:7]
+                secondary = request.form.get("secondary_color", "#00b8d9")[:7]
+                accent = request.form.get("accent_color", "#ffd23f")[:7]
+                bg = request.form.get("bg_color", "#0a0a0a")[:7]
+                card_bg = request.form.get("card_bg", "#111111")[:7]
+                border = request.form.get("border_color", "#1a1a1a")[:7]
+                font_style = request.form.get("font_style", "mono")
+                glow = request.form.get("glow_intensity", "medium")
+                execute(
+                    """INSERT INTO user_themes
+                       (user_id, primary_color, secondary_color, accent_color,
+                        bg_color, card_bg, border_color, font_style, glow_intensity, updated_at)
+                       VALUES (?,?,?,?,?,?,?,?,?, datetime('now'))
+                       ON CONFLICT(user_id) DO UPDATE SET
+                       primary_color=excluded.primary_color,
+                       secondary_color=excluded.secondary_color,
+                       accent_color=excluded.accent_color,
+                       bg_color=excluded.bg_color,
+                       card_bg=excluded.card_bg,
+                       border_color=excluded.border_color,
+                       font_style=excluded.font_style,
+                       glow_intensity=excluded.glow_intensity,
+                       updated_at=excluded.updated_at""",
+                    (user["id"], primary, secondary, accent, bg, card_bg, border, font_style, glow)
+                )
+                flash("Vizual sozlamalar saqlandi!", "success")
         return redirect(url_for("settings"))
-    return render_template("settings.html")
+    theme = query_one("SELECT * FROM user_themes WHERE user_id=?", (user["id"],))
+    return render_template("settings.html", user_theme=theme)
+
+
+@app.route("/api/user/theme")
+@login_required
+def api_user_theme():
+    """Joriy foydalanuvchining tema CSS o'zgaruvchilarini qaytaradi."""
+    user = get_current_user()
+    if user.get("plan") not in ("cyber_pro", "vip", "shats_cyber_pro", "shats_pro"):
+        return api_response(True, data={"has_theme": False})
+    theme = query_one("SELECT * FROM user_themes WHERE user_id=?", (user["id"],))
+    if not theme:
+        return api_response(True, data={"has_theme": False})
+    return api_response(True, data={
+        "has_theme": True,
+        "theme": dict(theme),
+    })
 
 
 # =================================================================

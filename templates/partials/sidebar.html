@@ -27,6 +27,7 @@
         <a href="{{ url_for('reels_feed') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['reels_feed','reels_create'] }}">{{ icon('play') }} Reels</a>
         <a href="{{ url_for('startups_list') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['startups_list','startup_detail'] }}">{{ icon('briefcase') }} Startaplar</a>
         <a href="{{ url_for('startup_auctions_list') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['startup_auctions_list','startup_auction_detail'] }}" style="color:#ffd23f;">{{ icon('zap') }} Startap Auksioni</a>
+        <a href="{{ url_for('trading_page') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['trading_page'] }}" style="color:var(--cs-text-primary);">{{ icon('trending-up') }} Trading</a>
         <a href="{{ url_for('messages_page') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['messages_page','messages_thread'] }}" style="display:flex; align-items:center; justify-content:space-between;">
             <span>{{ icon('send') }} Xabarlar</span>
             {% if unread_msg_count and unread_msg_count > 0 %}
@@ -51,6 +52,7 @@
         <a href="{{ url_for('admin_certificates') }}" class="cs-nav-item {{ 'active' if request.endpoint=='admin_certificates' }}" style="color:#3366ff;">{{ icon('award') }} Sertifikat arizalari</a>
         <a href="{{ url_for('admin_hacker_lab_security') }}" class="cs-nav-item {{ 'active' if request.endpoint=='admin_hacker_lab_security' }}" style="color:#ff5555;">{{ icon('shield') }} Hacker Lab Xavfsizlik</a>
         <a href="{{ url_for('admin_startups') }}" class="cs-nav-item {{ 'active' if request.endpoint=='admin_startups' }}" style="color:#3366ff;">{{ icon('briefcase') }} Startaplar tasdiqlash</a>
+        <a href="{{ url_for('admin_trading') }}" class="cs-nav-item {{ 'active' if request.endpoint=='admin_trading' }}" style="color:var(--cs-text-primary);">{{ icon('trending-up') }} Trading boshqaruv</a>
         <a href="{{ url_for('admin_ids') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['admin_ids'] }}" style="color:#ffd23f;">{{ icon('hash') }} ID Boshqaruvi</a>
         {% endif %}
         <a href="{{ url_for('profile') }}" class="cs-nav-item {{ 'active' if request.endpoint=='profile' }}">{{ icon('user') }} Profil</a>
