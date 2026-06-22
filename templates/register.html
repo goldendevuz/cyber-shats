@@ -72,4 +72,44 @@
         </div>
     </div>
 </div>
+<!-- 3D Fon (register sahifasi) -->
+<canvas id="regBgCanvas" style="position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.28;"></canvas>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+    if(typeof THREE === 'undefined') return;
+    var canvas = document.getElementById('regBgCanvas');
+    if(!canvas) return;
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+    var renderer = new THREE.WebGLRenderer({ canvas:canvas, antialias:true, alpha:true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.position.z = 100;
+    var count=180, geo=new THREE.BufferGeometry();
+    var pos=new Float32Array(count*3), vel=[];
+    for(var i=0;i<count;i++){
+        pos[i*3]=(Math.random()-.5)*250; pos[i*3+1]=(Math.random()-.5)*200; pos[i*3+2]=(Math.random()-.5)*60;
+        vel.push({x:(Math.random()-.5)*.04, y:(Math.random()-.5)*.04});
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    scene.add(new THREE.Points(geo, new THREE.PointsMaterial({color:0x00ff41, size:0.8, transparent:true, opacity:0.55})));
+    window.addEventListener('resize', function(){
+        camera.aspect=window.innerWidth/window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    (function loop(){
+        requestAnimationFrame(loop);
+        for(var i=0;i<count;i++){
+            pos[i*3]+=vel[i].x; pos[i*3+1]+=vel[i].y;
+            if(Math.abs(pos[i*3])>125) vel[i].x*=-1;
+            if(Math.abs(pos[i*3+1])>100) vel[i].y*=-1;
+        }
+        geo.attributes.position.needsUpdate=true;
+        renderer.render(scene, camera);
+    })();
+})();
+</script>
 {% endblock %}

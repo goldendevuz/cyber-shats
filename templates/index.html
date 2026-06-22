@@ -24,8 +24,10 @@
 
 {% include 'partials/public_nav.html' %}
 
-<section class="hero-section">
-    <div class="container hero-grid">
+<section class="hero-section" style="position:relative; overflow:hidden;">
+    <!-- Fon particle effekti (3D, Three.js) -->
+    <canvas id="heroBgCanvas" style="position:absolute; inset:0; z-index:0; pointer-events:none; opacity:0.45;"></canvas>
+    <div class="container hero-grid" style="position:relative; z-index:1;">
         <div class="hero-copy fade-in-up">
             <div class="tag">// IT TA'LIM PLATFORMASI O'ZBEKISTON</div>
             <h1>BARCHA IT YO'NALISHLARI <span class="accent">BIR JOYDA</span></h1>
@@ -270,4 +272,56 @@
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/globe-intro.js') }}"></script>
+<script>
+// Hero bo'limi uchun suzuvchi particle effekti (Three.js)
+(function(){
+    if(typeof THREE === 'undefined') return;
+    var canvas = document.getElementById('heroBgCanvas');
+    if(!canvas) return;
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+    var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, canvas.parentElement.offsetHeight || 520);
+    camera.position.z = 80;
+
+    var count = 300;
+    var geo = new THREE.BufferGeometry();
+    var positions = new Float32Array(count * 3);
+    var velocities = [];
+    for(var i = 0; i < count; i++){
+        positions[i*3]   = (Math.random()-0.5)*200;
+        positions[i*3+1] = (Math.random()-0.5)*200;
+        positions[i*3+2] = (Math.random()-0.5)*200;
+        velocities.push({ x:(Math.random()-0.5)*0.04, y:(Math.random()-0.5)*0.04, z:0 });
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    var mat = new THREE.PointsMaterial({ color: 0x00ff41, size: 0.7, transparent: true, opacity: 0.7 });
+    var points = new THREE.Points(geo, mat);
+    scene.add(points);
+
+    function resize(){
+        var h = canvas.parentElement.offsetHeight || 520;
+        camera.aspect = window.innerWidth / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, h);
+    }
+    window.addEventListener('resize', resize);
+
+    function animate(){
+        requestAnimationFrame(animate);
+        var pos = geo.attributes.position.array;
+        for(var i = 0; i < count; i++){
+            pos[i*3]   += velocities[i].x;
+            pos[i*3+1] += velocities[i].y;
+            if(Math.abs(pos[i*3])   > 100) velocities[i].x *= -1;
+            if(Math.abs(pos[i*3+1]) > 100) velocities[i].y *= -1;
+        }
+        geo.attributes.position.needsUpdate = true;
+        points.rotation.y += 0.0005;
+        renderer.render(scene, camera);
+    }
+    animate();
+})();
+</script>
 {% endblock %}

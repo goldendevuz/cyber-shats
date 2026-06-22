@@ -2,7 +2,8 @@
 CYBER SHATS V1.3 — Diagnostika skripti
 
 Bu skript loyihangizning to'g'ri o'rnatilganligini tekshiradi va
-nima yetishmayotganini ko'rsatadi.
+nima yetishmayotganini ko'rsatadi (kerakli fayllar, Python kutubxonalari,
+database holati, asosiy sahifalar ishlashi).
 
 Ishga tushirish:  python verify_install.py
 """
@@ -15,36 +16,75 @@ print("=" * 70)
 print(f"\nIshlash papkasi: {os.getcwd()}")
 print(f"Python versiyasi: {sys.version.split()[0]}")
 
-# 1. Kerakli fayllar mavjudligi
-print("\n[1] KERAKLI FAYLLAR:")
+# ============================================================
+# 1. PYTHON KUTUBXONALARI (eng ko'p uchraydigan xato manbai)
+# ============================================================
+print("\n[1] PYTHON KUTUBXONALARI (requirements.txt):")
+required_packages = [
+    ("flask", "Flask"),
+    ("werkzeug", "Werkzeug"),
+    ("reportlab", "reportlab"),
+    ("qrcode", "qrcode"),
+    ("PIL", "Pillow"),
+    ("anthropic", "anthropic"),
+    ("dotenv", "python-dotenv"),
+    ("requests", "requests"),
+    ("pywebpush", "pywebpush"),
+    ("markdown", "Markdown"),
+]
+missing_packages = []
+for import_name, pip_name in required_packages:
+    try:
+        __import__(import_name)
+        print(f"    OK {pip_name}")
+    except ImportError:
+        print(f"    YOQ {pip_name}  <-- O'RNATILMAGAN!")
+        missing_packages.append(pip_name)
+
+if missing_packages:
+    print(f"\n*** DIQQAT: {len(missing_packages)} ta kutubxona o'rnatilmagan! ***")
+    print("    Quyidagi buyruqni ishga tushiring:")
+    print("    pip install -r requirements.txt")
+    print("    (yoki: pip install " + " ".join(missing_packages) + ")")
+else:
+    print("\n    Barcha kutubxonalar o'rnatilgan.")
+
+# ============================================================
+# 2. KERAKLI FAYLLAR
+# ============================================================
+print("\n[2] KERAKLI FAYLLAR:")
 required_files = [
     "app.py",
     "treasury.py",
     "messaging.py",
     "coins.py",
     "pricing.py",
+    "social.py",
+    "startups.py",
+    "hacker_lab.py",
+    "telegram_verify.py",
     "database/cyber_shats.db",
-    "database/bootstrap_v13.py",
-    "database/import_premium_ids_v13.py",
-    "database/demo_users.txt",
     "templates/treasury_login.html",
     "templates/treasury_dashboard.html",
-    "templates/treasury_accounts.html",
+    "templates/hacker_lab.html",
+    "templates/startups_list.html",
 ]
-missing = []
+missing_files = []
 for f in required_files:
     exists = os.path.exists(f)
     print(f"    {'OK' if exists else 'YOQ'} {f}")
     if not exists:
-        missing.append(f)
+        missing_files.append(f)
 
-if missing:
-    print(f"\n*** XATO: {len(missing)} ta kerakli fayl YO'Q ***")
-    print("Yangi zip arxivini to'liq ochmagansiz!")
+if missing_files:
+    print(f"\n*** XATO: {len(missing_files)} ta kerakli fayl YO'Q ***")
+    print("Yangi zip arxivini to'liq ochmagansiz, yoki eski papka bilan aralashtirib yubordingiz.")
     sys.exit(1)
 
-# 2. Database tekshirish
-print("\n[2] DATABASE TEKSHIRISH:")
+# ============================================================
+# 3. DATABASE TEKSHIRISH
+# ============================================================
+print("\n[3] DATABASE TEKSHIRISH:")
 try:
     import sqlite3
     conn = sqlite3.connect("database/cyber_shats.db")
@@ -52,13 +92,13 @@ try:
     c = conn.cursor()
 
     tables = [r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table'")]
-    needed = ['treasury_accounts', 'treasury_fund', 'treasury_fund_log',
-              'coin_transfers', 'private_messages', 'premium_ids']
+    needed = ['treasury_accounts', 'treasury_fund', 'coin_transfers', 'private_messages',
+              'premium_ids', 'groups', 'channels', 'stories', 'reels', 'startups',
+              'telegram_verifications', 'hacker_lab_security_events']
     for t in needed:
         print(f"    {'OK' if t in tables else 'YOQ'} jadval: {t}")
 
-    # 3. Sizning hisoblar
-    print("\n[3] HISOBLAR:")
+    print("\n[4] HISOBLAR:")
     admin = c.execute("SELECT id, ism, email, role FROM users WHERE email='avazbek@mixridinov'").fetchone()
     if admin:
         print(f"    OK Admin: {admin['ism']} ({admin['email']}) role={admin['role']}")
@@ -71,44 +111,55 @@ try:
     else:
         print("    YOQ G'aznachi (kassa@shats) topilmadi!")
 
-    # 4. Demo users
-    demo_count = c.execute("SELECT COUNT(*) c FROM users WHERE email LIKE 'demo_user_%'").fetchone()[0]
-    print(f"\n[4] DEMO FOYDALANUVCHILAR: {demo_count} ta (kutilgan 137)")
-
-    # 5. Premium IDs
-    print("\n[5] PREMIUM IDLAR (TOIFA BO'YICHA):")
-    for r in c.execute("SELECT id_type, COUNT(*) c FROM premium_ids GROUP BY id_type ORDER BY id_type"):
-        print(f"    {r['id_type']}: {r['c']} ta")
-    total = c.execute("SELECT COUNT(*) c FROM premium_ids").fetchone()[0]
-    print(f"    JAMI: {total} ta")
-
-    # 6. Narxlar
-    print("\n[6] NARXLAR SOZLAMASI:")
-    for k in ['welcome_bonus_code', 'cyber_pro_price_code', 'certificate_exam_fee',
-              'id_tier_A_min', 'id_tier_A_max', 'ping_test_cost_free']:
-        r = c.execute("SELECT value FROM pricing_settings WHERE key=?", (k,)).fetchone()
-        print(f"    {k}: {r[0] if r else 'YOQ (default ishlatiladi)'}")
-
     conn.close()
 except Exception as e:
     print(f"    XATO: {e}")
 
-# 7. Flask import qilish va Treasury sahifasi ishlashini tekshirish
-print("\n[7] FLASK ILOVASI:")
+# ============================================================
+# 5. FLASK ILOVASI VA ASOSIY SAHIFALAR
+# ============================================================
+print("\n[5] FLASK ILOVASI VA ASOSIY SAHIFALAR:")
 try:
     os.environ['SECRET_KEY'] = 'test'
     import app as application
     client = application.app.test_client()
-    r = client.get('/treasury/login')
-    print(f"    /treasury/login javob: {r.status_code} {'OK' if r.status_code == 200 else 'XATO'}")
-    r2 = client.get('/login')
-    print(f"    /login javob: {r2.status_code} {'OK' if r2.status_code == 200 else 'XATO'}")
+    pages_to_check = [
+        ("/login", "Login"),
+        ("/treasury/login", "G'azna login"),
+        ("/register", "Ro'yxatdan o'tish"),
+    ]
+    for path, label in pages_to_check:
+        r = client.get(path)
+        status = "OK" if r.status_code == 200 else "XATO"
+        print(f"    {status} {label} ({path}): {r.status_code}")
+
+    # Login qilib, asosiy sahifalarni tekshirish
+    client.post('/login', data={'email': 'avazbek@mixridinov', 'password': 'av050619192009az'})
+    inner_pages = [
+        ("/dashboard", "Bosh sahifa"),
+        ("/admin", "Admin panel"),
+        ("/hacker-lab", "Hacker Lab"),
+        ("/startups", "Startaplar"),
+        ("/groups", "Guruhlar"),
+        ("/channels", "Kanallar"),
+    ]
+    for path, label in inner_pages:
+        r = client.get(path)
+        status = "OK" if r.status_code in (200, 302) else "XATO"
+        print(f"    {status} {label} ({path}): {r.status_code}")
+
 except Exception as e:
     print(f"    XATO: {e}")
+    import traceback
+    traceback.print_exc()
 
 print("\n" + "=" * 70)
 print("DIAGNOSTIKA TUGADI")
 print("=" * 70)
-print("\nAGAR HAMMASI 'OK' BO'LSA — fayllar to'g'ri o'rnatilgan.")
-print("Endi: python app.py  va brauzerda http://localhost:5000 oching")
+if missing_packages:
+    print("\n!!! AVVAL KUTUBXONALARNI O'RNATING: pip install -r requirements.txt !!!")
+else:
+    print("\nAGAR HAMMASI 'OK' BO'LSA — loyiha to'g'ri ishlashga tayyor.")
+    print("Ishga tushirish: python app.py")
+    print("Brauzerda: http://localhost:5000")
 print("\nMUHIM: Brauzerda Ctrl+Shift+R bosing (kesh tozalash)")

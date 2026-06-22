@@ -1,137 +1,177 @@
 {% extends "app_base.html" %}
 {% from 'partials/icons.html' import icon %}
-{% block title %}Code Editor — Cyber Pro{% endblock %}
+{% block title %}Kod Yozish Paneli — CYBER SHATS{% endblock %}
 {% block app_content %}
 
-<div class="flex-between" style="margin-bottom:14px;">
+<div class="flex-between" style="margin-bottom:14px; flex-wrap:wrap; gap:10px;">
   <div>
-    <h1 style="font-size:20px;">{{ icon('code',18) }} Code Editor</h1>
-    <p class="muted" style="font-size:11.5px;">HTML / CSS / JavaScript real-vaqt preview · Cyber Pro</p>
+    <h1 style="font-size:20px;">{{ icon('terminal',18) }} Kod Yozish Paneli</h1>
+    <p class="muted" style="font-size:11.5px; margin-top:4px;">
+      Real bajarish (Python, JS, C++, C) · Xavfsiz sandbox · Maksimal 5 soniya
+    </p>
   </div>
-  <div style="display:flex; gap:6px;">
-    <button id="runBtn" class="cs-btn cs-btn-primary cs-btn-sm">{{ icon('play',12) }} Ishga tushirish (Ctrl+S)</button>
-    <button id="clearBtn" class="cs-btn cs-btn-sm cs-btn-danger">{{ icon('trash-2',12) }} Tozalash</button>
+  <div style="display:flex; gap:6px; align-items:center;">
+    <span id="langLabel" class="cs-chip solid" style="font-size:11px;">Python 3</span>
+    <button id="runBtn" class="cs-btn cs-btn-primary">{{ icon('play',14) }} Ishga tushirish</button>
+    <button id="clearBtn" class="cs-btn cs-btn-sm">{{ icon('trash-2',13) }} Tozalash</button>
   </div>
 </div>
 
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; height:calc(100vh - 220px); min-height:480px;">
-  <!-- TAHRIRLOVCHI -->
-  <div style="display:flex; flex-direction:column; gap:8px;">
-    <div class="cs-card" style="padding:0; flex:1; display:flex; flex-direction:column;">
-      <div class="cs-card-title" style="padding:8px 12px; display:flex; gap:8px;">
-        <button class="tab-btn active" data-tab="html" style="background:rgba(255,107,107,.15); color:#ff6b6b; border:1px solid #ff6b6b40; padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer;">HTML</button>
-        <button class="tab-btn" data-tab="css" style="background:rgba(102,170,255,.15); color:#66aaff; border:1px solid #66aaff40; padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer;">CSS</button>
-        <button class="tab-btn" data-tab="js" style="background:rgba(255,210,63,.15); color:#ffd23f; border:1px solid #ffd23f40; padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer;">JavaScript</button>
-      </div>
-      <textarea id="htmlCode" class="code-area active" spellcheck="false"
-                style="flex:1; resize:none; background:#0a0a14; color:#e0e0e0; border:0; padding:14px; font-family:'Consolas','Courier New',monospace; font-size:13px; line-height:1.5; outline:none;">&lt;div class=&quot;greeting&quot;&gt;
-  &lt;h1&gt;Salom CYBER PRO!&lt;/h1&gt;
-  &lt;p&gt;HTML, CSS, JavaScript yozishni boshlang.&lt;/p&gt;
-  &lt;button id=&quot;clickMe&quot;&gt;Bosing&lt;/button&gt;
-&lt;/div&gt;</textarea>
-      <textarea id="cssCode" class="code-area" spellcheck="false"
-                style="display:none; flex:1; resize:none; background:#0a0a14; color:#e0e0e0; border:0; padding:14px; font-family:'Consolas','Courier New',monospace; font-size:13px; line-height:1.5; outline:none;">.greeting {
-  font-family: sans-serif;
-  text-align: center;
-  padding: 40px;
-  background: linear-gradient(135deg, #ff3366, #3366ff);
-  color: white;
-  border-radius: 12px;
-}
-button {
-  background: white;
-  color: #ff3366;
-  padding: 10px 22px;
-  border: 0;
-  border-radius: 6px;
-  font-weight: 700;
-  cursor: pointer;
-  font-size: 15px;
-}
-button:hover { transform: scale(1.05); }</textarea>
-      <textarea id="jsCode" class="code-area" spellcheck="false"
-                style="display:none; flex:1; resize:none; background:#0a0a14; color:#e0e0e0; border:0; padding:14px; font-family:'Consolas','Courier New',monospace; font-size:13px; line-height:1.5; outline:none;">document.getElementById('clickMe').addEventListener('click', function() {
-  alert('Tabriklaymiz, JavaScript ishlayapti!');
-});</textarea>
+<!-- TIL TANLASH -->
+<div class="cs-card" style="padding:10px 14px; margin-bottom:12px;">
+  <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+    <span class="muted" style="font-size:11px; margin-right:4px;">Til:</span>
+    {% for key, lang in languages.items() %}
+    <button class="lang-btn cs-btn cs-btn-sm {{ 'cs-btn-primary' if key == default_lang }}"
+            data-lang="{{ key }}" data-name="{{ lang.name }}"
+            data-default="{{ lang.default_code|e }}">
+      {{ lang.name }}
+    </button>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- EDITOR PANELI -->
+<div class="grid" style="grid-template-columns:1fr 1fr; gap:14px; height:480px;">
+  <!-- Kod kirish -->
+  <div class="cs-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 14px; border-bottom:1px solid var(--cs-border); background:var(--cs-bg-input);">
+      <span style="font-size:11px; color:var(--cs-text-muted); font-family:var(--cs-font-mono);" id="editorTitle">main.py</span>
+      <span class="muted" style="font-size:10px;" id="charCount">0 belgi</span>
     </div>
+    <textarea id="codeInput" spellcheck="false"
+              style="flex:1; width:100%; resize:none; background:var(--cs-bg-input); border:0; outline:0;
+                     color:var(--cs-text-white); font-family:var(--cs-font-mono); font-size:13px;
+                     line-height:1.6; padding:12px 14px; tab-size:4;">{{ languages[default_lang].default_code }}</textarea>
   </div>
 
-  <!-- KO'RINISH -->
-  <div class="cs-card" style="padding:0; display:flex; flex-direction:column;">
-    <div class="cs-card-title" style="padding:8px 12px;">
-      <h3 style="font-size:12px;">{{ icon('eye',12) }} KO'RINISH</h3>
+  <!-- Chiqish (natija) -->
+  <div class="terminal-box" style="display:flex; flex-direction:column;">
+    <div class="term-head" style="justify-content:space-between;">
+      <div style="display:flex; gap:6px; align-items:center;">
+        <span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span>
+        <span style="font-size:10px;">OUTPUT</span>
+      </div>
+      <span id="execTime" class="muted" style="font-size:10px;"></span>
     </div>
-    <iframe id="preview" style="flex:1; border:0; background:#fff; border-radius:0 0 6px 6px;"></iframe>
+    <div id="outputBox" class="term-body" style="flex:1; max-height:none; overflow-y:auto; white-space:pre-wrap; font-size:12.5px;">
+      <span class="muted">▶ Kodni yozing va "Ishga tushirish" tugmasini bosing</span>
+    </div>
   </div>
+</div>
+
+<!-- YORDAM HAQIDA -->
+<div class="cs-card" style="margin-top:12px; padding:12px 16px;">
+  <div style="display:flex; gap:24px; flex-wrap:wrap; font-size:11.5px;">
+    <div><strong>Python 3</strong> — to'liq, xavfsiz (OS/socket/fayl bloklangan)</div>
+    <div><strong>JavaScript</strong> — Node.js v22, to'liq ES2023+</div>
+    <div><strong>C / C++</strong> — GCC/G++ 13, kompilyatsiya + bajarish</div>
+    <div style="color:#ff5555;"><strong>Java</strong> — JDK o'rnatilishi kerak</div>
+  </div>
+  <div class="muted" style="font-size:10.5px; margin-top:8px;">Ctrl+Enter — ishga tushirish · Tab — boʻshliq</div>
 </div>
 
 {% endblock %}
 
 {% block scripts %}
 <script>
-var tabs = document.querySelectorAll('.tab-btn');
-var areas = {
-    html: document.getElementById('htmlCode'),
-    css: document.getElementById('cssCode'),
-    js: document.getElementById('jsCode')
-};
+var currentLang = '{{ default_lang }}';
+var languages = {{ languages | tojson }};
 
-tabs.forEach(function(tab) {
-    tab.addEventListener('click', function() {
-        tabs.forEach(function(t) { t.classList.remove('active'); t.style.opacity = '.55'; });
-        this.classList.add('active'); this.style.opacity = '1';
-        var key = this.dataset.tab;
-        Object.keys(areas).forEach(function(k) {
-            areas[k].style.display = (k === key) ? 'block' : 'none';
+// Til tanlash tugmalari
+document.querySelectorAll('.lang-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.lang-btn').forEach(function(b) {
+            b.classList.remove('cs-btn-primary');
         });
+        btn.classList.add('cs-btn-primary');
+        currentLang = btn.dataset.lang;
+        document.getElementById('langLabel').textContent = btn.dataset.name;
+        // Kengaytmani yangilash
+        var ext = {python:'py', javascript_node:'js', cpp:'cpp', c:'c', java:'java'}[currentLang] || 'txt';
+        var name = {python:'Main', javascript_node:'main', cpp:'main', c:'main', java:'Main'}[currentLang] || 'main';
+        document.getElementById('editorTitle').textContent = name + '.' + ext;
+        // Standart kod yuklash
+        if (btn.dataset.default) {
+            document.getElementById('codeInput').value = btn.dataset.default;
+            updateCharCount();
+        }
+        document.getElementById('outputBox').innerHTML = '<span class="muted">▶ Kodni yozing va "Ishga tushirish" tugmasini bosing</span>';
+        document.getElementById('execTime').textContent = '';
     });
 });
-tabs.forEach(function(t) { if (!t.classList.contains('active')) t.style.opacity = '.55'; });
 
-function run() {
-    var preview = document.getElementById('preview');
-    var doc = preview.contentDocument || preview.contentWindow.document;
-    var html = areas.html.value;
-    var css = areas.css.value;
-    var js = areas.js.value;
-    var content =
-        '<!DOCTYPE html><html><head><style>' + css + '</style></head>' +
-        '<body>' + html +
-        '<script>try{' + js + '}catch(e){document.body.innerHTML+="<pre style=\\"color:red;background:#fee;padding:8px;\\">"+e.message+"</pre>";}<\/script>' +
-        '</body></html>';
-    doc.open();
-    doc.write(content);
-    doc.close();
+// Belgi hisoblagich
+function updateCharCount() {
+    var len = document.getElementById('codeInput').value.length;
+    document.getElementById('charCount').textContent = len.toLocaleString() + ' belgi';
 }
+document.getElementById('codeInput').addEventListener('input', updateCharCount);
+updateCharCount();
 
-document.getElementById('runBtn').addEventListener('click', run);
-
-document.getElementById('clearBtn').addEventListener('click', function() {
-    if (!confirm('Hamma kodni tozalashni tasdiqlaysizmi?')) return;
-    areas.html.value = '';
-    areas.css.value = '';
-    areas.js.value = '';
-    run();
-});
-
-// Ctrl+S
-document.addEventListener('keydown', function(e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+// Tab tugmasi — kodda bo'shliq qo'shish
+document.getElementById('codeInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
         e.preventDefault();
-        run();
+        var start = this.selectionStart, end = this.selectionEnd;
+        this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+        this.selectionStart = this.selectionEnd = start + 4;
+    }
+    if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        runCode();
     }
 });
 
-// Auto-run kod yozilganda (debounced)
-var timer;
-Object.values(areas).forEach(function(area) {
-    area.addEventListener('input', function() {
-        clearTimeout(timer);
-        timer = setTimeout(run, 800);
-    });
+// Tozalash
+document.getElementById('clearBtn').addEventListener('click', function() {
+    document.getElementById('outputBox').innerHTML = '<span class="muted">▶ Tozalandi</span>';
+    document.getElementById('execTime').textContent = '';
 });
 
-// Boshlang'ich ishga tushirish
-run();
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Asosiy bajarish funksiyasi
+async function runCode() {
+    var code = document.getElementById('codeInput').value.trim();
+    var btn = document.getElementById('runBtn');
+    var outputBox = document.getElementById('outputBox');
+    var execTime = document.getElementById('execTime');
+    if (!code) { outputBox.innerHTML = '<span style="color:#ff5555;">Kod bo\'sh</span>'; return; }
+    btn.disabled = true;
+    btn.textContent = '⏳ Bajarilmoqda...';
+    outputBox.innerHTML = '<span class="muted">Kuting...</span>';
+    execTime.textContent = '';
+    try {
+        var r = await fetch('/api/code/run', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ language: currentLang, code: code })
+        });
+        var d = await r.json();
+        if (d.success) {
+            var res = d.data.result;
+            execTime.textContent = res.execution_time_ms + ' ms';
+            if (res.success) {
+                outputBox.innerHTML = '<span style="color:var(--cs-text-primary);">✓ Muvaffaqiyatli</span>\n\n' +
+                    (res.output ? esc(res.output) : '<span class="muted">(chiqish yo\'q)</span>');
+            } else {
+                outputBox.innerHTML = '<span style="color:#ff5555;">✗ Xato</span>\n\n' +
+                    esc(res.error || 'Noma\'lum xato');
+            }
+        } else {
+            outputBox.innerHTML = '<span style="color:#ff5555;">✗ ' + esc(d.error) + '</span>';
+        }
+    } catch(e) {
+        outputBox.innerHTML = '<span style="color:#ff5555;">Ulanish xatoligi: ' + esc(e.message) + '</span>';
+    }
+    btn.disabled = false;
+    btn.innerHTML = '{{ icon("play",14) }} Ishga tushirish';
+    outputBox.scrollTop = 0;
+}
+
+document.getElementById('runBtn').addEventListener('click', runCode);
 </script>
 {% endblock %}

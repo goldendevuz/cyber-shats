@@ -2,9 +2,13 @@
 {% from 'partials/icons.html' import icon %}
 {% block title %}Kirish — CYBER SHATS{% endblock %}
 {% block content %}
-<div class="auth-wrap">
-  <div class="auth-card">
-    <div class="auth-logo">{{ icon('shield',32) }}<span>CYBER SHATS</span></div>
+<!-- 3D Fon -->
+<canvas id="loginBgCanvas" style="position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.35;"></canvas>
+
+<div class="auth-wrap" style="position:relative; z-index:1;">
+  <div class="auth-card" style="backdrop-filter:blur(8px); border-color:rgba(0,255,65,.3); box-shadow:0 0 40px rgba(0,255,65,.08);">
+    <div id="loginCube" style="width:72px; height:72px; margin:0 auto 10px; display:block;"></div>
+    <div class="auth-logo" style="margin-top:0;">{{ icon('shield',28) }}<span>CYBER SHATS</span></div>
     <h2 class="auth-title">Tizimga kirish</h2>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -41,4 +45,48 @@
     <p class="auth-foot">Hisobingiz yo'qmi? <a href="{{ url_for('register') }}">Ro'yxatdan o'ting</a></p>
   </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+// Login sahifasi uchun 3D kub (karta tepasida)
+if(typeof csCreateCryptoCube !== 'undefined') {
+    csCreateCryptoCube('loginCube', { cameraZ: 3.5 });
+}
+// Fon particle effekti
+(function(){
+    if(typeof THREE === 'undefined') return;
+    var canvas = document.getElementById('loginBgCanvas');
+    if(!canvas) return;
+    var scene = new THREE.Scene();
+    var w = window.innerWidth, h = window.innerHeight;
+    var camera = new THREE.PerspectiveCamera(60, w/h, 0.1, 1000);
+    var renderer = new THREE.WebGLRenderer({ canvas:canvas, antialias:true, alpha:true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    renderer.setSize(w, h);
+    camera.position.z = 100;
+    var count = 200, geo = new THREE.BufferGeometry();
+    var pos = new Float32Array(count*3), vel = [];
+    for(var i=0;i<count;i++){
+        pos[i*3]=(Math.random()-.5)*240; pos[i*3+1]=(Math.random()-.5)*180; pos[i*3+2]=(Math.random()-.5)*80;
+        vel.push({x:(Math.random()-.5)*.05, y:(Math.random()-.5)*.05});
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    scene.add(new THREE.Points(geo, new THREE.PointsMaterial({color:0x00ff41, size:0.9, transparent:true, opacity:0.65})));
+    window.addEventListener('resize', function(){
+        w=window.innerWidth; h=window.innerHeight;
+        camera.aspect=w/h; camera.updateProjectionMatrix();
+        renderer.setSize(w,h);
+    });
+    (function loop(){
+        requestAnimationFrame(loop);
+        for(var i=0;i<count;i++){
+            pos[i*3]+=vel[i].x; pos[i*3+1]+=vel[i].y;
+            if(Math.abs(pos[i*3])>120) vel[i].x*=-1;
+            if(Math.abs(pos[i*3+1])>90) vel[i].y*=-1;
+        }
+        geo.attributes.position.needsUpdate=true;
+        renderer.render(scene, camera);
+    })();
+})();
+</script>
 {% endblock %}

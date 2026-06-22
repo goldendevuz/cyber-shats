@@ -38,6 +38,7 @@ import terminal_sim
 import coins_purchase
 import social
 import startups as startups_mod
+import code_runner
 from oauth_routes import oauth_bp
 from ids import (generate_unique_id, set_user_id, get_premium_ids_list,
                  buy_premium_id, get_active_auctions, place_bid, finalize_auction,
@@ -3044,7 +3045,22 @@ def code_editor_page():
     if user.get("plan") not in ("cyber_pro", "vip") and user.get("role") not in ("admin", "super_admin"):
         flash("Code editor Cyber Pro va undan yuqori foydalanuvchilar uchun.", "error")
         return redirect(url_for("pricing"))
-    return render_template("code_editor.html")
+    return render_template("code_editor.html",
+                           languages=code_runner.LANGUAGES,
+                           default_lang="python")
+
+
+@app.route("/api/code/run", methods=["POST"])
+@api_login_required
+def api_code_run():
+    """Foydalanuvchi kodini xavfsiz sandboxda bajaradi."""
+    data = request.get_json(silent=True) or {}
+    lang = (data.get("language") or "python").strip()
+    code = (data.get("code") or "").strip()
+    if not code:
+        return api_response(False, error="Kod bo'sh.")
+    result = code_runner.run_code(lang, code)
+    return api_response(True, data={"result": result})
 
 
 # =================================================================
