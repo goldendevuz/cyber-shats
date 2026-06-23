@@ -1514,6 +1514,23 @@ def api_trading_history():
 
 
 # ---- Admin trading paneli ----
+@app.route("/admin/pricing/packages", methods=["POST"])
+@admin_required
+def admin_update_packages():
+    """CODE paket narxlarini yangilash."""
+    packs = [1000, 5000, 10000, 20000, 30000, 50000, 70000, 100000]
+    for amt in packs:
+        val = request.form.get(f"code_pack_{amt}", "").strip()
+        if val and val.isdigit() and int(val) > 0:
+            execute(
+                "INSERT INTO pricing_settings (key, value) VALUES (?,?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (f"code_pack_{amt}", val)
+            )
+    flash("Paket narxlari saqlandi! Bot keyingi so'rovda yangi narxlarni ishlatadi.", "success")
+    return redirect(url_for("admin_pricing"))
+
+
 @app.route("/admin/pricing", methods=["GET", "POST"])
 @admin_required
 def admin_pricing():
@@ -2428,6 +2445,23 @@ def treasury_dashboard():
         treasury_ism=session.get("treasury_account_ism"),
         pricing=pricing, trading_current=trading_current,
     )
+
+
+@app.route("/treasury/update-packages", methods=["POST"])
+@treasury_login_required
+def treasury_update_packages():
+    """G'azna tomonidan CODE paket narxlarini yangilash."""
+    packs = [1000, 5000, 10000, 20000, 30000, 50000, 70000, 100000]
+    for amt in packs:
+        val = request.form.get(f"code_pack_{amt}", "").strip()
+        if val and val.isdigit() and int(val) > 0:
+            execute(
+                "INSERT INTO pricing_settings (key, value) VALUES (?,?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (f"code_pack_{amt}", val)
+            )
+    flash("Paket narxlari yangilandi!", "success")
+    return redirect(url_for("treasury_dashboard"))
 
 
 @app.route("/treasury/update-pricing", methods=["POST"])

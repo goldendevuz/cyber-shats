@@ -8,6 +8,111 @@
   <a href="{{ url_for('admin_dashboard') }}" class="cs-btn cs-btn-sm">← Admin Panel</a>
 </div>
 
+<div class="grid" style="grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+
+  <!-- CODE PAKET NARXLARI -->
+  <div class="cs-card">
+    <h3 style="font-size:13px; margin-bottom:14px; color:#ffd700;">{{ icon('zap',14) }} CODE PAKET NARXLARI (Telegramda ko'rinadi)</h3>
+    <form method="post" action="{{ url_for('admin_update_packages') }}">
+      <div style="margin-bottom:8px;">
+        <div class="grid" style="grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px;">
+          <div class="muted" style="font-size:10px;">CODE miqdori</div>
+          <div class="muted" style="font-size:10px;">Narxi (so'm)</div>
+        </div>
+        {% set packs = [1000,5000,10000,20000,30000,50000,70000,100000] %}
+        {% for amt in packs %}
+        <div class="grid" style="grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px; align-items:center;">
+          <div style="font-size:12px; color:#38bff8; font-weight:700;">⚡ {{ "{:,}".format(amt) }} Code</div>
+          <input type="number" name="code_pack_{{ amt }}"
+                 value="{{ settings.get('code_pack_' ~ amt, '') }}"
+                 class="cs-input" style="font-size:12px; padding:6px 10px;" min="0">
+        </div>
+        {% endfor %}
+      </div>
+      <button type="submit" class="cs-btn cs-btn-primary cs-btn-full">
+        {{ icon('save',13) }} Paket narxlarini saqlash
+      </button>
+    </form>
+  </div>
+
+  <!-- PLAN NARXLARI VA TRADING -->
+  <div>
+    <div class="cs-card" style="margin-bottom:14px;">
+      <h3 style="font-size:13px; margin-bottom:14px; color:#38bff8;">{{ icon('star',14) }} PLAN NARXLARI</h3>
+      <form method="post">
+        <input type="hidden" name="action" value="save_pricing">
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          {% set fields = [
+            ('pro_price_code', 'Cyber Pro (CODE)'),
+            ('cyber_pro_price_code', 'SHATS CYBER PRO (CODE)'),
+            ('vip_price_code', 'VIP (CODE)'),
+            ('welcome_bonus_code', 'Xush kelibsiz bonusi (CODE)'),
+            ('paid_course_code_default', 'Kurs standart narxi (CODE)'),
+          ] %}
+          {% for key, label in fields %}
+          <div>
+            <label class="muted" style="font-size:10px; display:block; margin-bottom:3px;">{{ label }}</label>
+            <input type="number" name="{{ key }}" value="{{ settings.get(key,'') }}"
+                   class="cs-input" style="font-size:12px; padding:6px 10px;" min="0">
+          </div>
+          {% endfor %}
+          <button type="submit" class="cs-btn cs-btn-primary">{{ icon('save',13) }} Saqlash</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="cs-card">
+      <h3 style="font-size:13px; margin-bottom:12px; color:#38bff8;">{{ icon('trending-up',14) }} TRADING SOZLAMALARI</h3>
+      <form method="post">
+        <input type="hidden" name="action" value="save_pricing">
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          {% set tfields = [
+            ('trading_commission_pct', 'Komisyon (%)'),
+            ('trading_min_bet', 'Minimal tiklov (CODE)'),
+            ('trading_max_bet', 'Maksimal tiklov (CODE)'),
+          ] %}
+          {% for key, label in tfields %}
+          <div>
+            <label class="muted" style="font-size:10px; display:block; margin-bottom:3px;">{{ label }}</label>
+            <input type="number" name="{{ key }}" value="{{ settings.get(key,'') }}"
+                   class="cs-input" style="font-size:12px; padding:6px 10px;" min="0">
+          </div>
+          {% endfor %}
+          <button type="submit" class="cs-btn cs-btn-primary">{{ icon('save',13) }} Saqlash</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- TRADING BOSHQARUV -->
+<div class="cs-card">
+  <h3 style="font-size:13px; margin-bottom:12px; color:#ff4444;">{{ icon('alert-triangle',14) }} TRADING NAZORAT</h3>
+  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+    <div class="cs-card" style="padding:10px 14px; text-align:center;">
+      <div class="muted" style="font-size:9px;">JORIY NARX</div>
+      <div style="font-size:18px; font-weight:800; color:#1e90ff;">{{ "%.4f"|format(current_price.price) }}</div>
+    </div>
+    <div class="cs-card" style="padding:10px 14px; text-align:center;">
+      <div class="muted" style="font-size:9px;">OCHIQ POZITSIYA</div>
+      <div style="font-size:18px; font-weight:800; color:#ffd700;">{{ open_count }}</div>
+    </div>
+    <div class="cs-card" style="padding:10px 14px; text-align:center;">
+      <div class="muted" style="font-size:9px;">PLATFORMA DAROMADI</div>
+      <div style="font-size:16px; font-weight:800; color:#ffd700;">⚡ {{ "{:,}".format(trading_stats.platform_commission if trading_stats else 0) }}</div>
+    </div>
+    <form method="post" onsubmit="return confirm('Trading narxini 1.0 ga qaytarasizmi?');">
+      <input type="hidden" name="action" value="reset_trading_price">
+      <button class="cs-btn cs-btn-sm">{{ icon('refresh-cw',12) }} Narxni reset</button>
+    </form>
+    <form method="post" onsubmit="return confirm('Barcha ochiq pozitsiyalarni yopasizmi?');">
+      <input type="hidden" name="action" value="close_all_positions">
+      <button class="cs-btn cs-btn-sm cs-btn-danger">{{ icon('x',12) }} Barchani yopish</button>
+    </form>
+  </div>
+</div>
+
+
 <div class="grid" style="grid-template-columns:1fr 1fr; gap:16px;">
 
   <!-- CODE NARXLARI -->

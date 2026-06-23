@@ -163,6 +163,63 @@
   <!-- CODE NARXLARINI O'ZGARTIRISH -->
   <div class="cs-card" style="margin-top:20px;">
     <h3 style="font-size:13px; margin-bottom:14px; color:#ffd700;">{{ icon('settings',14) }} CODE NARXLARINI O'ZGARTIRISH</h3>
+    <div class="grid" style="grid-template-columns:1fr 1fr; gap:16px;">
+
+      <!-- Paket narxlari -->
+      <div>
+        <div style="font-size:11px; font-weight:700; margin-bottom:10px; color:#38bff8;">PAKET NARXLARI (Telegram bot)</div>
+        <form method="post" action="{{ url_for('treasury_update_packages') }}">
+          {% set packs = [1000,5000,10000,20000,30000,50000,70000,100000] %}
+          <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">
+            {% for amt in packs %}
+            <div class="grid" style="grid-template-columns:1fr 1fr; gap:6px; align-items:center;">
+              <div style="font-size:11px; color:#38bff8;">⚡ {{ "{:,}".format(amt) }} Code</div>
+              <input type="number" name="code_pack_{{ amt }}"
+                     value="{{ pricing.get('code_pack_' ~ amt, '') }}"
+                     class="cs-input" style="font-size:11px; padding:5px 8px;" min="0">
+            </div>
+            {% endfor %}
+          </div>
+          <button type="submit" class="cs-btn cs-btn-primary cs-btn-sm cs-btn-full">{{ icon('save',12) }} Paket narxlarini saqlash</button>
+        </form>
+      </div>
+
+      <!-- Plan narxlari + Trading -->
+      <div>
+        <div style="font-size:11px; font-weight:700; margin-bottom:10px; color:#38bff8;">PLAN NARXLARI</div>
+        <form method="post" action="{{ url_for('treasury_update_pricing') }}">
+          {% set pfields = [
+            ('pro_price_code', 'Cyber Pro (CODE)'),
+            ('cyber_pro_price_code', 'SHATS CYBER PRO (CODE)'),
+            ('vip_price_code', 'VIP (CODE)'),
+            ('welcome_bonus_code', 'Xush kelibsiz bonusi'),
+            ('paid_course_code_default', 'Kurs standart narxi'),
+          ] %}
+          <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">
+            {% for key, label in pfields %}
+            <div>
+              <div class="muted" style="font-size:9.5px; margin-bottom:2px;">{{ label }}</div>
+              <input type="number" name="{{ key }}" value="{{ pricing.get(key,'') }}"
+                     class="cs-input" style="font-size:11px; padding:5px 8px;" min="0">
+            </div>
+            {% endfor %}
+          </div>
+          <button type="submit" class="cs-btn cs-btn-primary cs-btn-sm cs-btn-full">{{ icon('save',12) }} Plan narxlarini saqlash</button>
+        </form>
+
+        <div style="margin-top:12px; padding:10px; background:rgba(0,0,0,.2); border-radius:6px;">
+          <div class="muted" style="font-size:9px; margin-bottom:4px;">TRADING JORIY NARXI</div>
+          <div style="font-size:20px; font-weight:800; color:#1e90ff; font-family:var(--cs-font-display);">{{ "%.4f"|format(trading_current.price) }}</div>
+          <div style="font-size:10px; {{ 'color:#1e90ff' if trading_current.change_pct >= 0 else 'color:#ff4444' }}; margin-top:3px;">
+            {{ '+' if trading_current.change_pct >= 0 else '' }}{{ "%.3f"|format(trading_current.change_pct) }}%
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
     <div class="grid" style="grid-template-columns:1fr 280px; gap:16px; align-items:start;">
       <form method="post" action="{{ url_for('treasury_update_pricing') }}">
         <div class="grid grid-3" style="gap:10px; margin-bottom:12px;">

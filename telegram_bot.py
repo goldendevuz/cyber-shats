@@ -41,17 +41,42 @@ PAYMENT_CARDS = {
     "humo":     "9860 1234 5678 9012",
 }
 
-# Code paketlari (foydalanuvchi tanlovi uchun)
-CODE_PACKAGES = [
-    (1_000,   1_000),
-    (5_000,   5_000),
-    (10_000,  10_000),
-    (20_000,  20_000),
-    (30_000,  30_000),
-    (50_000,  50_000),
-    (70_000,  70_000),
-    (100_000, 100_000),
+# Code paketlari — bazadan dinamik yuklanadi
+# Standart narxlar (bazada yo'q bo'lsa ishlatiladi)
+_DEFAULT_PACKAGES = [
+    (1_000, 9_000),
+    (5_000, 19_000),
+    (10_000, 29_000),
+    (20_000, 49_000),
+    (30_000, 69_000),
+    (50_000, 99_000),
+    (70_000, 139_000),
+    (100_000, 199_000),
 ]
+
+
+def get_code_packages():
+    """Bazadan joriy paket narxlarini qaytaradi (admin o'zgartirsa yangilanadi)."""
+    try:
+        conn = db_conn()
+        c = conn.cursor()
+        rows = c.execute(
+            "SELECT key, value FROM pricing_settings WHERE key LIKE 'code_pack_%' ORDER BY CAST(value AS INTEGER)"
+        ).fetchall()
+        conn.close()
+        if rows:
+            result = []
+            for key, price_str in rows:
+                amount = int(key.replace('code_pack_', ''))
+                result.append((amount, int(price_str)))
+            return sorted(result, key=lambda x: x[0])
+    except Exception:
+        pass
+    return _DEFAULT_PACKAGES
+
+
+# Eski o'zgaruvchi — mos kelish uchun saqlanadi
+CODE_PACKAGES = _DEFAULT_PACKAGES
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s [%(levelname)s] %(message)s")
@@ -519,7 +544,7 @@ def kb_main_menu(lang):
 def kb_code_packages(lang):
     rows = []
     row = []
-    for code, price in CODE_PACKAGES:
+    for code, price in get_code_packages():
         row.append({"text": t(lang, "code_pkg_format", code=code, price=price),
                     "callback_data": f"code:{code}:{price}"})
         if len(row) == 1:

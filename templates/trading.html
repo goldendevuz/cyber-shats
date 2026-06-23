@@ -1,175 +1,225 @@
 {% extends "app_base.html" %}
 {% from 'partials/icons.html' import icon %}
-{% block title %}Trading — SHATS CYBER CODE{% endblock %}
+{% block title %}Trading — SHATS CODE{% endblock %}
 {% block app_content %}
 
-<div class="flex-between" style="margin-bottom:10px; flex-wrap:wrap; gap:8px;">
-  <div>
-    <h1 style="font-size:18px; font-family:var(--cs-font-display);">{{ icon('trending-up',16) }} SHATS CODE / SO'M</h1>
-    <div style="display:flex; align-items:center; gap:12px; margin-top:4px;">
-      <span id="livePriceDisplay" style="font-size:28px; font-weight:900; font-family:var(--cs-font-display); color:#1e90ff;">1.0000</span>
-      <div>
-        <div id="liveChangeDisplay" style="font-size:12px; color:#888;">+0.000%</div>
-        <div style="font-size:10px; color:#4a7fa0;">CYBER CODE • REAL VAQT</div>
+<!-- TOP BAR: Narx + OHLC -->
+<div style="background:linear-gradient(90deg,#020b15,#031420,#020b15); border:1px solid rgba(30,144,255,.2); border-radius:8px; padding:10px 16px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+  <div style="display:flex; align-items:center; gap:14px;">
+    <div>
+      <div style="font-size:10px; color:#4a7fa0; letter-spacing:1px; margin-bottom:2px;">SHATS CODE / SO'M</div>
+      <div style="display:flex; align-items:baseline; gap:8px;">
+        <span id="livePriceDisplay" style="font-size:26px; font-weight:900; font-family:var(--cs-font-display); color:#1e90ff;">1.0000</span>
+        <span id="liveChangeDisplay" style="font-size:12px; color:#888; font-family:monospace;">+0.000%</span>
       </div>
-      <span class="cs-chip solid" style="font-size:9px; padding:2px 7px; animation:pulse 1.2s infinite;">● JONLI</span>
+    </div>
+    <div style="width:1px; height:36px; background:rgba(30,144,255,.2);"></div>
+    <div style="display:grid; grid-template-columns:auto auto; gap:2px 16px; font-size:11px;">
+      <span class="muted">O:</span><span id="ohlcO" style="font-family:monospace; color:#e8f4ff;">—</span>
+      <span class="muted">H:</span><span id="ohlcH" style="font-family:monospace; color:#00c853;">—</span>
+      <span class="muted">L:</span><span id="ohlcL" style="font-family:monospace; color:#ff4444;">—</span>
+      <span class="muted">C:</span><span id="ohlcC" style="font-family:monospace; color:#1e90ff;">—</span>
+    </div>
+    <div style="width:1px; height:36px; background:rgba(30,144,255,.2);"></div>
+    <div style="display:flex; gap:4px;">
+      <button id="tf1s"  onclick="setTF(10,this)"  class="tf-btn active" data-tf="10">1S</button>
+      <button id="tf5s"  onclick="setTF(50,this)"  class="tf-btn">5S</button>
+      <button id="tf30s" onclick="setTF(300,this)" class="tf-btn">30S</button>
     </div>
   </div>
-  <div style="display:flex; gap:14px; font-size:11px; align-items:center; flex-wrap:wrap;">
-    <div><span class="muted">O:</span> <span id="ohlcO" style="font-family:monospace;">—</span></div>
-    <div><span class="muted">H:</span> <span id="ohlcH" style="color:#00c853; font-family:monospace;">—</span></div>
-    <div><span class="muted">L:</span> <span id="ohlcL" style="color:#ff4444; font-family:monospace;">—</span></div>
-    <div><span class="muted">C:</span> <span id="ohlcC" style="font-family:monospace;">—</span></div>
-    <div style="display:flex; gap:3px;">
-      <button id="tf1s"  onclick="setTF(10)"  class="cs-btn cs-btn-sm" style="font-size:9px;padding:3px 7px;">1S</button>
-      <button id="tf5s"  onclick="setTF(50)"  class="cs-btn cs-btn-sm cs-btn-primary" style="font-size:9px;padding:3px 7px;">5S</button>
-      <button id="tf30s" onclick="setTF(300)" class="cs-btn cs-btn-sm" style="font-size:9px;padding:3px 7px;">30S</button>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <div style="text-align:right;">
+      <div style="font-size:10px; color:#4a7fa0;">MAX / MIN</div>
+      <div style="font-size:11px;"><span id="highLabel" style="color:#00c853; font-family:monospace;">—</span> / <span id="lowLabel" style="color:#ff4444; font-family:monospace;">—</span></div>
     </div>
+    <span style="display:flex; align-items:center; gap:4px; font-size:10px; color:#38bff8; padding:3px 8px; background:rgba(30,144,255,.1); border:1px solid rgba(30,144,255,.3); border-radius:4px;">
+      <span style="width:6px;height:6px;background:#38bff8;border-radius:50%;animation:pulse 1.2s infinite;display:inline-block;"></span> JONLI
+    </span>
   </div>
 </div>
 
-<div class="grid" style="grid-template-columns:1fr 295px; gap:12px; align-items:start;">
+<!-- ASOSIY PANEL -->
+<div class="grid" style="grid-template-columns:1fr 280px; gap:12px; align-items:start;">
+
+  <!-- CHAP: GRAFIK -->
   <div>
-    <div class="cs-card" style="padding:0; overflow:hidden; margin-bottom:8px; background:#040e1a;">
-      <div style="padding:7px 12px; border-bottom:1px solid rgba(30,144,255,.12); background:#020b15; display:flex; justify-content:space-between;">
-        <span style="font-size:11px; font-weight:700; color:#38bff8; font-family:var(--cs-font-display);">SHATS CODE · CANDLESTICK</span>
-        <div style="display:flex; gap:6px;">
-          <span class="cs-chip" id="highLabel" style="font-size:9px; color:#00c853;">MAX: —</span>
-          <span class="cs-chip" id="lowLabel" style="font-size:9px; color:#ff4444;">MIN: —</span>
+    <!-- Sham grafigi -->
+    <div style="background:#020b15; border:1px solid rgba(30,144,255,.18); border-radius:8px; overflow:hidden; margin-bottom:8px;">
+      <canvas id="candleChart" style="width:100%; height:340px; display:block;"></canvas>
+      <div style="height:1px; background:rgba(30,144,255,.1);"></div>
+      <canvas id="volumeChart" style="width:100%; height:52px; display:block;"></canvas>
+    </div>
+
+    <!-- MFI ko'rsatkich -->
+    <div style="background:#020b15; border:1px solid rgba(30,144,255,.15); border-radius:8px; overflow:hidden; margin-bottom:10px;">
+      <div style="padding:5px 12px; border-bottom:1px solid rgba(30,144,255,.1); display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:10px; color:#4a7fa0; font-family:monospace;">MFI  <span id="mfiValue" style="color:#38bff8; font-weight:700;">—</span></span>
+        <div style="font-size:9px; color:#2a3a4a;">
+          <span style="color:#ff4444;">OB: 80</span> · <span style="color:#00c853;">OS: 20</span>
         </div>
       </div>
-      <canvas id="candleChart" style="width:100%; height:300px; display:block;"></canvas>
-      <canvas id="volumeChart" style="width:100%; height:50px; display:block; border-top:1px solid rgba(30,144,255,.08);"></canvas>
+      <canvas id="mfiChart" style="width:100%; height:64px; display:block;"></canvas>
     </div>
-    <div class="cs-card" style="padding:0; overflow:hidden; margin-bottom:8px; background:#040e1a;">
-      <div style="padding:5px 12px; border-bottom:1px solid rgba(30,144,255,.08); display:flex; justify-content:space-between;">
-        <span style="font-size:10px; color:#4a7fa0;">MFI  <span id="mfiValue" style="color:#38bff8;">—</span></span>
-        <span style="font-size:9px; color:#333;">OB:80 · OS:20</span>
+
+    <!-- Statistika + Tarixi -->
+    <div class="grid grid-4" style="gap:8px; margin-bottom:10px;">
+      {% set stats_items = [
+        ('total', 'JAMI', (stats.total_trades if stats else 0)|string, '#e8f4ff'),
+        ('won', "G'ALABA", (stats.total_won if stats else 0)|string, '#1e90ff'),
+        ('lost', 'ZARAR', (((stats.total_trades or 0)-(stats.total_won or 0)) if stats else 0)|string, '#ff4444'),
+        ('commission', 'PLATFORMA', '⚡ ' ~ "{:,}".format(stats.platform_commission if stats else 0), '#ffd700'),
+      ] %}
+      {% for key, label, val, col in stats_items %}
+      <div style="background:#020b15; border:1px solid rgba(30,144,255,.15); border-radius:6px; padding:10px; text-align:center;">
+        <div style="font-size:9px; color:#3a5a7a; letter-spacing:1px; margin-bottom:4px;">{{ label }}</div>
+        <div data-stat="{{ key }}" style="font-size:{% if key=='commission' %}14{% else %}20{% endif %}px; font-weight:800; color:{{ col }};">{{ val }}</div>
       </div>
-      <canvas id="mfiChart" style="width:100%; height:65px; display:block;"></canvas>
+      {% endfor %}
     </div>
-    <div class="grid grid-4" style="gap:8px; margin-bottom:8px;">
-      <div class="cs-card" style="padding:10px; text-align:center; background:#040e1a;">
-        <div class="muted" style="font-size:9px;">JAMI</div>
-        <div data-stat="total" style="font-size:20px; font-weight:800; margin-top:2px;">{{ stats.total_trades if stats else 0 }}</div>
-      </div>
-      <div class="cs-card" style="padding:10px; text-align:center; background:#040e1a;">
-        <div class="muted" style="font-size:9px;">G'ALABA</div>
-        <div data-stat="won" style="font-size:20px; font-weight:800; color:#1e90ff; margin-top:2px;">{{ stats.total_won if stats else 0 }}</div>
-      </div>
-      <div class="cs-card" style="padding:10px; text-align:center; background:#040e1a;">
-        <div class="muted" style="font-size:9px;">ZARAR</div>
-        <div data-stat="lost" style="font-size:20px; font-weight:800; color:#ff4444; margin-top:2px;">{{ ((stats.total_trades or 0)-(stats.total_won or 0)) if stats else 0 }}</div>
-      </div>
-      <div class="cs-card" style="padding:10px; text-align:center; background:#040e1a;">
-        <div class="muted" style="font-size:9px;">PLATFORMA</div>
-        <div data-stat="commission" style="font-size:13px; font-weight:800; color:#ffd700; margin-top:2px;">⚡ {{ "{:,}".format(stats.platform_commission if stats else 0) }}</div>
-      </div>
-    </div>
-    <div class="cs-card" style="background:#040e1a;">
-      <div style="font-size:11px; font-weight:700; margin-bottom:8px; color:#38bff8;">OXIRGI TIKLOVLAR</div>
+
+    <div style="background:#020b15; border:1px solid rgba(30,144,255,.15); border-radius:8px; padding:12px;">
+      <div style="font-size:10px; color:#38bff8; font-weight:700; letter-spacing:1px; margin-bottom:10px;">OXIRGI TIKLOVLAR</div>
       <table class="cs-table" style="font-size:11px;">
-        <thead><tr><th>Yo'nalish</th><th>Miqdor</th><th>Narx</th><th>Natija</th></tr></thead>
+        <thead style="background:rgba(30,144,255,.06);">
+          <tr><th>Yo'nalish</th><th>Miqdor</th><th>Narx</th><th>Natija</th></tr>
+        </thead>
         <tbody id="historyTableBody">
           {% for h in history %}
           <tr>
-            <td>{{ '⬆ UP' if h.direction=='up' else '⬇ DOWN' }}</td>
+            <td style="font-weight:700; {{ 'color:#1e90ff' if h.direction=='up' else 'color:#ff4444' }}">{{ '⬆ UP' if h.direction=='up' else '⬇ DOWN' }}</td>
             <td>⚡{{ "{:,}".format(h.amount) }}</td>
-            <td style="color:#4a7fa0; font-family:monospace; font-size:10px;">{{ "%.4f"|format(h.exit_price) if h.exit_price else '—' }}</td>
-            <td>{% if h.status=='won' %}<span style="color:#1e90ff;">+{{ "{:,}".format(h.profit_loss) }}</span>
+            <td style="color:#3a5a7a; font-family:monospace; font-size:10px;">{{ "%.4f"|format(h.exit_price) if h.exit_price else '—' }}</td>
+            <td>{% if h.status=='won' %}<span style="color:#1e90ff; font-weight:700;">+{{ "{:,}".format(h.profit_loss) }}</span>
                 {% elif h.status=='lost' %}<span style="color:#ff4444;">{{ "{:,}".format(h.profit_loss) }}</span>
-                {% elif h.status=='open' %}<span style="color:#ffd700;font-size:10px;">Ochiq</span>
+                {% elif h.status=='open' %}<span style="color:#ffd700; font-size:10px; animation:pulse 1s infinite;">● Ochiq</span>
                 {% else %}<span class="muted" style="font-size:10px;">Bekor</span>{% endif %}</td>
           </tr>
           {% else %}
-          <tr><td colspan="4" style="text-align:center;padding:14px;" class="muted">Hali tiklovlar yo'q</td></tr>
+          <tr><td colspan="4" style="text-align:center; padding:14px; color:#2a3a4a;">Hali tiklovlar yo'q</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
 
-  <div style="position:sticky; top:60px; display:flex; flex-direction:column; gap:10px;">
-    <div class="cs-card" style="padding:10px 14px; background:#040e1a;">
-      <div class="flex-between">
-        <span class="muted" style="font-size:10px;">BALANS</span>
-        <strong style="color:#1e90ff;">⚡ <span id="balanceDisplay">{{ "{:,}".format(current_user.code_balance or 0) }}</span></strong>
+  <!-- O'NG: TIKLOV PANELI -->
+  <div style="position:sticky; top:58px; display:flex; flex-direction:column; gap:10px;">
+
+    <!-- Balans -->
+    <div style="background:linear-gradient(135deg,#031420,#041c2c); border:1px solid rgba(30,144,255,.25); border-radius:8px; padding:10px 14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:10px; color:#3a5a7a; letter-spacing:1px;">BALANS</span>
+        <span style="font-size:15px; font-weight:800; color:#1e90ff;">⚡ <span id="balanceDisplay">{{ "{:,}".format(current_user.code_balance or 0) }}</span></span>
       </div>
     </div>
 
+    <!-- Ochiq pozitsiya -->
     {% if open_pos %}
-    <div id="openPosPanel" class="cs-card" style="text-align:center; background:#040e1a; border-color:{{ 'rgba(30,144,255,.6)' if open_pos.direction=='up' else 'rgba(255,68,68,.6)' }};">
-      <div class="muted" style="font-size:9px; margin-bottom:5px;">OCHIQ TIKLOV</div>
-      <div id="openDir" style="font-size:22px; font-weight:900; font-family:var(--cs-font-display);">{{ '⬆ YUQORI' if open_pos.direction=='up' else '⬇ PASTGA' }}</div>
-      <div style="font-size:12px; margin:6px 0;">⚡ <strong>{{ "{:,}".format(open_pos.amount) }}</strong> CODE</div>
-      <div class="flex-between" style="font-size:10px; margin-bottom:8px;"><span class="muted">Kirish:</span><strong style="font-family:monospace;">{{ "%.4f"|format(open_pos.entry_price) }}</strong></div>
-      <div class="muted" style="font-size:9px; margin-bottom:3px;">QOLGAN VAQT</div>
-      <div id="countdown" style="font-family:var(--cs-font-display); font-size:34px; font-weight:900; letter-spacing:2px;">—</div>
-      <div id="openProfitDisplay" style="font-size:11px; margin-top:6px;" class="muted">—</div>
+    <div id="openPosPanel" style="background:linear-gradient(135deg,{% if open_pos.direction=='up' %}#031a3a,#0a2a5a{% else %}#2a0808,#4a0f0f{% endif %}); border:1px solid {% if open_pos.direction=='up' %}rgba(30,144,255,.6){% else %}rgba(255,68,68,.6){% endif %}; border-radius:8px; padding:14px; text-align:center;">
+      <div style="font-size:9px; color:#3a5a7a; letter-spacing:1.5px; margin-bottom:8px; text-transform:uppercase;">Ochiq tiklov</div>
+      <div id="openDir" style="font-size:22px; font-weight:900; font-family:var(--cs-font-display); margin-bottom:6px; {% if open_pos.direction=='up' %}color:#1e90ff;{% else %}color:#ff4444;{% endif %}">{{ '⬆ YUQORI' if open_pos.direction=='up' else '⬇ PASTGA' }}</div>
+      <div style="font-size:13px; margin-bottom:10px; color:#e8f4ff;">⚡ <strong>{{ "{:,}".format(open_pos.amount) }}</strong> CODE</div>
+      <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:12px; padding:0 4px;">
+        <span class="muted">Kirish narxi</span><strong style="font-family:monospace;">{{ "%.4f"|format(open_pos.entry_price) }}</strong>
+      </div>
+      <div style="font-size:9px; color:#3a5a7a; margin-bottom:4px; letter-spacing:1px;">QOLGAN VAQT</div>
+      <div id="countdown" style="font-size:40px; font-weight:900; font-family:var(--cs-font-display); letter-spacing:3px; margin-bottom:8px;">—</div>
+      <div id="openProfitDisplay" style="font-size:11px; padding:6px 10px; background:rgba(0,0,0,.3); border-radius:6px;" class="muted">Kuting...</div>
     </div>
     <div id="betPanel" style="display:none;">
     {% else %}
-    <div id="openPosPanel" style="display:none;" class="cs-card" style="text-align:center; background:#040e1a;">
-      <div class="muted" style="font-size:9px; margin-bottom:5px;">OCHIQ TIKLOV</div>
-      <div id="openDir" style="font-size:22px; font-weight:900;">—</div>
-      <div id="openAmt" style="font-size:12px; margin:6px 0;">—</div>
-      <div class="muted" style="font-size:9px; margin-bottom:3px;">QOLGAN VAQT</div>
-      <div id="countdown" style="font-family:var(--cs-font-display); font-size:34px; font-weight:900; letter-spacing:2px;">—</div>
-      <div id="openProfitDisplay" style="font-size:11px; margin-top:6px;" class="muted">—</div>
+    <div id="openPosPanel" style="display:none; border-radius:8px; padding:14px; text-align:center;">
+      <div style="font-size:9px; color:#3a5a7a; letter-spacing:1.5px; margin-bottom:8px;">OCHIQ TIKLOV</div>
+      <div id="openDir" style="font-size:22px; font-weight:900; font-family:var(--cs-font-display);">—</div>
+      <div id="openAmt" style="font-size:13px; margin:6px 0;">—</div>
+      <div style="font-size:9px; color:#3a5a7a; margin-bottom:4px;">QOLGAN VAQT</div>
+      <div id="countdown" style="font-size:40px; font-weight:900; font-family:var(--cs-font-display); letter-spacing:3px;">—</div>
+      <div id="openProfitDisplay" style="font-size:11px; margin-top:8px;" class="muted">—</div>
     </div>
-    <div id="betPanel" class="cs-card" style="background:#040e1a;">
+
+    <!-- Tiklov paneli -->
+    <div id="betPanel" style="background:#020b15; border:1px solid rgba(30,144,255,.2); border-radius:8px; padding:14px;">
     {% endif %}
-      <div style="font-size:11px; font-weight:700; margin-bottom:10px; text-align:center; color:#38bff8; font-family:var(--cs-font-display);">TIKLOV QO'YISH</div>
-      <div class="muted" style="font-size:9px; margin-bottom:4px;">MIQDOR (CODE)</div>
-      <input type="number" id="betAmount" class="cs-input" value="500" min="100" max="100000" style="margin-bottom:6px; font-size:14px; font-weight:700; text-align:center; background:#020b15;">
-      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:3px; margin-bottom:10px;">
+      <div style="font-size:10px; color:#38bff8; font-weight:700; letter-spacing:1.5px; text-align:center; margin-bottom:12px; font-family:var(--cs-font-display);">TIKLOV QO'YISH</div>
+
+      <div style="font-size:9px; color:#3a5a7a; letter-spacing:1px; margin-bottom:4px;">MIQDOR (CODE)</div>
+      <input type="number" id="betAmount" class="cs-input" value="500" min="100" max="100000"
+             style="margin-bottom:8px; font-size:15px; font-weight:700; text-align:center; background:#010a14; border-color:rgba(30,144,255,.3);">
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin-bottom:12px;">
         {% for v in [100,500,1000,5000] %}
-        <button class="cs-btn cs-btn-sm" onclick="document.getElementById('betAmount').value='{{ v }}'" style="font-size:9px; padding:4px 2px;">{{ v }}</button>
+        <button onclick="document.getElementById('betAmount').value='{{ v }}'"
+                style="background:rgba(30,144,255,.08); border:1px solid rgba(30,144,255,.2); color:#38bff8; border-radius:4px; padding:5px 2px; font-size:10px; cursor:pointer;">{{ v }}</button>
         {% endfor %}
       </div>
-      <div class="muted" style="font-size:9px; margin-bottom:4px;">MUDDAT</div>
-      <select id="betDuration" class="cs-input" style="margin-bottom:12px; background:#020b15; font-size:11px;">
-        <option value="15">15 soniya</option>
+
+      <div style="font-size:9px; color:#3a5a7a; letter-spacing:1px; margin-bottom:4px;">MUDDAT</div>
+      <select id="betDuration" class="cs-input" style="margin-bottom:14px; background:#010a14; border-color:rgba(30,144,255,.3); font-size:11px;">
+        <option value="15">15 soniya (tez)</option>
         <option value="30" selected>30 soniya</option>
         <option value="60">1 daqiqa</option>
         <option value="120">2 daqiqa</option>
       </select>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
-        <button id="betUpBtn" class="cs-btn" onclick="placeBet('up')" style="padding:14px 6px; font-size:12px; font-weight:800; background:linear-gradient(135deg,#0a2a5e,#1e90ff); border-color:#1e90ff;">⬆<br><span style="font-size:9px;">YUQORI</span></button>
-        <button id="betDownBtn" class="cs-btn" onclick="placeBet('down')" style="padding:14px 6px; font-size:12px; font-weight:800; background:linear-gradient(135deg,#4a0a0a,#ff4444); border-color:#ff4444;">⬇<br><span style="font-size:9px;">PASTGA</span></button>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+        <button id="betUpBtn" onclick="placeBet('up')"
+                style="padding:16px 8px; font-size:13px; font-weight:900; font-family:var(--cs-font-display); cursor:pointer;
+                background:linear-gradient(135deg,#0a2a5e,#0f4aad,#1e90ff); border:1px solid #1e90ff; border-radius:6px; color:#fff;
+                transition:all .2s; box-shadow:0 4px 15px rgba(30,144,255,.3);">
+          ⬆<br><span style="font-size:10px; opacity:.8; letter-spacing:1px;">YUQORI</span>
+        </button>
+        <button id="betDownBtn" onclick="placeBet('down')"
+                style="padding:16px 8px; font-size:13px; font-weight:900; font-family:var(--cs-font-display); cursor:pointer;
+                background:linear-gradient(135deg,#5a0a0a,#9a1818,#ff4444); border:1px solid #ff4444; border-radius:6px; color:#fff;
+                transition:all .2s; box-shadow:0 4px 15px rgba(255,68,68,.3);">
+          ⬇<br><span style="font-size:10px; opacity:.8; letter-spacing:1px;">PASTGA</span>
+        </button>
       </div>
-      <div style="font-size:9px; text-align:center; color:#4a7fa0; padding:5px; background:rgba(0,0,0,.3); border-radius:4px;">G'alaba: +N% · Zarar: −N% · Kom: 2%</div>
+      <div style="font-size:9px; text-align:center; color:#2a3a4a; padding:6px; background:rgba(0,0,0,.3); border-radius:4px; font-family:monospace;">
+        G'alaba: +N%  ·  Zarar: −N%  ·  Kom: 2%
+      </div>
     </div>
 
-    <a href="#theory" class="cs-card" style="display:block; text-decoration:none; padding:10px 12px; background:#040e1a; border-color:rgba(255,215,0,.2);">
+    <!-- Nazariya havolasi -->
+    <a href="#theory" style="display:block; text-decoration:none; background:#020b15; border:1px solid rgba(255,215,0,.2); border-radius:8px; padding:10px 12px;">
       <div style="font-size:11px; font-weight:700; color:#ffd700;">{{ icon('book-open',12) }} Nazariy kurs</div>
-      <div class="muted" style="font-size:10px; margin-top:3px;">Trading asoslari, texnik tahlil →</div>
+      <div style="font-size:10px; color:#3a5a7a; margin-top:3px;">Trading asoslari, MFI, texnik tahlil →</div>
     </a>
   </div>
 </div>
 
-<div id="theory" class="cs-card" style="margin-top:12px; background:#040e1a;">
-  <h3 style="font-size:14px; margin-bottom:12px; color:#38bff8;">{{ icon('book-open',14) }} TRADING NAZARIYASI</h3>
-  <div class="grid grid-3" style="gap:10px;">
-    <div><div style="font-size:11px; font-weight:700; color:#1e90ff; margin-bottom:5px;">Candlestick nima?</div><p class="muted" style="font-size:11px; line-height:1.6;">Har bir sham — Open, High, Low, Close (OHLC) ko'rsatadi. Ko'k = ko'tarildi, Qizil = tushdi. Sham o'lchami harakat kuchini ko'rsatadi.</p></div>
-    <div><div style="font-size:11px; font-weight:700; color:#1e90ff; margin-bottom:5px;">MFI ko'rsatkichi</div><p class="muted" style="font-size:11px; line-height:1.6;">Money Flow Index — 0-100 oralig'ida. 80 dan yuqori: overbought (tushishi mumkin). 20 dan past: oversold (ko'tarilishi mumkin).</p></div>
-    <div><div style="font-size:11px; font-weight:700; color:#1e90ff; margin-bottom:5px;">Foiz hisob</div><p class="muted" style="font-size:11px; line-height:1.6;">Narx N% o'zgarsa — siz N% foyda/zarar olasiz. 3% ko'tarildi + UP tiklov = tiklov × 3% foyda (komisyon 2% chiqarib).</p></div>
-    <div><div style="font-size:11px; font-weight:700; color:#1e90ff; margin-bottom:5px;">Trend tahlili</div><p class="muted" style="font-size:11px; line-height:1.6;">Ko'tarilish = uptrend, tushish = downtrend. Candlestick patterlar (Doji, Hammer, Engulfing) qayrilish nuqtalarini ko'rsatadi.</p></div>
-    <div><div style="font-size:11px; font-weight:700; color:#1e90ff; margin-bottom:5px;">Volatillik</div><p class="muted" style="font-size:11px; line-height:1.6;">SHATS CODE GBM (Geometric Brownian Motion) modeli asosida tebranadi — real moliyaviy bozorlar kabi. Har 0.1 soniyada yangi narx hisoblanadi.</p></div>
-    <div><div style="font-size:11px; font-weight:700; color:#1e90ff; margin-bottom:5px;">Disciplina</div><p class="muted" style="font-size:11px; line-height:1.6;">Balansning max 10% bitta tiklov. Ketma-ket yutilib ketsangiz — miqdorni kamaytiring. Hissiyot emas, tahlil asosida qaror qiling.</p></div>
+<!-- NAZARIY BO'LIM -->
+<div id="theory" style="background:#020b15; border:1px solid rgba(30,144,255,.15); border-radius:8px; padding:16px; margin-top:12px;">
+  <h3 style="font-size:14px; margin-bottom:14px; color:#38bff8;">{{ icon('book-open',14) }} TRADING NAZARIYASI</h3>
+  <div class="grid grid-3" style="gap:12px;">
+    {% set theory = [
+      ('Candlestick nima?', 'Har bir sham — Open, High, Low, Close (OHLC). Ko\'k = narx ko\'tarildi, Qizil = tushdi. Sham tanasi va quyrug\'i harakatning kuchini ko\'rsatadi.'),
+      ('MFI ko\'rsatkichi', 'Money Flow Index — 0-100. 80 dan yuqori: "overbought" (tushishi mumkin). 20 dan past: "oversold" (ko\'tarilishi mumkin). Kirish/chiqish nuqtalarini aniqlashda yordam beradi.'),
+      ('Foiz hisob', 'Narx N% o\'zgarsa — siz N% foyda/zarar olasiz. Misol: narx 3% ko\'tarildi + UP tiklov = tiklov × 3% foyda. Komisyon 2% chiqarib beriladi.'),
+      ('Trend tahlili', 'Candlestick patterlar: Doji (qayrilish), Hammer (ko\'tarilish), Engulfing (kuchli signal). Ketma-ket shamlar yo\'nalishi — trendni ko\'rsatadi.'),
+      ('GBM modeli', 'SHATS CODE Geometric Brownian Motion asosida tebranadi — real moliyaviy bozorlarda ishlatiladigan matematik model. Har 0.1 soniyada yangi narx hisoblanadi.'),
+      ('Disciplina', 'Max 10% balansni bitta tiklovga qo\'ying. Ketma-ket yutilsangiz — pauza qiling. Hissiyot emas, tahlil asosida qaror qiling.'),
+    ] %}
+    {% for title, text in theory %}
+    <div style="padding:10px; background:rgba(30,144,255,.04); border:1px solid rgba(30,144,255,.1); border-radius:6px;">
+      <div style="font-size:11px; font-weight:700; color:#1e90ff; margin-bottom:5px;">{{ title }}</div>
+      <p style="font-size:10.5px; color:#3a5a7a; line-height:1.65; margin:0;">{{ text }}</p>
+    </div>
+    {% endfor %}
   </div>
 </div>
 
 {% endblock %}
 {% block scripts %}
 <style>
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.tf-btn{padding:3px 9px;font-size:9px;border-radius:4px;cursor:pointer;font-family:monospace;background:rgba(30,144,255,.08);border:1px solid rgba(30,144,255,.25);color:#38bff8;transition:all .2s;}
+.tf-btn.active,.tf-btn:hover{background:rgba(30,144,255,.25);border-color:#1e90ff;color:#fff;}
 </style>
 <script>
 var cCV=document.getElementById('candleChart'),vCV=document.getElementById('volumeChart'),mCV=document.getElementById('mfiChart');
-var cCX=cCV?cCV.getContext('2d'):null,vCX=vCV?vCV.getContext('2d'):null,mCX=mCV?mCV.getContext('2d'):null;
-var ticks=[],candles=[],candleSize=50,MAX_TICKS=80*50+50;
+var cCX=cCV&&cCV.getContext('2d'),vCX=vCV&&vCV.getContext('2d'),mCX=mCV&&mCV.getContext('2d');
+var ticks=[],candles=[],candleSize=10,MAX_TICKS=6000;
 var openPos={{open_pos|tojson if open_pos else 'null'}};
 var entryPrice=openPos?parseFloat(openPos.entry_price):null;
 var posDuration=openPos?parseInt(openPos.duration_seconds):0;
@@ -177,13 +227,11 @@ var openedAt=openPos?new Date(openPos.opened_at.replace(' ','T')+'+05:00'):null;
 var _cr=false,_tr=false;
 
 function initCV(cv,h){
-  if(!cv)return;
-  var pr=window.devicePixelRatio||1;
-  cv.width=cv.offsetWidth*pr; cv.height=h*pr;
-  cv.style.height=h+'px';
-  var c=cv.getContext('2d'); c.setTransform(1,0,0,1,0,0); c.scale(pr,pr);
+  if(!cv)return;var pr=window.devicePixelRatio||1;
+  cv.width=cv.offsetWidth*pr;cv.height=h*pr;cv.style.height=h+'px';
+  var c=cv.getContext('2d');c.setTransform(1,0,0,1,0,0);c.scale(pr,pr);
 }
-function resizeAll(){initCV(cCV,300);initCV(vCV,50);initCV(mCV,65);drawAll();}
+function resizeAll(){initCV(cCV,340);initCV(vCV,52);initCV(mCV,64);drawAll();}
 window.addEventListener('resize',resizeAll);
 
 function buildCandles(){
@@ -191,132 +239,141 @@ function buildCandles(){
   for(var i=0;i<ticks.length;i+=candleSize){
     var chunk=ticks.slice(i,i+candleSize);
     if(!chunk.length)break;
-    var ps=chunk.map(function(t){return t.price;});
+    var ps=chunk.map(function(t){return t.p;});
     candles.push({o:ps[0],h:Math.max.apply(null,ps),l:Math.min.apply(null,ps),c:ps[ps.length-1],vol:chunk.length,up:ps[ps.length-1]>=ps[0]});
   }
 }
 
 function drawCandleChart(){
-  if(!cCX||candles.length<2)return;
-  var w=cCV.offsetWidth,h=300;
+  if(!cCX||candles.length<1)return;
+  var w=cCV.offsetWidth,h=340;
   cCX.clearRect(0,0,w,h);
-  var vals=candles.map(function(c){return[c.h,c.l];}).flat();
+  var vals=[];candles.forEach(function(c){vals.push(c.h,c.l);});
   var hi=Math.max.apply(null,vals),lo=Math.min.apply(null,vals);
   var pad=(hi-lo)*0.06||0.002;hi+=pad;lo-=pad;
   var range=hi-lo||0.001;
-  var PL=58,PR=52,PT=14,PB=22,cw=w-PL-PR,ch=h-PT-PB;
-  function toX(i){return PL+(i/(Math.max(candles.length-1,1)))*cw;}
-  function toY(v){return PT+ch-((v-lo)/range)*ch;}
+  var PL=62,PR=54,PT=16,PB=20,cw=w-PL-PR,ch=h-PT-PB;
+  function tx(i){return PL+(i/(Math.max(candles.length-1,1)))*cw;}
+  function ty(v){return PT+ch-((v-lo)/range)*ch;}
+
+  // Fon gradient
+  var bg=cCX.createLinearGradient(0,PT,0,PT+ch);
+  bg.addColorStop(0,'rgba(30,144,255,0.03)');bg.addColorStop(1,'rgba(0,0,0,0)');
+  cCX.fillStyle=bg;cCX.fillRect(PL,PT,cw,ch);
 
   // Grid
-  cCX.strokeStyle='rgba(30,144,255,0.07)';cCX.lineWidth=1;
-  for(var gi=0;gi<=4;gi++){
-    var gy=PT+(ch/4)*gi;
+  for(var gi=0;gi<=5;gi++){
+    var gy=PT+(ch/5)*gi,gv=hi-(range/5)*gi;
+    cCX.strokeStyle='rgba(30,144,255,0.07)';cCX.lineWidth=1;
     cCX.beginPath();cCX.moveTo(PL,gy);cCX.lineTo(PL+cw,gy);cCX.stroke();
-    cCX.fillStyle='rgba(30,144,255,0.45)';cCX.font='9px monospace';cCX.textAlign='right';
-    cCX.fillText((hi-(range/4)*gi).toFixed(4),PL-3,gy+3);
+    cCX.fillStyle='rgba(30,144,255,0.4)';cCX.font='9px monospace';cCX.textAlign='right';
+    cCX.fillText(gv.toFixed(4),PL-4,gy+3);
   }
 
-  // Entry line
-  if(entryPrice!==null&&entryPrice>=lo&&entryPrice<=hi){
-    var ey=toY(entryPrice);
-    cCX.save();cCX.strokeStyle='rgba(255,215,0,0.75)';cCX.setLineDash([5,4]);cCX.lineWidth=1;
+  // Entry narx chizig'i
+  if(entryPrice!==null){
+    var ey=ty(entryPrice);
+    cCX.save();cCX.strokeStyle='rgba(255,215,0,0.8)';cCX.setLineDash([6,4]);cCX.lineWidth=1.2;
     cCX.beginPath();cCX.moveTo(PL,ey);cCX.lineTo(PL+cw,ey);cCX.stroke();
     cCX.setLineDash([]);cCX.restore();
-    cCX.fillStyle='#ffd700';cCX.font='bold 9px monospace';cCX.textAlign='left';
-    cCX.fillText('E:'+entryPrice.toFixed(4),PL+4,ey-3);
+    cCX.fillStyle='rgba(255,215,0,0.85)';cCX.fillRect(PL+cw+2,ey-9,50,18);
+    cCX.fillStyle='#000';cCX.font='bold 9px monospace';cCX.textAlign='left';
+    cCX.fillText('E:'+entryPrice.toFixed(4),PL+cw+4,ey+3);
   }
 
   // Shamlar
-  var cW=Math.max(2,(cw/candles.length)*0.7);
+  var cW=Math.max(3,Math.min(12,(cw/Math.max(candles.length,1))*0.72));
   candles.forEach(function(cd,i){
-    var x=toX(i),oY=toY(cd.o),cY=toY(cd.c),hY=toY(cd.h),lY=toY(cd.l);
+    var x=tx(i),oY=ty(cd.o),cY=ty(cd.c),hY=ty(cd.h),lY=ty(cd.l);
     var bTop=Math.min(oY,cY),bH=Math.max(Math.abs(cY-oY),1.5);
     var col=cd.up?'#1e90ff':'#ff4444';
     cCX.strokeStyle=col;cCX.lineWidth=1;
     cCX.beginPath();cCX.moveTo(x,hY);cCX.lineTo(x,lY);cCX.stroke();
-    cCX.fillStyle=cd.up?'rgba(30,144,255,0.85)':'rgba(255,68,68,0.85)';
+    cCX.fillStyle=cd.up?'rgba(30,144,255,0.88)':'rgba(255,68,68,0.88)';
     cCX.fillRect(x-cW/2,bTop,cW,bH);
-    cCX.strokeStyle=col;cCX.lineWidth=0.5;
+    cCX.strokeStyle=cd.up?'#3aaaff':'#ff6666';cCX.lineWidth=0.5;
     cCX.strokeRect(x-cW/2,bTop,cW,bH);
   });
 
-  // Oxirgi narx label
+  // Oxirgi narx label (o'ng tomonda)
   if(candles.length){
     var lc=candles[candles.length-1];
-    var ly=toY(lc.c),lCol=lc.up?'#1e90ff':'#ff4444';
-    cCX.strokeStyle=lCol+'66';cCX.lineWidth=1;cCX.setLineDash([3,3]);
+    var ly=ty(lc.c),lCol=lc.up?'#1e90ff':'#ff4444';
+    cCX.strokeStyle=lCol+'55';cCX.lineWidth=1;cCX.setLineDash([3,3]);
     cCX.beginPath();cCX.moveTo(PL,ly);cCX.lineTo(PL+cw,ly);cCX.stroke();
     cCX.setLineDash([]);
-    cCX.fillStyle=lCol;cCX.fillRect(PL+cw+2,ly-8,48,16);
+    cCX.fillStyle=lCol;cCX.fillRect(PL+cw+2,ly-9,50,18);
     cCX.fillStyle='#fff';cCX.font='bold 9px monospace';cCX.textAlign='left';
     cCX.fillText(lc.c.toFixed(4),PL+cw+4,ly+3);
-    var eo=document.getElementById('ohlcO'),eh=document.getElementById('ohlcH');
-    var el=document.getElementById('ohlcL'),ec=document.getElementById('ohlcC');
-    if(eo)eo.textContent=lc.o.toFixed(4);
-    if(eh)eh.textContent=lc.h.toFixed(4);
-    if(el)el.textContent=lc.l.toFixed(4);
-    if(ec){ec.textContent=lc.c.toFixed(4);ec.style.color=lc.up?'#1e90ff':'#ff4444';}
+    // OHLC yangilash
+    var eO=document.getElementById('ohlcO'),eH=document.getElementById('ohlcH');
+    var eL=document.getElementById('ohlcL'),eC=document.getElementById('ohlcC');
+    if(eO)eO.textContent=lc.o.toFixed(4);
+    if(eH)eH.textContent=lc.h.toFixed(4);
+    if(eL)eL.textContent=lc.l.toFixed(4);
+    if(eC){eC.textContent=lc.c.toFixed(4);eC.style.color=lc.up?'#1e90ff':'#ff4444';}
     var hiL=document.getElementById('highLabel'),loL=document.getElementById('lowLabel');
-    if(hiL)hiL.textContent='MAX: '+hi.toFixed(4);
-    if(loL)loL.textContent='MIN: '+lo.toFixed(4);
+    if(hiL)hiL.textContent=hi.toFixed(4);
+    if(loL)loL.textContent=lo.toFixed(4);
   }
 }
 
 function drawVolume(){
   if(!vCX||candles.length<1)return;
-  var w=vCV.offsetWidth,h=50;
+  var w=vCV.offsetWidth,h=52;
   vCX.clearRect(0,0,w,h);
+  var PL=62,PR=54;
+  var cw=w-PL-PR;
   var maxV=Math.max.apply(null,candles.map(function(c){return c.vol;}));
-  var cW=Math.max(2,(w/candles.length)*0.7);
+  var cW=Math.max(3,Math.min(12,(cw/Math.max(candles.length,1))*0.72));
   candles.forEach(function(cd,i){
-    var x=(i/(Math.max(candles.length-1,1)))*w;
-    var bH=(cd.vol/maxV)*(h-3);
-    vCX.fillStyle=cd.up?'rgba(30,144,255,0.65)':'rgba(255,68,68,0.55)';
+    var x=PL+(i/(Math.max(candles.length-1,1)))*cw;
+    var bH=Math.max((cd.vol/maxV)*(h-4),2);
+    vCX.fillStyle=cd.up?'rgba(30,144,255,0.55)':'rgba(255,68,68,0.45)';
     vCX.fillRect(x-cW/2,h-bH,cW,bH);
   });
-  vCX.fillStyle='rgba(30,144,255,0.35)';vCX.font='9px monospace';vCX.textAlign='left';
-  vCX.fillText('VOL',4,11);
+  vCX.fillStyle='rgba(30,144,255,0.3)';vCX.font='9px monospace';vCX.textAlign='left';
+  vCX.fillText('VOL',2,11);
 }
 
 function calcMFI(){
   if(candles.length<5)return[];
-  var mfi=[],period=Math.min(14,candles.length-1);
+  var period=Math.min(14,candles.length-1),mfi=[];
   for(var i=period;i<candles.length;i++){
     var pf=0,nf=0;
     for(var j=i-period+1;j<=i;j++){
       var tp=(candles[j].h+candles[j].l+candles[j].c)/3;
       var pp=(candles[j-1].h+candles[j-1].l+candles[j-1].c)/3;
-      var rawMF=tp*candles[j].vol;
-      if(tp>pp)pf+=rawMF;else nf+=rawMF;
+      if(tp>pp)pf+=tp*candles[j].vol;else nf+=tp*candles[j].vol;
     }
-    var r=nf===0?100:pf/nf;
-    mfi.push(Math.round(100-(100/(1+r))));
+    mfi.push(Math.round(100-(100/(1+(nf===0?100:pf/nf)))));
   }
   return mfi;
 }
 
 function drawMFI(){
   if(!mCX)return;
-  var w=mCV.offsetWidth,h=65,mfi=calcMFI();
+  var w=mCV.offsetWidth,h=64,mfi=calcMFI();
   mCX.clearRect(0,0,w,h);
   if(mfi.length<2)return;
-  var PL=24,PR=4,PT=5,PB=14,cw=w-PL-PR,ch=h-PT-PB;
+  var PL=26,PR=4,PT=4,PB=16,cw=w-PL-PR,ch=h-PT-PB;
   [20,50,80].forEach(function(lv){
     var y=PT+ch-(lv/100)*ch;
-    mCX.strokeStyle=lv===50?'rgba(255,255,255,0.12)':'rgba(255,80,80,0.15)';
+    mCX.strokeStyle=lv===50?'rgba(255,255,255,0.08)':'rgba(255,80,80,0.12)';
     mCX.lineWidth=1;mCX.setLineDash([3,3]);
     mCX.beginPath();mCX.moveTo(PL,y);mCX.lineTo(PL+cw,y);mCX.stroke();
     mCX.setLineDash([]);
-    mCX.fillStyle='rgba(80,110,140,0.7)';mCX.font='8px monospace';mCX.textAlign='right';
+    mCX.fillStyle='rgba(60,90,120,0.8)';mCX.font='8px monospace';mCX.textAlign='right';
     mCX.fillText(lv,PL-2,y+3);
   });
-  mCX.strokeStyle='#38bff8';mCX.lineWidth=1.5;
-  mCX.beginPath();
-  mfi.forEach(function(v,i){
-    var x=PL+(i/(mfi.length-1||1))*cw,y=PT+ch-(v/100)*ch;
-    i===0?mCX.moveTo(x,y):mCX.lineTo(x,y);
-  });
+  // Gradient to'ldirish
+  var mGrad=mCX.createLinearGradient(0,PT,0,PT+ch);
+  mGrad.addColorStop(0,'rgba(56,191,248,0.15)');mGrad.addColorStop(1,'rgba(0,0,0,0)');
+  mCX.fillStyle=mGrad;mCX.beginPath();
+  mfi.forEach(function(v,i){var x=PL+(i/(mfi.length-1||1))*cw,y=PT+ch-(v/100)*ch;i===0?mCX.moveTo(x,y):mCX.lineTo(x,y);});
+  mCX.lineTo(PL+cw,PT+ch);mCX.lineTo(PL,PT+ch);mCX.fill();
+  mCX.strokeStyle='#38bff8';mCX.lineWidth=1.5;mCX.beginPath();
+  mfi.forEach(function(v,i){var x=PL+(i/(mfi.length-1||1))*cw,y=PT+ch-(v/100)*ch;i===0?mCX.moveTo(x,y):mCX.lineTo(x,y);});
   mCX.stroke();
   var cur=mfi[mfi.length-1];
   var mEl=document.getElementById('mfiValue');
@@ -325,15 +382,10 @@ function drawMFI(){
 
 function drawAll(){drawCandleChart();drawVolume();drawMFI();}
 
-function setTF(sz){
+function setTF(sz,btn){
   candleSize=sz;
-  ['1s','5s','30s'].forEach(function(id){
-    var b=document.getElementById('tf'+id);
-    if(b){b.className='cs-btn cs-btn-sm';b.style.cssText='font-size:9px;padding:3px 7px;';}
-  });
-  var m={10:'1s',50:'5s',300:'30s'};
-  var ab=document.getElementById('tf'+m[sz]);
-  if(ab){ab.className='cs-btn cs-btn-sm cs-btn-primary';}
+  document.querySelectorAll('.tf-btn').forEach(function(b){b.classList.remove('active');});
+  if(btn)btn.classList.add('active');
   buildCandles();drawAll();
 }
 
@@ -353,15 +405,13 @@ function tickPrice(){
   fetch('/api/trading/tick',{credentials:'same-origin'})
     .then(function(r){return r.json();})
     .then(function(d){
-      _tr=false;
-      if(!d.success)return;
+      _tr=false;if(!d.success)return;
       var p=d.data;
-      ticks.push({price:p.price});
-      if(ticks.length>MAX_TICKS)ticks.shift();
+      ticks.push({p:p.price});if(ticks.length>MAX_TICKS)ticks.shift();
       buildCandles();drawAll();
       var el=document.getElementById('livePriceDisplay');
       var ce=document.getElementById('liveChangeDisplay');
-      if(el){el.textContent=p.formatted;el.style.color=p.direction>0?'#1e90ff':(p.direction<0?'#ff4444':'inherit');}
+      if(el){el.textContent=p.formatted;el.style.color=p.direction>0?'#1e90ff':(p.direction<0?'#ff4444':'#e8f4ff');}
       if(ce){ce.textContent=p.change_str;ce.style.color=p.direction>0?'#1e90ff':(p.direction<0?'#ff4444':'#888');}
       updateCountdown(p.price);
     }).catch(function(){_tr=false;});
@@ -372,13 +422,16 @@ function updateCountdown(cp){
   var elapsed=(Date.now()-openedAt.getTime())/1000;
   var remaining=Math.max(0,posDuration-elapsed);
   var el=document.getElementById('countdown');
-  if(el)el.textContent=remaining<1?'⏳':Math.ceil(remaining)+'s';
+  if(el){
+    el.textContent=remaining<1?'⏳':Math.ceil(remaining)+'s';
+    el.style.color=remaining<10?'#ff4444':'#1e90ff';
+  }
   var pe=document.getElementById('openProfitDisplay');
   if(pe&&entryPrice&&cp){
     var pct=((cp-entryPrice)/entryPrice*100).toFixed(2);
     var isW=(openPos.direction==='up'&&cp>entryPrice)||(openPos.direction==='down'&&cp<entryPrice);
-    pe.innerHTML=isW?'<span style="color:#1e90ff;">✓ +'+Math.abs(pct)+'% foyda tomonda</span>':
-                     '<span style="color:#ff4444;">✗ -'+Math.abs(pct)+'% zarar tomonda</span>';
+    pe.innerHTML=isW?'<span style="color:#1e90ff;font-weight:700;">✓ +'+Math.abs(pct)+'% foyda tomonda</span>':
+                     '<span style="color:#ff4444;font-weight:700;">✗ -'+Math.abs(pct)+'% zarar tomonda</span>';
   }
   if(remaining<0.5&&!_cr){_cr=true;setTimeout(checkResult,800);}
 }
@@ -399,10 +452,10 @@ function checkResult(){
           if(nd.success&&nd.data&&nd.data.length)showToast(nd.data[0].title,nd.data[0].body,nd.data[0].type);
         }).catch(function(){});
       openPos=null;entryPrice=null;openedAt=null;_cr=false;
-      var p=document.getElementById('betPanel'),o=document.getElementById('openPosPanel');
-      if(p)p.style.display='block';if(o)o.style.display='none';
-      var upBtn=document.getElementById('betUpBtn'),dnBtn=document.getElementById('betDownBtn');
-      if(upBtn)upBtn.disabled=false;if(dnBtn)dnBtn.disabled=false;
+      var bp=document.getElementById('betPanel'),op=document.getElementById('openPosPanel');
+      if(bp)bp.style.display='block';if(op)op.style.display='none';
+      var uB=document.getElementById('betUpBtn'),dB=document.getElementById('betDownBtn');
+      if(uB)uB.disabled=false;if(dB)dB.disabled=false;
       fetchHistory();
     }).catch(function(){_cr=false;});
 }
@@ -425,22 +478,21 @@ function fetchHistory(){
       var tb=document.getElementById('historyTableBody');
       if(!tb)return;
       tb.innerHTML=d.data.history.slice(0,10).map(function(h){
-        var dir=h.direction==='up'?'⬆ UP':'⬇ DOWN';
-        var nat=h.status==='won'?'<span style="color:#1e90ff;">+'+Number(h.profit_loss).toLocaleString()+'</span>':
+        var dir=h.direction==='up'?'<span style="color:#1e90ff;font-weight:700;">⬆ UP</span>'  :'<span style="color:#ff4444;font-weight:700;">⬇ DOWN</span>';
+        var nat=h.status==='won'?'<span style="color:#1e90ff;font-weight:700;">+'+Number(h.profit_loss).toLocaleString()+'</span>':
                 h.status==='lost'?'<span style="color:#ff4444;">'+Number(h.profit_loss).toLocaleString()+'</span>':
-                h.status==='open'?'<span style="color:#ffd700;font-size:10px;">Ochiq</span>':
-                '<span class="muted" style="font-size:10px;">Bekor</span>';
-        return '<tr><td>'+dir+'</td><td>⚡'+Number(h.amount).toLocaleString()+'</td>'+
-               '<td style="color:#4a7fa0;font-family:monospace;font-size:10px;">'+(h.exit_price?parseFloat(h.exit_price).toFixed(4):'—')+'</td>'+
-               '<td>'+nat+'</td></tr>';
-      }).join('')||'<tr><td colspan="4" style="text-align:center;padding:14px;" class="muted">Hali tiklovlar yo\'q</td></tr>';
+                h.status==='open'?'<span style="color:#ffd700;font-size:10px;animation:pulse 1s infinite;">● Ochiq</span>':
+                '<span style="color:#2a3a4a;font-size:10px;">Bekor</span>';
+        return '<tr><td>'+dir+'</td><td>⚡'+Number(h.amount).toLocaleString()+'</td><td style="color:#3a5a7a;font-family:monospace;font-size:10px;">'+
+               (h.exit_price?parseFloat(h.exit_price).toFixed(4):'—')+'</td><td>'+nat+'</td></tr>';
+      }).join('')||'<tr><td colspan="4" style="text-align:center;padding:12px;color:#2a3a4a;">Hali tiklovlar yo\'q</td></tr>';
     }).catch(function(){});
 }
 
 function showToast(title,body,type){
   var col=type==='success'?'#1e90ff':type==='error'?'#ff4444':'#ffd700';
   var el=document.createElement('div');
-  el.style.cssText='position:fixed;top:70px;right:16px;z-index:9999;padding:14px 18px;border-radius:8px;border:1px solid '+col+';background:#051a2e;color:#fff;max-width:300px;font-size:13px;box-shadow:0 4px 24px rgba(0,0,0,.6);animation:slideIn .3s ease;';
+  el.style.cssText='position:fixed;top:70px;right:16px;z-index:9999;padding:14px 18px;border-radius:8px;border:1px solid '+col+';background:#031420;color:#e8f4ff;max-width:300px;font-size:13px;box-shadow:0 4px 24px rgba(0,0,0,.7);animation:slideIn .3s ease;';
   el.innerHTML='<strong style="color:'+col+';">'+title+'</strong><br><span style="font-size:12px;opacity:.85;">'+body+'</span>';
   document.body.appendChild(el);
   setTimeout(function(){el.style.opacity='0';el.style.transition='opacity .5s';},4500);
@@ -458,12 +510,12 @@ window.placeBet=function(dir){
     .then(function(d){
       if(d.success){
         var bp=document.getElementById('betPanel'),op=document.getElementById('openPosPanel');
-        if(bp)bp.style.display='none';if(op)op.style.display='block';
-        var od=document.getElementById('openDir'),oa=document.getElementById('openAmt');
-        if(od)od.textContent=dir==='up'?'⬆ YUQORI':'⬇ PASTGA';
-        if(oa)oa.textContent='⚡ '+Number(amount).toLocaleString()+' CODE';
+        var oDir=document.getElementById('openDir'),oAmt=document.getElementById('openAmt');
+        if(bp)bp.style.display='none';if(op){op.style.display='block';}
+        if(oDir){oDir.textContent=dir==='up'?'⬆ YUQORI':'⬇ PASTGA';oDir.style.color=dir==='up'?'#1e90ff':'#ff4444';}
+        if(oAmt)oAmt.textContent='⚡ '+Number(amount).toLocaleString()+' CODE';
         posDuration=dur;openedAt=new Date();
-        openPos={direction:dir,entry_price:ticks.length?ticks[ticks.length-1].price:1};
+        openPos={direction:dir,entry_price:ticks.length?ticks[ticks.length-1].p:1};
         entryPrice=openPos.entry_price;_cr=false;
         var bal=document.getElementById('balanceDisplay');
         if(bal)bal.textContent=(parseInt(bal.textContent.replace(/,/g,''))-amount).toLocaleString();
@@ -478,12 +530,10 @@ window.placeBet=function(dir){
 fetch('/api/trading/chart',{credentials:'same-origin'})
   .then(function(r){return r.json();})
   .then(function(d){
-    if(d.success&&d.data.prices){
-      ticks=d.data.prices.map(function(p){return{price:p.price};});
-    }
+    if(d.success&&d.data.prices)ticks=d.data.prices.map(function(p){return{p:p.price};});
     resizeAll();
-    setInterval(tickPrice,100);        // 0.1s narx yangilash
-    setInterval(fetchStats,5000);      // 5s statistika yangilash
+    setInterval(tickPrice,100);
+    setInterval(fetchStats,5000);
     fetchStats();
     fetchHistory();
   });
