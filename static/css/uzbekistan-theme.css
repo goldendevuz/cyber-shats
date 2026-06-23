@@ -1,0 +1,175 @@
+/* ================================================================
+   CYBER SHATS — O'ZBEKISTON MILLIY JAMOASI TEMA
+   "Oldinga O'zbekiston! Jahon Chempioniga!" 
+   ================================================================ */
+
+:root {
+    /* O'zbekiston bayrog'i asosida: Ko'k + Yashil + Oq */
+    --cs-bg-primary:    #020b18;          /* Tungi ko'k */
+    --cs-bg-secondary:  #031220;
+    --cs-bg-card:       #051a2e;          /* Chuqur ko'k karta */
+    --cs-bg-glass:      rgba(5, 26, 46, 0.85);
+    --cs-bg-sidebar:    #031420;
+    --cs-bg-input:      #041826;
+    --cs-bg-body:       #020b18;
+
+    /* Asosiy ranglar — ko'k + yashil (O'zbekiston) */
+    --cs-text-primary:  #1e90ff;          /* Milliy ko'k */
+    --cs-text-secondary: #00c853;         /* Milliy yashil */
+    --cs-text-muted:    #4a7fa0;
+    --cs-text-cyan:     #38bff8;
+    --cs-text-white:    #e8f4ff;
+    --cs-text-dark:     #000000;
+    --cs-text-red:      #ff4444;
+    --cs-text-yellow:   #ffd700;          /* Oltin */
+    --cs-text-accent:   #ffd700;
+
+    /* Chegara va effektlar */
+    --cs-border:           rgba(30, 144, 255, 0.25);
+    --cs-border-active:    rgba(30, 144, 255, 0.7);
+    --cs-glow:             0 0 12px rgba(30, 144, 255, 0.35);
+    --cs-glow-strong:      0 0 24px rgba(30, 144, 255, 0.65);
+    --cs-glow-red:         0 0 15px rgba(255, 0, 0, 0.4);
+    --cs-glow-cyan:        0 0 15px rgba(56, 191, 248, 0.4);
+
+    /* Gradientlar */
+    --cs-grad-main:    linear-gradient(135deg, #020b18 0%, #031d34 50%, #020f1e 100%);
+    --cs-grad-card:    linear-gradient(135deg, #051a2e 0%, #031220 100%);
+    --cs-grad-btn:     linear-gradient(135deg, #1e90ff 0%, #0070d8 100%);
+    --cs-grad-sidebar: linear-gradient(180deg, #031420 0%, #020b18 100%);
+
+    /* O'lchamlar */
+    --cs-sidebar-w:    220px;
+    --cs-radius:       6px;
+    --cs-font-mono:    'Share Tech Mono', 'Courier New', monospace;
+    --cs-font-display: 'Orbitron', monospace;
+}
+
+/* ========================
+   BAYROQ CHIZIGI — yuqori
+   ======================== */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        #1d84cc 0%, #1d84cc 33%,
+        #ffffff 33%, #ffffff 66%,
+        #1db954 66%, #1db954 100%
+    );
+    z-index: 99999;
+}
+
+/* ========================
+   TUGMALAR (asosiy)
+   ======================== */
+.cs-btn-primary {
+    background: linear-gradient(135deg, #1e4a8a 0%, #0f6fd4 50%, #1e90ff 100%) !important;
+    border-color: #1e90ff !important;
+    color: #fff !important;
+}
+.cs-btn-primary:hover {
+    background: linear-gradient(135deg, #1563bb 0%, #1e90ff 100%) !important;
+    box-shadow: 0 0 16px rgba(30,144,255,.5) !important;
+}
+
+/* ========================
+   LOGO va HEADER
+   ======================== */
+.cs-logo-text span,
+.auth-logo span {
+    background: linear-gradient(135deg, #1e90ff, #00c853, #ffd700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ========================
+   SIDEBAR active
+   ======================== */
+.cs-nav-item.active,
+.cs-nav-item:hover {
+    background: rgba(30, 144, 255, 0.12) !important;
+    border-color: rgba(30, 144, 255, 0.35) !important;
+    color: #1e90ff !important;
+}
+
+/* ========================
+   KARTA chegarasi
+   ======================== */
+.cs-card {
+    border-color: rgba(30, 144, 255, 0.18) !important;
+    background: linear-gradient(135deg, #051a2e 0%, #031220 100%) !important;
+}
+
+/* ========================
+   CHIP (tag)
+   ======================== */
+.cs-chip.solid {
+    background: rgba(30, 144, 255, 0.2) !important;
+    border-color: rgba(30, 144, 255, 0.5) !important;
+    color: #38bff8 !important;
+}
+
+/* ========================
+   TERMINAL
+   ======================== */
+.terminal-box {
+    background: #010d1a !important;
+    border-color: rgba(30, 144, 255, 0.3) !important;
+}
+.term-head { background: #020f1e !important; }
+
+/* ========================
+   INPUT
+   ======================== */
+.cs-input {
+    background: #041826 !important;
+    border-color: rgba(30, 144, 255, 0.25) !important;
+    color: #e8f4ff !important;
+}
+.cs-input:focus {
+    border-color: rgba(30, 144, 255, 0.7) !important;
+    box-shadow: 0 0 10px rgba(30, 144, 255, 0.2) !important;
+}
+
+/* ========================
+   HOVER effekt — aksent rang
+   ======================== */
+.cyan, a.cyan { color: #38bff8 !important; }
+.accent { color: #ffd700 !important; }
+
+/* ========================
+   HERO SECTION — milliy
+   ======================== */
+.hero-section {
+    background:
+        radial-gradient(ellipse at 70% 50%, rgba(30,144,255,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse at 30% 50%, rgba(0,200,83,0.08) 0%, transparent 50%),
+        #020b18;
+}
+
+/* ========================
+   STAT KARTA
+   ======================== */
+.stat-card {
+    background: linear-gradient(135deg, #051a2e, #031220) !important;
+    border-color: rgba(30,144,255,.2) !important;
+}
+.stat-card .num { color: #1e90ff !important; }
+
+/* ========================
+   TRADING — ko'k rang bilan
+   ======================== */
+#livePriceDisplay { color: #1e90ff; }
+
+/* ========================
+   SCROLLBAR
+   ======================== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #020b18; }
+::-webkit-scrollbar-thumb {
+    background: rgba(30,144,255,0.4);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(30,144,255,0.7); }

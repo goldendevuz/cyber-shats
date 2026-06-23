@@ -1,8 +1,13 @@
 {% from 'partials/icons.html' import icon %}
 <aside class="cs-sidebar" id="cs-sidebar">
-    <a href="{{ url_for('dashboard') }}" class="logo">
+    <!-- Bayroq chizig'i -->
+    <div style="height:3px; background:linear-gradient(90deg,#1d84cc 33%,#fff 33%,#fff 66%,#1db954 66%); margin-bottom:1px; border-radius:0;"></div>
+    <a href="{{ url_for('dashboard') }}" class="logo" style="padding:14px 16px;">
         {{ icon('shield', 22) }}
-        <div>CYBER SHATS<span>IT TA'LIM PLATFORMASI</span></div>
+        <div>
+            <span style="background:linear-gradient(135deg,#1e90ff,#00c853); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-weight:900;">CYBER SHATS</span>
+            <span style="display:block; font-size:9px; color:#38bff8; letter-spacing:1px; opacity:0.8;">🏆 OLDINGA O'ZBEKISTON!</span>
+        </div>
     </a>
 
     <!-- Yuqoriga scroll tugmasi -->

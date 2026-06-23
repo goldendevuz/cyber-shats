@@ -101,11 +101,11 @@
 
     {% if open_pos %}
     <!-- OCHIQ POZITSIYA -->
-    <div class="cs-card" style="border-color:{{ 'rgba(0,255,65,.5)' if open_pos.direction=='up' else 'rgba(255,85,85,.5)' }}; text-align:center;">
+    <div id="openPosPanel" class="cs-card" style="border-color:{{ 'rgba(0,255,65,.5)' if open_pos.direction=='up' else 'rgba(255,85,85,.5)' }}; text-align:center;">
       <div class="muted" style="font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Ochiq tiklov</div>
-      <div style="font-size:26px; font-weight:800; margin-bottom:6px;">{{ '⬆ YUQORI' if open_pos.direction=='up' else '⬇ PASTGA' }}</div>
-      <div style="font-size:13px; margin-bottom:12px;">⚡ <strong>{{ "{:,}".format(open_pos.amount) }}</strong> CODE</div>
-      <div style="display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:12px;">
+      <div id="openDir" style="font-size:26px; font-weight:800; margin-bottom:6px;">{{ '⬆ YUQORI' if open_pos.direction=='up' else '⬇ PASTGA' }}</div>
+      <div>⚡ <strong>{{ "{:,}".format(open_pos.amount) }}</strong> CODE</div>
+      <div style="display:flex; justify-content:space-between; font-size:11.5px; margin:10px 0;">
         <span class="muted">Kirish narxi</span>
         <strong>{{ "%.4f"|format(open_pos.entry_price) }}</strong>
       </div>
@@ -113,10 +113,21 @@
       <div id="countdown" style="font-family:var(--cs-font-display); font-size:36px; font-weight:800;">—</div>
       <div id="openProfitDisplay" style="font-size:12px; margin-top:8px;" class="muted">—</div>
     </div>
+    <div id="betPanel" style="display:none;">
 
     {% else %}
+    <!-- Dinamik ochiq pozitsiya paneli (JS tomonidan ko'rsatiladi) -->
+    <div id="openPosPanel" style="display:none;" class="cs-card" style="text-align:center;">
+      <div class="muted" style="font-size:10px; text-transform:uppercase; margin-bottom:8px;">Ochiq tiklov</div>
+      <div id="openDir" style="font-size:26px; font-weight:800; margin-bottom:6px;">—</div>
+      <div id="openAmt" style="font-size:14px; margin-bottom:10px;">—</div>
+      <div class="muted" style="font-size:10px; margin-bottom:4px;">Qolgan vaqt</div>
+      <div id="countdown" style="font-family:var(--cs-font-display); font-size:36px; font-weight:800;">—</div>
+      <div id="openProfitDisplay" style="font-size:12px; margin-top:8px;" class="muted">—</div>
+    </div>
+
     <!-- TIKLOV QO'YISH -->
-    <div class="cs-card">
+    <div id="betPanel" class="cs-card">
       <h3 style="font-size:12px; margin-bottom:12px; text-align:center;">{{ icon('zap',13) }} TIKLOV QO'YISH</h3>
 
       <div class="muted" style="font-size:10.5px; margin-bottom:5px;">Miqdor (CODE)</div>
@@ -310,8 +321,9 @@ function updateCountdown(currentPrice) {
         profitEl.style.color = isWin ? '#00ff41' : '#ff5555';
     }
 
-    if (remaining < 0.5) {
-        setTimeout(function(){ window.location.reload(); }, 1500);
+    if (remaining < 0.5 && !window._checkingResult) {
+        window._checkingResult = true;
+        checkPositionResult();
     }
 }
 
@@ -327,7 +339,11 @@ window.placeBet = function(dir) {
         body: JSON.stringify({direction:dir, amount:amount, duration:dur})
     }).then(function(r){return r.json();})
       .then(function(d){
-          if(d.success){ window.location.reload(); }
+          if(d.success){
+              window._openPos = {direction:dir, amount:amount, duration:dur,
+                  opened_at: new Date().toISOString(), entry_price: prices.length ? prices[prices.length-1].price : 1};
+              showOpenPosition(dir, amount, dur);
+          }
           else{
               alert(d.error||'Xato yuz berdi');
               document.getElementById('betUpBtn').disabled=false;
@@ -349,7 +365,79 @@ fetch('/api/trading/chart',{credentials:'same-origin'})
         }
     });
 
-resizeCanvas();
-setInterval(tickPrice, 100);
+// Natijani sahifani yuklamasdan tekshirish
+function checkPositionResult() {
+    fetch('/api/trading/status', {credentials:'same-origin'})
+        .then(function(r){return r.json();})
+        .then(function(d){
+            if(!d.success) return;
+            var pos = d.data.open_position;
+            if(pos && pos.status === 'open'){
+                // Hali ochiq — davom et
+                window._checkingResult = false;
+                return;
+            }
+            // Yopilgan — natijani ko'rsatish
+            var bal = d.data.balance;
+            var balEl = document.getElementById('balanceDisplay');
+            if(balEl) balEl.textContent = Number(bal).toLocaleString();
+
+            // Bildirishnoma
+            fetch('/api/notifications/recent', {credentials:'same-origin'})
+                .then(function(r2){return r2.json();})
+                .then(function(nd){
+                    if(nd.success && nd.data && nd.data.length){
+                        var n = nd.data[0];
+                        showTradeToast(n.title, n.body, n.type);
+                    }
+                }).catch(function(){});
+
+            // Tiklov panelini qayta ko'rsatish
+            openPos = null;
+            window._checkingResult = false;
+            showBetPanel();
+        }).catch(function(){ window._checkingResult = false; });
+}
+
+function showTradeToast(title, body, type) {
+    var el = document.createElement('div');
+    el.style.cssText = 'position:fixed;top:70px;right:16px;z-index:9999;padding:14px 18px;border-radius:8px;' +
+        'border:1px solid ' + (type==='success'?'#00ff41':'#ff5555') + ';' +
+        'background:var(--cs-bg-card,#111);color:#fff;max-width:320px;font-size:13px;' +
+        'box-shadow:0 4px 20px rgba(0,0,0,.5);animation:slideIn .3s ease;';
+    el.innerHTML = '<strong>' + title + '</strong><br><span style="font-size:12px;opacity:.8;">' + body + '</span>';
+    document.body.appendChild(el);
+    setTimeout(function(){ el.style.opacity='0'; el.style.transition='opacity .5s'; }, 4000);
+    setTimeout(function(){ el.remove(); }, 4500);
+}
+
+function showBetPanel() {
+    var panel = document.getElementById('betPanel');
+    var openPanel = document.getElementById('openPosPanel');
+    if(panel) panel.style.display = 'block';
+    if(openPanel) openPanel.style.display = 'none';
+}
+
+function showOpenPosition(dir, amount, dur) {
+    var panel = document.getElementById('betPanel');
+    var openPanel = document.getElementById('openPosPanel');
+    if(panel) panel.style.display = 'none';
+    if(openPanel){
+        openPanel.style.display = 'block';
+        var dirEl = openPanel.querySelector('#openDir');
+        var amtEl = openPanel.querySelector('#openAmt');
+        var durEl = openPanel.querySelector('#openDur');
+        if(dirEl) dirEl.textContent = dir === 'up' ? '⬆ YUQORI' : '⬇ PASTGA';
+        if(amtEl) amtEl.textContent = '⚡ ' + Number(amount).toLocaleString();
+        if(durEl) durEl.textContent = dur;
+    }
+    // Countdown yangilash
+    duration = dur;
+    openedAt = new Date();
+    openPos = {direction: dir, entry_price: prices.length ? prices[prices.length-1].price : 1};
+    entryPrice = openPos.entry_price;
+    window._checkingResult = false;
+}
 </script>
+<style>@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}</style>
 {% endblock %}

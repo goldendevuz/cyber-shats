@@ -24,30 +24,76 @@
 
 {% include 'partials/public_nav.html' %}
 
-<section class="hero-section" style="position:relative; overflow:hidden;">
-    <!-- Fon particle effekti (3D, Three.js) -->
-    <canvas id="heroBgCanvas" style="position:absolute; inset:0; z-index:0; pointer-events:none; opacity:0.45;"></canvas>
-    <div class="container hero-grid" style="position:relative; z-index:1;">
+<section class="hero-section" style="position:relative; overflow:hidden; min-height:520px;">
+    <canvas id="heroBgCanvas" style="position:absolute; inset:0; z-index:0; pointer-events:none; opacity:0.4;"></canvas>
+
+    <!-- Bayroq gorizontal chizig'i -->
+    <div style="position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,#1d84cc 33%,#fff 33%,#fff 66%,#1db954 66%); z-index:2;"></div>
+
+    <!-- Dekorativ futbol to'pi SVG (fon) -->
+    <svg style="position:absolute; right:-80px; top:50%; transform:translateY(-50%); opacity:0.06; z-index:0;" width="500" height="500" viewBox="0 0 500 500">
+      <circle cx="250" cy="250" r="240" fill="none" stroke="#1e90ff" stroke-width="3"/>
+      <path d="M250 10 L295 140 L440 140 L330 220 L375 360 L250 280 L125 360 L170 220 L60 140 L205 140 Z" fill="none" stroke="#1e90ff" stroke-width="2" opacity="0.5"/>
+    </svg>
+
+    <div class="container hero-grid" style="position:relative; z-index:1; align-items:center;">
         <div class="hero-copy fade-in-up">
-            <div class="tag">// IT TA'LIM PLATFORMASI O'ZBEKISTON</div>
-            <h1>BARCHA IT YO'NALISHLARI <span class="accent">BIR JOYDA</span></h1>
-            <p class="lead">Web dasturlash, Python, Cyber Security, Mobil dasturlash va yana 8 ta yo'nalish bo'yicha amaliy kurslar, AI yordamchi, real loyihalar va sertifikatlar — bir platformada.</p>
-            <div class="cmd-box code-text">$ cyber-shats --start<br><span class="muted">// {{ total_courses }}+ kurs, 12 yo'nalish, cheksiz imkoniyat</span></div>
+            <!-- Milliy bayroq rang chiziqchasi -->
+            <div style="display:flex; gap:4px; margin-bottom:16px; align-items:center;">
+                <div style="width:28px; height:4px; background:#1d84cc; border-radius:2px;"></div>
+                <div style="width:28px; height:4px; background:#fff; border-radius:2px; opacity:0.7;"></div>
+                <div style="width:28px; height:4px; background:#1db954; border-radius:2px;"></div>
+                <span style="font-size:11px; margin-left:8px; color:#38bff8; font-weight:700; letter-spacing:2px;">O'ZBEKISTON</span>
+            </div>
+
+            <div class="tag" style="color:#1e90ff; border-color:rgba(30,144,255,.3);">// OLDINGA O'ZBEKISTON — JAHON CHEMPIONIGA!</div>
+            <h1 style="line-height:1.15; margin-bottom:12px;">
+                IT BILIMLAR BILAN <span class="accent" style="color:#ffd700;">CHEKSIZ IMKONIYAT</span>
+            </h1>
+            <p class="lead" style="color:#8ab8d8; font-size:14.5px; line-height:1.7;">
+                Web dasturlash, Python, Cyber Security va yana 9+ yo'nalish bo'yicha amaliy kurslar.
+                O'zbekiston yoshlari — texnologiyalar orqali dunyoni zabt eting!
+            </p>
+
+            <!-- Shior -->
+            <div style="margin:16px 0; padding:10px 16px; background:rgba(30,144,255,0.08); border-left:3px solid #1e90ff; border-radius:0 6px 6px 0;">
+                <div style="font-size:12px; color:#38bff8; font-family:var(--cs-font-display);">
+                    🏆 BIR JAMOA · BIR YURAK · BIR G'ALABA
+                </div>
+                <div style="font-size:11px; color:#4a7fa0; margin-top:4px;">
+                    #UzbekistanIT · #CyberShats · #WorldChampion
+                </div>
+            </div>
+
             <div class="flex gap-16">
                 <a href="{{ url_for('register') }}" class="cs-btn cs-btn-primary">{{ icon('zap',14) }} Bepul boshlash</a>
-                <a href="#yonalishlar" class="cs-btn">Yo'nalishlarni ko'rish</a>
+                <a href="#yonalishlar" class="cs-btn" style="border-color:rgba(30,144,255,.4); color:#38bff8;">Yo'nalishlarni ko'rish</a>
             </div>
-            <div class="hero-stats">
-                <div class="hs"><div class="n">{{ total_students }}+</div><div class="l">O'quvchilar</div></div>
-                <div class="hs"><div class="n">{{ total_courses }}+</div><div class="l">Kurslar</div></div>
-                <div class="hs"><div class="n">12</div><div class="l">Yo'nalish</div></div>
-                <div class="hs"><div class="n">4.8</div><div class="l">O'rtacha baho</div></div>
+            <div class="hero-stats" style="margin-top:24px;">
+                <div class="hs"><div class="n" style="color:#1e90ff;">{{ total_students }}+</div><div class="l">O'quvchilar</div></div>
+                <div class="hs"><div class="n" style="color:#00c853;">{{ total_courses }}+</div><div class="l">Kurslar</div></div>
+                <div class="hs"><div class="n" style="color:#ffd700;">12</div><div class="l">Yo'nalish</div></div>
+                <div class="hs"><div class="n" style="color:#38bff8;">4.9</div><div class="l">Baho</div></div>
             </div>
         </div>
-        <div class="hero-globe">
-            <div id="globe-mini-container" data-globe data-speed="0.0018"></div>
+
+        <!-- O'ng taraf — globe + milliy ramzlar -->
+        <div class="hero-globe" style="position:relative;">
+            <div id="globe-mini-container" data-globe data-speed="0.0018" style="opacity:0.9;"></div>
+            <!-- UFA emblem (SVG) -->
+            <div style="position:absolute; bottom:10px; right:10px; text-align:center; opacity:0.7;">
+                <svg width="52" height="52" viewBox="0 0 60 60">
+                  <circle cx="30" cy="30" r="28" fill="none" stroke="#1d84cc" stroke-width="2"/>
+                  <circle cx="30" cy="30" r="22" fill="rgba(30,144,255,0.08)" stroke="#1db954" stroke-width="1.5"/>
+                  <text x="30" y="28" text-anchor="middle" font-size="10" fill="#1e90ff" font-weight="bold" font-family="Orbitron,monospace">UFA</text>
+                  <text x="30" y="40" text-anchor="middle" font-size="7" fill="#38bff8" font-family="Orbitron,monospace">FUTBOL</text>
+                </svg>
+            </div>
         </div>
     </div>
+
+    <!-- Pastki gorizontal chiziq -->
+    <div style="position:absolute; bottom:0; left:0; right:0; height:2px; background:linear-gradient(90deg, transparent, #1e90ff, #00c853, transparent);"></div>
 </section>
 
 <section class="section" id="yonalishlar">

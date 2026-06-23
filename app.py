@@ -3296,6 +3296,18 @@ def api_announcements_seen(ann_id):
     return api_response(True)
 
 
+@app.route("/api/notifications/recent")
+@api_login_required
+def api_notifications_recent():
+    """Trading natijasi uchun so'nggi bildirishnomani qaytaradi."""
+    user = get_current_user()
+    notifs = query_all(
+        "SELECT * FROM notifications WHERE user_id=? ORDER BY id DESC LIMIT 3",
+        (user["id"],)
+    )
+    return api_response(True, data=notifs)
+
+
 @app.route("/api/notifications/pending")
 @api_login_required
 def api_notifications_pending():

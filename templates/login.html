@@ -2,14 +2,23 @@
 {% from 'partials/icons.html' import icon %}
 {% block title %}Kirish — CYBER SHATS{% endblock %}
 {% block content %}
-<!-- 3D Fon -->
-<canvas id="loginBgCanvas" style="position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.35;"></canvas>
+<canvas id="loginBgCanvas" style="position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.3;"></canvas>
+
+<!-- Bayroq chiziqlari -->
+<div style="position:fixed; top:3px; left:0; right:0; height:3px; background:linear-gradient(90deg,#1d84cc 33%,#fff 33%,#fff 66%,#1db954 66%); z-index:9999;"></div>
 
 <div class="auth-wrap" style="position:relative; z-index:1;">
-  <div class="auth-card" style="backdrop-filter:blur(8px); border-color:rgba(0,255,65,.3); box-shadow:0 0 40px rgba(0,255,65,.08);">
-    <div id="loginCube" style="width:72px; height:72px; margin:0 auto 10px; display:block;"></div>
-    <div class="auth-logo" style="margin-top:0;">{{ icon('shield',28) }}<span>CYBER SHATS</span></div>
-    <h2 class="auth-title">Tizimga kirish</h2>
+  <div class="auth-card" style="backdrop-filter:blur(10px); border-color:rgba(30,144,255,.3); box-shadow:0 0 40px rgba(30,144,255,.1);">
+    <div id="loginCube" style="width:72px; height:72px; margin:0 auto 8px; display:block;"></div>
+    <div class="auth-logo" style="margin-top:0;">
+      {{ icon('shield',28) }}
+      <span style="background:linear-gradient(135deg,#1e90ff,#00c853); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">CYBER SHATS</span>
+    </div>
+    <!-- Milliy shior -->
+    <div style="text-align:center; margin:6px 0 14px; padding:6px 12px; background:rgba(30,144,255,0.06); border-radius:6px; border:1px solid rgba(30,144,255,.15);">
+      <div style="font-size:10px; color:#38bff8; letter-spacing:1.5px;">🏆 OLDINGA O'ZBEKISTON — JAHON CHEMPIONIGA!</div>
+    </div>
+    <h2 class="auth-title" style="color:#e8f4ff;">Tizimga kirish</h2>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% for cat, msg in messages %}
@@ -71,7 +80,7 @@ if(typeof csCreateCryptoCube !== 'undefined') {
         vel.push({x:(Math.random()-.5)*.05, y:(Math.random()-.5)*.05});
     }
     geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
-    scene.add(new THREE.Points(geo, new THREE.PointsMaterial({color:0x00ff41, size:0.9, transparent:true, opacity:0.65})));
+    scene.add(new THREE.Points(geo, new THREE.PointsMaterial({color:0x1e90ff, size:0.9, transparent:true, opacity:0.55})));
     window.addEventListener('resize', function(){
         w=window.innerWidth; h=window.innerHeight;
         camera.aspect=w/h; camera.updateProjectionMatrix();

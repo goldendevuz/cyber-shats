@@ -157,74 +157,120 @@ def _check_expired_positions():
 
 
 def _close_position(pos: dict):
-    """Pozitsiyani yopadi va foyda/zarar hisoblaydi."""
-    from pricing import get_price
+    """
+    Pozitsiyani yopadi va foyda/zarar hisoblaydi.
+
+    MANTIQ (margin trading uslubi):
+    - Narx entry dan exit gacha N% ko'tarilgan/tushgan bo'lsa,
+      foydalanuvchi tiklov miqdorining N% ini yutadi yoki yo'qotadi.
+    - To'g'ri yo'nalish: tiklov + (tiklov × N%)  qo'shiladi
+    - Noto'g'ri yo'nalish: tiklov - (tiklov × N%) yechildi (ya'ni yo'nalish teskari bo'lsa)
+    - Komisyon: 2% (sof foyda yoki zarar miqdoridan)
+    """
     from coins import add_coins, _treasury_fund_in
 
     current = get_current_price()
     exit_price = current["price"]
     entry_price = pos["entry_price"]
-
-    # Narx yo'nalishini aniqlash
-    actual_direction = "up" if exit_price > entry_price else ("down" if exit_price < entry_price else None)
-
-    if actual_direction is None:
-        # Narx o'zgarmagan — pul qaytariladi, commission yo'q
-        execute(
-            "UPDATE trading_positions SET status='cancelled', exit_price=?, closed_at=datetime('now'), profit_loss=0, profit_pct=0 WHERE id=?",
-            (exit_price, pos["id"])
-        )
-        add_coins(pos["user_id"], pos["amount"], "trading_return")
-        return
-
-    win_multiplier = get_price("trading_win_multiplier") / 100  # 1.95
-    commission_pct = get_price("trading_commission_pct") / 100  # 0.02
     amount = pos["amount"]
 
-    if pos["direction"] == actual_direction:
-        # G'alaba: tiklov × multiplier - commission
-        gross_payout = int(amount * win_multiplier)
-        commission = int(gross_payout * commission_pct)
-        net_payout = gross_payout - commission
-        profit = net_payout - amount  # sof foyda
-        profit_pct = round((profit / amount) * 100, 2)
+    if entry_price == 0:
+        entry_price = 1.0
 
-        add_coins(pos["user_id"], net_payout, "trading_win")
+    # Narx o'zgarish foizi (mutlaq qiymat)
+    price_change_pct = abs((exit_price - entry_price) / entry_price) * 100
+
+    # Agar narx o'zgarmagan bo'lsa — hamma pul qaytariladi
+    if price_change_pct < 0.001:
+        execute(
+            "UPDATE trading_positions SET status='cancelled', exit_price=?, "
+            "closed_at=datetime('now'), profit_loss=0, profit_pct=0 WHERE id=?",
+            (exit_price, pos["id"])
+        )
+        add_coins(pos["user_id"], amount, "trading_return")
+        _notify_trade_result(pos["user_id"], "cancelled", 0, 0, exit_price, entry_price)
+        return
+
+    # Haqiqiy narx yo'nalishi
+    actual_up = exit_price > entry_price  # True = narx ko'tarildi
+
+    # Foydalanuvchi to'g'ri topganmi?
+    user_up = pos["direction"] == "up"
+    correct = (user_up and actual_up) or (not user_up and not actual_up)
+
+    # Foyda/zarar miqdori: tiklov × o'zgarish%
+    pnl_raw = int(amount * price_change_pct / 100)
+    commission_pct = 2  # 2%
+
+    if correct:
+        # G'alaba — tiklov qaytariladi + foyda qo'shiladi
+        commission = max(1, int(pnl_raw * commission_pct / 100))
+        net_profit = pnl_raw - commission
+        payout = amount + net_profit  # tiklov + foyda
+        profit_pct = round(price_change_pct * (1 - commission_pct/100), 3)
+
+        add_coins(pos["user_id"], payout, "trading_win")
         _treasury_fund_in(commission, "trading_commission", pos["user_id"])
 
         execute(
-            "UPDATE trading_positions SET status='won', exit_price=?, closed_at=datetime('now'), profit_loss=?, profit_pct=? WHERE id=?",
-            (exit_price, profit, profit_pct, pos["id"])
+            "UPDATE trading_positions SET status='won', exit_price=?, "
+            "closed_at=datetime('now'), profit_loss=?, profit_pct=? WHERE id=?",
+            (exit_price, net_profit, profit_pct, pos["id"])
         )
         execute(
-            "INSERT INTO notifications (user_id, title, body, type) VALUES (?,?,?,?)",
-            (pos["user_id"], "Trading: G'alaba! 🎉",
-             f"Tiklovingiz to'g'ri! +{profit:,} CODE foyda (+{profit_pct}%)", "success")
-        )
-        execute(
-            "UPDATE trading_stats SET total_volume=total_volume+?, total_trades=total_trades+1, total_won=total_won+1, platform_commission=platform_commission+? WHERE id=1",
+            "UPDATE trading_stats SET total_volume=total_volume+?, total_trades=total_trades+1, "
+            "total_won=total_won+1, platform_commission=platform_commission+? WHERE id=1",
             (amount, commission)
         )
-    else:
-        # Zarar: tiklov to'liq yo'qoladi, commission saqlanadi g'aznada
-        loss = amount
-        loss_pct = -100.0
-        commission = int(amount * commission_pct)
-        _treasury_fund_in(amount, "trading_loss", pos["user_id"])
+        _notify_trade_result(pos["user_id"], "won", net_profit, profit_pct, exit_price, entry_price)
 
+    else:
+        # Zarar — tiklov narx o'zgarish foiziga ko'ra yechiladi
+        commission = max(1, int(pnl_raw * commission_pct / 100))
+        loss = pnl_raw + commission  # zarar + komisyon
+        loss = min(loss, amount)     # ko'pi bilan tiklov miqdoricha yo'qoladi
+        # Tiklovning qolgan qismi qaytariladi
+        returned = amount - loss
+        if returned > 0:
+            add_coins(pos["user_id"], returned, "trading_partial_return")
+        _treasury_fund_in(loss, "trading_loss", pos["user_id"])
+
+        loss_pct = round(price_change_pct * (1 + commission_pct/100), 3)
         execute(
-            "UPDATE trading_positions SET status='lost', exit_price=?, closed_at=datetime('now'), profit_loss=?, profit_pct=? WHERE id=?",
-            (exit_price, -loss, loss_pct, pos["id"])
+            "UPDATE trading_positions SET status='lost', exit_price=?, "
+            "closed_at=datetime('now'), profit_loss=?, profit_pct=? WHERE id=?",
+            (exit_price, -loss, -loss_pct, pos["id"])
         )
         execute(
-            "INSERT INTO notifications (user_id, title, body, type) VALUES (?,?,?,?)",
-            (pos["user_id"], "Trading: Zarar",
-             f"Tiklovingiz noto'g'ri bo'ldi. -{loss:,} CODE zarar.", "error")
+            "UPDATE trading_stats SET total_volume=total_volume+?, total_trades=total_trades+1, "
+            "platform_commission=platform_commission+? WHERE id=1",
+            (amount, loss)
         )
-        execute(
-            "UPDATE trading_stats SET total_volume=total_volume+?, total_trades=total_trades+1, platform_commission=platform_commission+? WHERE id=1",
-            (amount, amount)
-        )
+        _notify_trade_result(pos["user_id"], "lost", -loss, -loss_pct, exit_price, entry_price)
+
+
+def _notify_trade_result(user_id, status, profit_loss, profit_pct, exit_price, entry_price):
+    """Natija haqida bildirishnoma yuboradi."""
+    change_pct = abs(round(((exit_price - entry_price) / max(entry_price, 0.0001)) * 100, 3))
+    if status == "won":
+        title = "Trading: G'alaba! 🎉"
+        body = (f"Narx {change_pct}% o'zgardi — to'g'ri topdingiz! "
+                f"+{profit_loss:,} CODE (+{profit_pct}%) foyda.")
+        ntype = "success"
+    elif status == "lost":
+        title = "Trading: Zarar"
+        body = (f"Narx {change_pct}% o'zgardi — noto'g'ri yo'nalish. "
+                f"{profit_loss:,} CODE ({profit_pct}%) zarar.")
+        ntype = "error"
+    else:
+        title = "Trading: Tiklov bekor"
+        body = "Narx o'zgarmadi — tiklovingiz qaytarildi."
+        ntype = "info"
+
+    execute(
+        "INSERT INTO notifications (user_id, title, body, type) VALUES (?,?,?,?)",
+        (user_id, title, body, ntype)
+    )
 
 
 def get_user_open_position(user_id: int):
