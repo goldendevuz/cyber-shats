@@ -160,6 +160,40 @@
     </div>
   </div>
 
+  <!-- CODE NARXLARINI O'ZGARTIRISH -->
+  <div class="cs-card" style="margin-top:20px;">
+    <h3 style="font-size:13px; margin-bottom:14px; color:#ffd700;">{{ icon('settings',14) }} CODE NARXLARINI O'ZGARTIRISH</h3>
+    <div class="grid" style="grid-template-columns:1fr 280px; gap:16px; align-items:start;">
+      <form method="post" action="{{ url_for('treasury_update_pricing') }}">
+        <div class="grid grid-3" style="gap:10px; margin-bottom:12px;">
+          {% set pfields = [
+            ('pro_price_code', 'Cyber Pro (CODE)'),
+            ('cyber_pro_price_code', 'SHATS CYBER PRO (CODE)'),
+            ('vip_price_code', 'VIP (CODE)'),
+            ('welcome_bonus_code', 'Xush kelibsiz bonusi'),
+            ('paid_course_code_default', 'Kurs narxi standart'),
+          ] %}
+          {% for key, label in pfields %}
+          <div>
+            <label class="muted" style="font-size:10px; display:block; margin-bottom:3px;">{{ label }}</label>
+            <input type="number" name="{{ key }}" value="{{ pricing.get(key, '') }}" class="cs-input" style="font-size:12px;">
+          </div>
+          {% endfor %}
+        </div>
+        <button type="submit" class="cs-btn cs-btn-primary cs-btn-sm">{{ icon('save',12) }} Narxlarni saqlash</button>
+      </form>
+      <div class="cs-card" style="padding:12px; background:rgba(0,0,0,.2);">
+        <div style="font-size:11px; font-weight:700; margin-bottom:8px; color:#38bff8;">TRADING JORIY HOLAT</div>
+        <div class="muted" style="font-size:10px; margin-bottom:3px;">Joriy CODE narxi</div>
+        <div style="font-size:22px; font-weight:800; color:#1e90ff; font-family:var(--cs-font-display);">{{ "%.4f"|format(trading_current.price) }}</div>
+        <div class="muted" style="font-size:10px; margin-top:8px; margin-bottom:3px;">O'zgarish</div>
+        <div style="font-size:12px; {{ 'color:#1e90ff' if trading_current.change_pct >= 0 else 'color:#ff4444' }};">
+          {{ '+' if trading_current.change_pct >= 0 else '' }}{{ "%.3f"|format(trading_current.change_pct) }}%
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 {% endblock %}

@@ -44,8 +44,10 @@ for import_name, pip_name in required_packages:
 if missing_packages:
     print(f"\n*** DIQQAT: {len(missing_packages)} ta kutubxona o'rnatilmagan! ***")
     print("    Quyidagi buyruqni ishga tushiring:")
-    print("    pip install -r requirements.txt")
-    print("    (yoki: pip install " + " ".join(missing_packages) + ")")
+    print("    python -m pip install -r requirements.txt")
+    print("    (yoki: python -m pip install " + " ".join(missing_packages) + ")")
+    print("")
+    print("    Windows'da 'pip' ishlamasa, o'rniga 'python -m pip' ishlating!")
 else:
     print("\n    Barcha kutubxonalar o'rnatilgan.")
 
@@ -157,7 +159,7 @@ print("\n" + "=" * 70)
 print("DIAGNOSTIKA TUGADI")
 print("=" * 70)
 if missing_packages:
-    print("\n!!! AVVAL KUTUBXONALARNI O'RNATING: pip install -r requirements.txt !!!")
+    print("\n!!! AVVAL KUTUBXONALARNI O'RNATING: python -m pip install -r requirements.txt !!!")
 else:
     print("\nAGAR HAMMASI 'OK' BO'LSA — loyiha to'g'ri ishlashga tayyor.")
     print("Ishga tushirish: python app.py")

@@ -58,6 +58,7 @@
         <a href="{{ url_for('admin_hacker_lab_security') }}" class="cs-nav-item {{ 'active' if request.endpoint=='admin_hacker_lab_security' }}" style="color:#ff5555;">{{ icon('shield') }} Hacker Lab Xavfsizlik</a>
         <a href="{{ url_for('admin_startups') }}" class="cs-nav-item {{ 'active' if request.endpoint=='admin_startups' }}" style="color:#3366ff;">{{ icon('briefcase') }} Startaplar tasdiqlash</a>
         <a href="{{ url_for('admin_trading') }}" class="cs-nav-item {{ 'active' if request.endpoint=='admin_trading' }}" style="color:var(--cs-text-primary);">{{ icon('trending-up') }} Trading boshqaruv</a>
+        <a href="{{ url_for('admin_pricing') }}" class="cs-nav-item {{ 'active' if request.endpoint=='admin_pricing' }}" style="color:#ffd700;">{{ icon('settings') }} CODE Narxlar</a>
         <a href="{{ url_for('admin_ids') }}" class="cs-nav-item {{ 'active' if request.endpoint in ['admin_ids'] }}" style="color:#ffd23f;">{{ icon('hash') }} ID Boshqaruvi</a>
         {% endif %}
         <a href="{{ url_for('profile') }}" class="cs-nav-item {{ 'active' if request.endpoint=='profile' }}">{{ icon('user') }} Profil</a>

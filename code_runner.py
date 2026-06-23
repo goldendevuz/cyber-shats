@@ -26,9 +26,17 @@ import os
 import subprocess
 import tempfile
 import shutil
-import uuid
-import resource
 import signal
+import platform
+
+# resource moduli faqat Linux/Mac da mavjud, Windows'da yo'q
+try:
+    import resource
+    HAS_RESOURCE = True
+except ImportError:
+    HAS_RESOURCE = False  # Windows
+
+IS_WINDOWS = platform.system() == "Windows"
 
 # Bajarish vaqti va resurs chegaralari
 TIMEOUT_SECONDS = 5
@@ -92,24 +100,23 @@ LANGUAGES = {
 
 
 def _limit_resources():
-    """Bola jarayon uchun CPU vaqti va xotira chegaralarini o'rnatadi.
-    preexec_fn sifatida subprocess.run() ga uzatiladi."""
+    """Bola jarayon uchun CPU va xotira chegaralarini o'rnatadi (Linux/Mac only)."""
+    if not HAS_RESOURCE:
+        return  # Windows'da ishlaydi, cheklovsiz (timeout orqali himoyalanadi)
     try:
         resource.setrlimit(resource.RLIMIT_CPU, (TIMEOUT_SECONDS, TIMEOUT_SECONDS))
         mem_bytes = MAX_MEMORY_MB * 1024 * 1024
         resource.setrlimit(resource.RLIMIT_AS, (mem_bytes, mem_bytes))
-        # Yangi fayl yarata olmasin (vaqtinchalik papkadan tashqari)
         resource.setrlimit(resource.RLIMIT_FSIZE, (10 * 1024 * 1024, 10 * 1024 * 1024))
-        # Yangi jarayon fork qila olmasin (fork bomb himoyasi)
         resource.setrlimit(resource.RLIMIT_NPROC, (10, 10))
     except Exception:
         pass
 
 
 def _limit_resources_no_mem():
-    """Node.js uchun: RLIMIT_AS qo'llanilmaydi (V8 katta virtual xotira manzil
-    maydonini oldindan band qiladi, RLIMIT_AS bilan jarayon muzlab qoladi).
-    Xotira cheklovi o'rniga Node'ning --max-old-space-size flagi ishlatiladi."""
+    """Node.js/Java uchun: RLIMIT_AS qo'llanilmaydi."""
+    if not HAS_RESOURCE:
+        return
     try:
         resource.setrlimit(resource.RLIMIT_CPU, (TIMEOUT_SECONDS, TIMEOUT_SECONDS))
         resource.setrlimit(resource.RLIMIT_FSIZE, (10 * 1024 * 1024, 10 * 1024 * 1024))
@@ -169,6 +176,8 @@ def _run_subprocess(cmd, cwd, timeout=TIMEOUT_SECONDS, limiter=None):
     """Markazlashtirilgan, cheklangan subprocess ishga tushirish."""
     if limiter is None:
         limiter = _limit_resources
+    # preexec_fn faqat Linux/Mac da ishlaydi (Windows'da xatolik beradi)
+    preexec = limiter if (not IS_WINDOWS and HAS_RESOURCE) else None
     try:
         proc = subprocess.run(
             cmd,
@@ -176,8 +185,8 @@ def _run_subprocess(cmd, cwd, timeout=TIMEOUT_SECONDS, limiter=None):
             capture_output=True,
             text=True,
             timeout=timeout,
-            preexec_fn=limiter if os.name != "nt" else None,
-            env={"PATH": os.environ.get("PATH", "")},  # minimal env, tarmoq/maxfiy o'zgaruvchilarsiz
+            preexec_fn=preexec,
+            env={"PATH": os.environ.get("PATH", "")},
         )
         return proc.returncode == 0, proc.stdout, proc.stderr
     except subprocess.TimeoutExpired:
@@ -189,23 +198,43 @@ def _run_subprocess(cmd, cwd, timeout=TIMEOUT_SECONDS, limiter=None):
         return False, "", str(e)
 
 
+def _get_python_cmd():
+    """Windows'da 'python', Linux'da 'python3' qaytaradi."""
+    import shutil
+    if shutil.which("python3"):
+        return "python3"
+    if shutil.which("python"):
+        return "python"
+    return "python3"  # default, xato beradi lekin aniq xabar chiqaradi
+
+
+def _get_node_cmd():
+    """Node.js buyrug'i nomini topadi."""
+    import shutil
+    for cmd in ("node", "nodejs"):
+        if shutil.which(cmd):
+            return cmd
+    return "node"
+
+
 def _run_python(workdir, code):
     safety_err = _check_python_safety(code)
     if safety_err:
         return {"success": False, "output": "", "error": safety_err}
     filepath = os.path.join(workdir, "main.py")
-    with open(filepath, "w") as f:
+    with open(filepath, "w", encoding="utf-8") as f:
         f.write(code)
-    ok, stdout, stderr = _run_subprocess(["python3", "-I", "main.py"], workdir)
+    ok, stdout, stderr = _run_subprocess([_get_python_cmd(), "-I", "main.py"], workdir)
     return {"success": ok, "output": stdout, "error": stderr if not ok else ""}
 
 
 def _run_node(workdir, code):
     filepath = os.path.join(workdir, "main.js")
-    with open(filepath, "w") as f:
+    with open(filepath, "w", encoding="utf-8") as f:
         f.write(code)
+    node_cmd = _get_node_cmd()
     ok, stdout, stderr = _run_subprocess(
-        ["node", f"--max-old-space-size={MAX_MEMORY_MB}", "--no-addons", "main.js"],
+        [node_cmd, f"--max-old-space-size={MAX_MEMORY_MB}", "--no-addons", "main.js"],
         workdir, limiter=_limit_resources_no_mem
     )
     return {"success": ok, "output": stdout, "error": stderr if not ok else ""}
@@ -213,8 +242,8 @@ def _run_node(workdir, code):
 
 def _run_cpp(workdir, code):
     src = os.path.join(workdir, "main.cpp")
-    binpath = os.path.join(workdir, "main_bin")
-    with open(src, "w") as f:
+    binpath = os.path.join(workdir, "main_bin" + (".exe" if IS_WINDOWS else ""))
+    with open(src, "w", encoding="utf-8") as f:
         f.write(code)
     compiled, _, compile_err = _run_subprocess(
         ["g++", "-O2", "-std=c++17", "-o", binpath, src], workdir, timeout=10
@@ -227,8 +256,8 @@ def _run_cpp(workdir, code):
 
 def _run_c(workdir, code):
     src = os.path.join(workdir, "main.c")
-    binpath = os.path.join(workdir, "main_bin")
-    with open(src, "w") as f:
+    binpath = os.path.join(workdir, "main_bin" + (".exe" if IS_WINDOWS else ""))
+    with open(src, "w", encoding="utf-8") as f:
         f.write(code)
     compiled, _, compile_err = _run_subprocess(
         ["gcc", "-O2", "-std=c17", "-o", binpath, src], workdir, timeout=10
@@ -240,13 +269,10 @@ def _run_c(workdir, code):
 
 
 def _run_java(workdir, code):
-    # Java sinf nomi "Main" bo'lishi shart (oddiy talab, sandbox uchun)
     src = os.path.join(workdir, "Main.java")
-    with open(src, "w") as f:
+    with open(src, "w", encoding="utf-8") as f:
         f.write(code)
-    compiled, _, compile_err = _run_subprocess(
-        ["javac", "Main.java"], workdir, timeout=15, limiter=_limit_resources_no_mem
-    )
+    compiled, _, compile_err = _run_subprocess(["javac", "Main.java"], workdir, timeout=15, limiter=_limit_resources_no_mem)
     if not compiled:
         return {"success": False, "output": "", "error": f"Kompilyatsiya xatosi:\n{compile_err}"}
     ok, stdout, stderr = _run_subprocess(

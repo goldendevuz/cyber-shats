@@ -87,12 +87,42 @@ def tick_price() -> dict:
 
 
 def get_price_history(limit: int = 200) -> list:
-    """Grafik uchun narx tarixi."""
+    """Grafik uchun narx tarixi — sham (candlestick) formatda."""
     rows = query_all(
         "SELECT price, change_pct, direction, created_at FROM trading_prices ORDER BY id DESC LIMIT ?",
         (limit,)
     )
     return list(reversed(rows))
+
+
+def get_ohlc_history(candle_count: int = 60) -> list:
+    """
+    OHLC (Open, High, Low, Close) sham grafigi uchun.
+    Har 10 ta tick = 1 ta sham (1 saniya = 10 tick × 0.1s).
+    """
+    rows = query_all(
+        "SELECT price, created_at FROM trading_prices ORDER BY id DESC LIMIT ?",
+        (candle_count * 10,)
+    )
+    if not rows:
+        return []
+    rows = list(reversed(rows))
+    candles = []
+    step = 10
+    for i in range(0, len(rows), step):
+        chunk = rows[i:i+step]
+        if not chunk:
+            continue
+        prices = [r["price"] for r in chunk]
+        candles.append({
+            "t": chunk[-1]["created_at"],
+            "o": prices[0],
+            "h": max(prices),
+            "l": min(prices),
+            "c": prices[-1],
+            "up": prices[-1] >= prices[0],
+        })
+    return candles[-candle_count:]
 
 
 # =================================================================

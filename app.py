@@ -1491,7 +1491,71 @@ def api_trading_chart():
     return api_response(True, data={"prices": history})
 
 
+@app.route("/api/trading/stats")
+def api_trading_stats():
+    stats = trading_mod.get_trading_stats()
+    return api_response(True, data=dict(stats) if stats else {})
+
+
+@app.route("/api/trading/ohlc")
+def api_trading_ohlc():
+    """TradingView uslubidagi sham grafigi uchun OHLC ma'lumotlari."""
+    candles = trading_mod.get_ohlc_history(80)
+    current = trading_mod.get_current_price()
+    return api_response(True, data={"candles": candles, "current": current})
+
+
+@app.route("/api/trading/history")
+@api_login_required
+def api_trading_history():
+    user = get_current_user()
+    history = trading_mod.get_user_history(user["id"], 20)
+    return api_response(True, data={"history": history})
+
+
 # ---- Admin trading paneli ----
+@app.route("/admin/pricing", methods=["GET", "POST"])
+@admin_required
+def admin_pricing():
+    """CODE narxlari va trading sozlamalarini boshqarish."""
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "save_pricing":
+            keys = [
+                "pro_price_code", "cyber_pro_price_code", "vip_price_code",
+                "welcome_bonus_code", "paid_course_code_default",
+                "trading_commission_pct", "trading_min_bet", "trading_max_bet",
+            ]
+            for k in keys:
+                val = request.form.get(k, "").strip()
+                if val and val.isdigit():
+                    execute(
+                        "INSERT INTO pricing_settings (key, value) VALUES (?,?) "
+                        "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                        (k, val)
+                    )
+            flash("Narxlar saqlandi!", "success")
+        elif action == "reset_trading_price":
+            execute("INSERT INTO trading_prices (price, change_pct, direction) VALUES (1.0, 0, 0)")
+            flash("Trading narxi 1.0 ga qaytarildi.", "success")
+        elif action == "close_all_positions":
+            open_positions = query_all("SELECT * FROM trading_positions WHERE status='open'")
+            for pos in open_positions:
+                from coins import add_coins
+                add_coins(pos["user_id"], pos["amount"], "admin_cancel")
+                execute("UPDATE trading_positions SET status='cancelled', closed_at=datetime('now') WHERE id=?", (pos["id"],))
+            flash(f"{len(open_positions)} pozitsiya yopildi, CODE'lar qaytarildi.", "success")
+        return redirect(url_for("admin_pricing"))
+
+    settings = {r["key"]: r["value"] for r in query_all("SELECT key, value FROM pricing_settings")}
+    trading_stats = trading_mod.get_trading_stats()
+    current_price = trading_mod.get_current_price()
+    open_count = query_one("SELECT COUNT(*) c FROM trading_positions WHERE status='open'")["c"]
+    return render_template("admin_pricing.html", settings=settings,
+                           trading_stats=trading_stats, current_price=current_price,
+                           open_count=open_count)
+
+
 @app.route("/admin/trading")
 @admin_required
 def admin_trading():
@@ -2356,11 +2420,34 @@ def treasury_dashboard():
                ORDER BY id DESC LIMIT 30""",
             (f"%{q}%", f"%{q}%", f"%{q}%", f"%{q}%")
         )
+    pricing = {r["key"]: r["value"] for r in query_all("SELECT key, value FROM pricing_settings")}
+    trading_current = trading_mod.get_current_price()
     return render_template(
         "treasury_dashboard.html",
         stats=stats, fund_log=fund_log, search_q=q, search_results=search_results,
         treasury_ism=session.get("treasury_account_ism"),
+        pricing=pricing, trading_current=trading_current,
     )
+
+
+@app.route("/treasury/update-pricing", methods=["POST"])
+@treasury_login_required
+def treasury_update_pricing():
+    """G'azna tomonidan CODE narxlarini yangilash."""
+    keys = [
+        "pro_price_code", "cyber_pro_price_code", "vip_price_code",
+        "welcome_bonus_code", "paid_course_code_default",
+    ]
+    for k in keys:
+        val = request.form.get(k, "").strip()
+        if val and val.isdigit():
+            execute(
+                "INSERT INTO pricing_settings (key, value) VALUES (?,?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (k, val)
+            )
+    flash("Narxlar yangilandi!", "success")
+    return redirect(url_for("treasury_dashboard"))
 
 
 @app.route("/treasury/issue/<int:user_id>", methods=["POST"])

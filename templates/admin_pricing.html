@@ -1,0 +1,108 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Narxlar — Admin{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <h1 style="font-size:19px;">{{ icon('settings',18) }} CODE NARXLARI VA SOZLAMALAR</h1>
+  <a href="{{ url_for('admin_dashboard') }}" class="cs-btn cs-btn-sm">← Admin Panel</a>
+</div>
+
+<div class="grid" style="grid-template-columns:1fr 1fr; gap:16px;">
+
+  <!-- CODE NARXLARI -->
+  <div class="cs-card">
+    <h3 style="font-size:13px; margin-bottom:14px; color:#38bff8;">{{ icon('zap',14) }} CODE NARXLARI</h3>
+    <form method="post">
+      <input type="hidden" name="action" value="save_pricing">
+      <div style="display:flex; flex-direction:column; gap:10px;">
+
+        {% set fields = [
+          ('pro_price_code', 'Cyber Pro narxi (CODE)'),
+          ('cyber_pro_price_code', 'SHATS CYBER PRO narxi (CODE)'),
+          ('vip_price_code', 'VIP narxi (CODE)'),
+          ('welcome_bonus_code', 'Xush kelibsiz bonusi (CODE)'),
+          ('paid_course_code_default', 'Kurs narxi standart (CODE)'),
+          ('trading_commission_pct', 'Trading komisyoni (%)'),
+          ('trading_min_bet', 'Trading minimal tiklov (CODE)'),
+          ('trading_max_bet', 'Trading maksimal tiklov (CODE)'),
+        ] %}
+
+        {% for key, label in fields %}
+        <div>
+          <label class="muted" style="font-size:10.5px; display:block; margin-bottom:3px;">{{ label }}</label>
+          <input type="number" name="{{ key }}" value="{{ settings.get(key, '') }}"
+                 class="cs-input" style="font-size:13px;" min="0">
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="cs-btn cs-btn-primary" style="margin-top:6px;">
+          {{ icon('save',13) }} Saqlash
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- TRADING BOSHQARUV -->
+  <div>
+    <!-- Joriy holat -->
+    <div class="cs-card" style="margin-bottom:14px;">
+      <h3 style="font-size:13px; margin-bottom:12px; color:#38bff8;">{{ icon('activity',14) }} TRADING HOLATI</h3>
+      <div class="grid grid-3" style="gap:10px; margin-bottom:14px;">
+        <div style="text-align:center; padding:10px; background:rgba(0,0,0,.2); border-radius:6px;">
+          <div class="muted" style="font-size:9px;">JORIY NARX</div>
+          <div style="font-size:18px; font-weight:800; color:#1e90ff; font-family:var(--cs-font-display);">{{ "%.4f"|format(current_price.price) }}</div>
+        </div>
+        <div style="text-align:center; padding:10px; background:rgba(0,0,0,.2); border-radius:6px;">
+          <div class="muted" style="font-size:9px;">OCHIQ POZITSIYA</div>
+          <div style="font-size:18px; font-weight:800; color:#ffd700;">{{ open_count }}</div>
+        </div>
+        <div style="text-align:center; padding:10px; background:rgba(0,0,0,.2); border-radius:6px;">
+          <div class="muted" style="font-size:9px;">JAMI TIKLOV</div>
+          <div style="font-size:18px; font-weight:800;">{{ trading_stats.total_trades if trading_stats else 0 }}</div>
+        </div>
+      </div>
+      <div class="grid" style="gap:8px; grid-template-columns:1fr 1fr;">
+        <div style="padding:10px; background:rgba(0,0,0,.2); border-radius:6px;">
+          <div class="muted" style="font-size:9px;">G'ALABA / ZARAR</div>
+          <div style="font-size:14px; font-weight:700; margin-top:3px;">
+            <span style="color:#1e90ff;">{{ trading_stats.total_won if trading_stats else 0 }}</span>
+            <span class="muted">/</span>
+            <span style="color:#ff4444;">{{ ((trading_stats.total_trades or 0) - (trading_stats.total_won or 0)) if trading_stats else 0 }}</span>
+          </div>
+        </div>
+        <div style="padding:10px; background:rgba(0,0,0,.2); border-radius:6px;">
+          <div class="muted" style="font-size:9px;">PLATFORMA DAROMADI</div>
+          <div style="font-size:14px; font-weight:700; color:#ffd700; margin-top:3px;">⚡ {{ "{:,}".format(trading_stats.platform_commission if trading_stats else 0) }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Boshqaruv tugmalari -->
+    <div class="cs-card">
+      <h3 style="font-size:13px; margin-bottom:12px; color:#ff4444;">{{ icon('alert-triangle',14) }} NAZORAT AMALLAR</h3>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <form method="post" onsubmit="return confirm('Narxni 1.0 ga qaytarasizmi?');">
+          <input type="hidden" name="action" value="reset_trading_price">
+          <button class="cs-btn cs-btn-sm cs-btn-full">
+            {{ icon('refresh-cw',12) }} Trading narxini 1.0 ga qaytarish
+          </button>
+        </form>
+        <form method="post" onsubmit="return confirm('Barcha ochiq pozitsiyalarni yopib, CODE larni qaytarasizmi?');">
+          <input type="hidden" name="action" value="close_all_positions">
+          <button class="cs-btn cs-btn-sm cs-btn-danger cs-btn-full">
+            {{ icon('x',12) }} Barcha ochiq pozitsiyalarni yopish ({{ open_count }} ta)
+          </button>
+        </form>
+        <a href="{{ url_for('trading_page') }}" target="_blank" class="cs-btn cs-btn-sm" style="text-align:center;">
+          {{ icon('external-link',12) }} Trading sahifasini ko'rish
+        </a>
+        <a href="{{ url_for('admin_trading') }}" class="cs-btn cs-btn-sm" style="text-align:center;">
+          {{ icon('trending-up',12) }} Trading statistika
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
