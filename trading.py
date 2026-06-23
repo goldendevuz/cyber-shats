@@ -230,7 +230,8 @@ def _close_position(pos: dict):
 
     # Foyda/zarar miqdori: tiklov × o'zgarish%
     pnl_raw = int(amount * price_change_pct / 100)
-    commission_pct = 2  # 2%
+    # commission_pct = 2  # 2%
+    commission_pct = 0  # 0%
 
     if correct:
         # G'alaba — tiklov qaytariladi + foyda qo'shiladi
