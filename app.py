@@ -184,6 +184,21 @@ def inject_globals():
             unread_msg_count = 0
     build_date = datetime.date(2026, 1, 1)
     uptime_days = (datetime.date.today() - build_date).days
+
+    # Sayt sozlamalari (tema, panel holati)
+    try:
+        settings_rows = query_all("SELECT key, value FROM site_settings")
+        site_settings = {r["key"]: r["value"] for r in settings_rows}
+    except Exception:
+        site_settings = {"site_theme": "football"}
+
+    # Panel holatlari
+    try:
+        panel_rows = query_all("SELECT panel_key, is_active, maintenance_msg FROM panel_status")
+        panel_status = {r["panel_key"]: {"active": r["is_active"], "msg": r["maintenance_msg"]} for r in panel_rows}
+    except Exception:
+        panel_status = {}
+
     return dict(
         current_user=user,
         site_name=Config.SITE_NAME,
@@ -200,6 +215,8 @@ def inject_globals():
         now=datetime.datetime.now(),
         time_ago_uz=time_ago_uz,
         fmt_duration=fmt_duration,
+        site_settings=site_settings,
+        panel_status=panel_status,
     )
 
 
@@ -208,6 +225,19 @@ def inject_globals():
 # ---------------------------------------------------------------
 def gen_code(n=8):
     return "".join(random.choices(string.ascii_uppercase + string.digits, k=n))
+
+
+def _check_panel(panel_key: str):
+    """Agar panel o'chirilgan bo'lsa maintenance sahifasiga yo'naltiradi."""
+    try:
+        row = query_one("SELECT is_active, maintenance_msg FROM panel_status WHERE panel_key=?", (panel_key,))
+        if row and not row["is_active"]:
+            msg = row["maintenance_msg"] or "Bu bo'lim vaqtinchalik texnik ishlar sababli to'xtatilgan. Tez orada qayta ulanadi."
+            flash(msg, "warn")
+            return redirect(url_for("dashboard"))
+    except Exception:
+        pass
+    return None
 
 
 def get_directions():
@@ -644,6 +674,8 @@ def practice(slug, lesson_id):
 @app.route("/hacker-lab")
 @login_required
 def hacker_lab():
+    check = _check_panel('hacker_lab')
+    if check: return check
     user = get_current_user()
 
     # Free plan — umuman kira olmaydi
@@ -910,6 +942,8 @@ def _social_save_file(file_storage):
 @app.route("/groups")
 @login_required
 def groups_list():
+    check = _check_panel('groups')
+    if check: return check
     user = get_current_user()
     my_groups = social.get_user_groups(user["id"])
     all_groups = social.get_all_groups()
@@ -1022,6 +1056,8 @@ def group_delete(group_id):
 @app.route("/channels")
 @login_required
 def channels_list():
+    check = _check_panel('channels')
+    if check: return check
     user = get_current_user()
     my_channels = social.get_user_channels(user["id"])
     all_channels = social.get_all_channels()
@@ -1173,6 +1209,8 @@ def stories_delete(story_id):
 @app.route("/reels")
 @login_required
 def reels_feed():
+    check = _check_panel('reels')
+    if check: return check
     reels = social.get_reels_feed()
     user = get_current_user()
     liked_ids = set()
@@ -1269,6 +1307,8 @@ def _startup_save_image(file_storage):
 @app.route("/startups")
 @login_required
 def startups_list():
+    check = _check_panel('startups')
+    if check: return check
     user = get_current_user()
     approved = startups_mod.get_approved_startups()
     my_startups = startups_mod.get_user_startups(user["id"])
@@ -1438,6 +1478,8 @@ def startup_auction_bid(auction_id):
 @app.route("/trading")
 @login_required
 def trading_page():
+    check = _check_panel('trading')
+    if check: return check
     user = get_current_user()
     open_pos = trading_mod.get_user_open_position(user["id"])
     history = trading_mod.get_user_history(user["id"], 30)
@@ -1514,6 +1556,125 @@ def api_trading_history():
 
 
 # ---- Admin trading paneli ----
+@app.route("/admin/design", methods=["GET", "POST"])
+@admin_required
+def admin_design():
+    """Sayt dizaynini boshqarish — tema, panel holati, trading trend."""
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        if action == "save_theme":
+            theme = request.form.get("theme", "football")
+            theme_name = {
+                "football": "Futbol — O'zbekiston",
+                "hack": "Hacker / Kali Linux",
+                "navrus": "Navruz",
+                "independence": "Mustaqillik Kuni",
+            }.get(theme, theme)
+            execute("INSERT INTO site_settings (key,value) VALUES ('site_theme',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=datetime('now')", (theme,))
+            execute("INSERT INTO site_settings (key,value) VALUES ('site_theme_name',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=datetime('now')", (theme_name,))
+            flash(f"Tema o'zgartirildi: {theme_name}! Hamma foydalanuvchilarda darhol ko'rinadi.", "success")
+
+        elif action == "save_panel":
+            panels = {
+                "trading": "Trading bo'limi",
+                "hacker_lab": "Hacker Lab",
+                "startups": "Startaplar",
+                "forum": "Forum",
+                "groups": "Guruhlar",
+                "channels": "Kanallar",
+                "stories": "Stories",
+                "reels": "Reels",
+                "library": "E-kutubxona",
+                "smm": "SMM",
+                "ai": "AI Yordamchi",
+            }
+            for panel_key in panels:
+                is_active = 1 if request.form.get(f"panel_{panel_key}") else 0
+                msg = request.form.get(f"msg_{panel_key}", "").strip() or None
+                execute(
+                    "INSERT INTO panel_status (panel_key,is_active,maintenance_msg,updated_by,updated_at) VALUES (?,?,?,?,datetime('now')) ON CONFLICT(panel_key) DO UPDATE SET is_active=excluded.is_active, maintenance_msg=excluded.maintenance_msg, updated_by=excluded.updated_by, updated_at=excluded.updated_at",
+                    (panel_key, is_active, msg, session["user_id"])
+                )
+            flash("Panel holatlari yangilandi!", "success")
+
+        elif action == "save_trading_trend":
+            direction = request.form.get("trend_direction", "neutral")
+            target = float(request.form.get("target_pct", "0") or "0")
+            days = int(request.form.get("duration_days", "7") or "7")
+            volatility = float(request.form.get("volatility", "0.015") or "0.015")
+            execute("UPDATE trading_trend SET active=0 WHERE active=1")
+            execute(
+                "INSERT INTO trading_trend (direction,target_change_pct,duration_days,volatility,created_by,active) VALUES (?,?,?,?,?,1)",
+                (direction, target, days, volatility, session["user_id"])
+            )
+            flash(f"Trading trend yangilandi: {direction} | {target}% / {days} kun | Volatillik: {volatility}", "success")
+
+        return redirect(url_for("admin_design"))
+
+    settings = {}
+    try:
+        settings = {r["key"]: r["value"] for r in query_all("SELECT key,value FROM site_settings")}
+    except Exception:
+        pass
+
+    panels = {}
+    try:
+        for r in query_all("SELECT * FROM panel_status"):
+            panels[r["panel_key"]] = {"active": r["is_active"], "msg": r["maintenance_msg"]}
+    except Exception:
+        pass
+
+    trend = query_one("SELECT * FROM trading_trend WHERE active=1 ORDER BY id DESC LIMIT 1")
+    current_price = trading_mod.get_current_price()
+    return render_template("admin_design.html", settings=settings, panels=panels,
+                           trend=trend, current_price=current_price)
+
+
+@app.route("/admin/promo-codes", methods=["GET", "POST"])
+@admin_required
+def admin_promo_codes():
+    """Promo kodlarni boshqarish."""
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "create":
+            import random, string
+            code = request.form.get("code", "").strip().upper()
+            if not code:
+                code = "SHATS" + "".join(random.choices(string.digits, k=4))
+            dtype = request.form.get("discount_type", "pct")
+            try:
+                dval = int(request.form.get("discount_value", 10))
+                max_uses = int(request.form.get("max_uses", 100))
+            except ValueError:
+                dval, max_uses = 10, 100
+            expires = request.form.get("expires_at", "").strip() or None
+            note = request.form.get("note", "").strip() or None
+            try:
+                execute(
+                    "INSERT INTO promo_codes (code,discount_type,discount_value,max_uses,expires_at,note,created_by) VALUES (?,?,?,?,?,?,?)",
+                    (code, dtype, dval, max_uses, expires, note, session["user_id"])
+                )
+                flash(f"Promo kod yaratildi: {code}", "success")
+            except Exception:
+                flash("Bu promo kod allaqachon mavjud.", "error")
+
+        elif action == "toggle":
+            pid = request.form.get("promo_id")
+            execute("UPDATE promo_codes SET is_active=1-is_active WHERE id=?", (pid,))
+            flash("Holat o'zgartirildi.", "success")
+
+        elif action == "delete":
+            pid = request.form.get("promo_id")
+            execute("DELETE FROM promo_codes WHERE id=?", (pid,))
+            flash("Promo kod o'chirildi.", "success")
+
+        return redirect(url_for("admin_promo_codes"))
+
+    promos = query_all("SELECT p.*, u.ism, u.familiya FROM promo_codes p LEFT JOIN users u ON u.id=p.created_by ORDER BY p.id DESC")
+    return render_template("admin_promo_codes.html", promos=promos)
+
+
 @app.route("/admin/pricing/packages", methods=["POST"])
 @admin_required
 def admin_update_packages():
@@ -1933,6 +2094,8 @@ def api_messages_send(peer_id):
 @app.route("/library")
 @login_required
 def library():
+    check = _check_panel("library")
+    if check: return check
     category = request.args.get("cat", "")
     sql = "SELECT * FROM books"
     args = ()
@@ -2681,17 +2844,35 @@ def _save_receipt_file(file_storage):
 @app.route("/coins/buy")
 @login_required
 def coins_buy_page():
-    """Saytdan to'g'ridan-to'g'ri CODE sotib olish sahifasi."""
     user = get_current_user()
     requests_list = coins_purchase.get_user_purchase_requests(user["id"])
+    packages = coins_purchase.get_packages_with_prices()
     return render_template(
         "coins_buy.html",
         cards=coins_purchase.PAYMENT_CARDS,
-        packages=coins_purchase.SUGGESTED_PACKAGES,
+        packages=packages,
         min_amount=coins_purchase.MIN_AMOUNT,
         requests_list=requests_list,
         my_custom_id=user.get("custom_id"),
     )
+
+
+@app.route("/api/promo/check", methods=["POST"])
+@api_login_required
+def api_promo_check():
+    """Promo kodni tekshiradi (AJAX)."""
+    user = get_current_user()
+    data = request.get_json(silent=True) or {}
+    code = data.get("code", "").strip()
+    try:
+        amount = int(data.get("amount", 0))
+    except (ValueError, TypeError):
+        amount = 0
+    if not code:
+        return api_response(False, error="Promo kod kiritilmagan.")
+    valid, msg, discount = coins_purchase.validate_promo_code(code, user["id"], amount)
+    return api_response(valid, data={"discount": discount, "message": msg} if valid else None,
+                        error=msg if not valid else None)
 
 
 @app.route("/coins/buy/submit", methods=["POST"])
@@ -2699,10 +2880,19 @@ def coins_buy_page():
 def coins_buy_submit():
     user = get_current_user()
     custom_id = request.form.get("custom_id", "").strip().lstrip("#")
+    promo_code = request.form.get("promo_code", "").strip()
     try:
         amount = int(request.form.get("amount", 0))
     except ValueError:
         amount = 0
+
+    # Promo kod chegirmasi
+    discount = 0
+    if promo_code and amount > 0:
+        valid, pmsg, discount = coins_purchase.validate_promo_code(promo_code, user["id"], amount)
+        if not valid and promo_code:
+            flash(pmsg, "error")
+            return redirect(url_for("coins_buy_page"))
 
     receipt_path = None
     if "receipt" in request.files:
@@ -2712,8 +2902,10 @@ def coins_buy_submit():
             return redirect(url_for("coins_buy_page"))
 
     ok, msg, rid = coins_purchase.create_site_purchase_request(
-        user["id"], custom_id, amount, receipt_path
+        user["id"], custom_id, amount, receipt_path, discount=discount, promo_code=promo_code
     )
+    if ok and promo_code and discount > 0:
+        coins_purchase.apply_promo_code(promo_code, user["id"], rid)
     flash(msg, "success" if ok else "error")
     return redirect(url_for("coins_buy_page"))
 

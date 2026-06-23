@@ -1,0 +1,18 @@
+/* HACK TEMA — KALI LINUX / HACKER USLUBI */
+:root {
+    --cs-bg-primary:#050505; --cs-bg-secondary:#080808;
+    --cs-bg-card:#0d0d0d; --cs-bg-sidebar:#080808; --cs-bg-input:#111;
+    --cs-text-primary:#00ff41; --cs-text-secondary:#00cc33;
+    --cs-text-muted:#1a4a1a; --cs-text-cyan:#00ff41;
+    --cs-text-white:#ccffcc; --cs-text-red:#ff0000; --cs-text-accent:#00ff41;
+    --cs-border:rgba(0,255,65,0.2); --cs-border-active:rgba(0,255,65,0.6);
+    --cs-glow:0 0 15px rgba(0,255,65,0.4);
+}
+body::before{content:'';position:fixed;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#00ff41,#003300,#00ff41);z-index:99999;}
+body{font-family:'Share Tech Mono',monospace!important;}
+.cs-btn-primary{background:linear-gradient(135deg,#003300,#00aa22)!important;border-color:#00ff41!important;color:#000!important;}
+.cs-card{background:#0d0d0d!important;border-color:rgba(0,255,65,0.2)!important;}
+.cs-nav-item.active,.cs-nav-item:hover{background:rgba(0,255,65,0.1)!important;color:#00ff41!important;}
+/* Matrix effekt sarlavhada */
+.logo span{background:linear-gradient(135deg,#00ff41,#00cc33)!important;-webkit-background-clip:text!important;-webkit-text-fill-color:transparent!important;}

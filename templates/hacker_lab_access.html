@@ -21,7 +21,7 @@
       <div class="muted" style="font-size:11px; margin-top:6px;">Sizning balansingiz: ⚡ {{ "{:,}".format(balance) }} CODE</div>
       <form method="post" action="{{ url_for('hacker_lab_access_page') }}" style="margin-top:18px;">
         <button class="cs-btn cs-btn-primary cs-btn-full" {{ 'disabled' if balance < price }}
-                onclick="return confirm('Hacker Lab kirish huquqini {{ \"{:,}\".format(price) }} CODE evaziga sotib olishni tasdiqlaysizmi?');">
+                onclick="return confirm('Hacker Lab kirish huquqini {{ price|int }} CODE evaziga sotib olishni tasdiqlaysizmi?');">
           {{ icon('unlock',14) }} Kirish huquqini sotib olish
         </button>
       </form>

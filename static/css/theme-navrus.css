@@ -1,0 +1,14 @@
+/* NAVRUZ TEMA — Bahor / Ko'k-Yashil */
+:root {
+    --cs-bg-primary:#0a1a0a; --cs-bg-secondary:#0f200f;
+    --cs-bg-card:#122012; --cs-bg-sidebar:#0d1a0d; --cs-bg-input:#152215;
+    --cs-text-primary:#4caf50; --cs-text-secondary:#81c784;
+    --cs-text-muted:#2e5a2e; --cs-text-cyan:#80cbc4;
+    --cs-text-white:#e8f5e9; --cs-text-red:#e57373; --cs-text-accent:#ffcc02;
+    --cs-border:rgba(76,175,80,0.25); --cs-border-active:rgba(76,175,80,0.6);
+    --cs-glow:0 0 12px rgba(76,175,80,0.3);
+}
+body::before{content:'';position:fixed;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#388e3c,#81c784,#ffcc02,#81c784,#388e3c);z-index:99999;}
+.cs-btn-primary{background:linear-gradient(135deg,#1b5e20,#4caf50)!important;border-color:#4caf50!important;}
+.cs-card{background:#122012!important;border-color:rgba(76,175,80,0.2)!important;}

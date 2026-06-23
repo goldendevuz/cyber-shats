@@ -1,0 +1,109 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Promo Kodlar — Admin{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <h1 style="font-size:19px;">{{ icon('tag',18) }} PROMO KODLAR</h1>
+  <a href="{{ url_for('admin_dashboard') }}" class="cs-btn cs-btn-sm">← Admin Panel</a>
+</div>
+
+<div class="grid" style="grid-template-columns:1fr 1.5fr; gap:16px;">
+
+  <!-- YANGI PROMO KOD -->
+  <div class="cs-card">
+    <h3 style="font-size:13px; margin-bottom:14px; color:#00c853;">{{ icon('plus',14) }} YANGI PROMO KOD YARATISH</h3>
+    <form method="post">
+      <input type="hidden" name="action" value="create">
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div>
+          <label class="muted" style="font-size:10px; display:block; margin-bottom:3px;">KOD (bo'sh qolsa avtomatik)</label>
+          <input type="text" name="code" placeholder="SHATS2026" class="cs-input" style="font-size:13px; text-transform:uppercase;" maxlength="20">
+        </div>
+        <div>
+          <label class="muted" style="font-size:10px; display:block; margin-bottom:3px;">CHEGIRMA TURI</label>
+          <select name="discount_type" class="cs-input" id="dtypeSelect">
+            <option value="pct">Foiz chegirma (%)</option>
+            <option value="fixed">Qat'iy miqdor (so'm)</option>
+          </select>
+        </div>
+        <div>
+          <label class="muted" style="font-size:10px; display:block; margin-bottom:3px;">CHEGIRMA QIYMATI</label>
+          <input type="number" name="discount_value" value="10" min="1" class="cs-input" style="font-size:13px;">
+          <div class="muted" style="font-size:9px; margin-top:2px;" id="discHint">Misol: 10% = to'lov summasining 10% chegirma</div>
+        </div>
+        <div>
+          <label class="muted" style="font-size:10px; display:block; margin-bottom:3px;">MAKSIMAL FOYDALANISH</label>
+          <input type="number" name="max_uses" value="100" min="1" class="cs-input" style="font-size:13px;">
+        </div>
+        <div>
+          <label class="muted" style="font-size:10px; display:block; margin-bottom:3px;">MUDDATI (bo'sh = muddatsiz)</label>
+          <input type="datetime-local" name="expires_at" class="cs-input" style="font-size:12px;">
+        </div>
+        <div>
+          <label class="muted" style="font-size:10px; display:block; margin-bottom:3px;">IZOH (ixtiyoriy)</label>
+          <input type="text" name="note" placeholder="Bayram chegirmasi" class="cs-input" style="font-size:12px;">
+        </div>
+        <button type="submit" class="cs-btn cs-btn-primary">{{ icon('plus',13) }} Yaratish</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- PROMO KODLAR RO'YXATI -->
+  <div class="cs-card">
+    <h3 style="font-size:13px; margin-bottom:12px; color:#38bff8;">BARCHA PROMO KODLAR ({{ promos|length }} ta)</h3>
+    {% for p in promos %}
+    <div style="padding:10px 12px; border:1px solid {% if p.is_active %}rgba(0,200,83,.2){% else %}rgba(255,68,68,.15){% endif %}; border-radius:6px; margin-bottom:8px; background:rgba(0,0,0,.2);">
+      <div class="flex-between" style="margin-bottom:6px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <code style="font-size:14px; font-weight:700; color:#ffd700; background:rgba(255,215,0,.08); padding:2px 8px; border-radius:4px;">{{ p.code }}</code>
+          {% if p.is_active %}
+          <span style="font-size:9px; color:#00c853; padding:2px 6px; background:rgba(0,200,83,.1); border-radius:3px;">● Faol</span>
+          {% else %}
+          <span style="font-size:9px; color:#ff4444; padding:2px 6px; background:rgba(255,68,68,.1); border-radius:3px;">● O'chirilgan</span>
+          {% endif %}
+        </div>
+        <div style="display:flex; gap:6px;">
+          <form method="post" style="display:inline;">
+            <input type="hidden" name="action" value="toggle">
+            <input type="hidden" name="promo_id" value="{{ p.id }}">
+            <button class="cs-btn cs-btn-sm" style="font-size:9px; padding:3px 8px;">
+              {{ 'O\'chirish' if p.is_active else 'Yoqish' }}
+            </button>
+          </form>
+          <form method="post" style="display:inline;" onsubmit="return confirm('O\'chirasizmi?')">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="promo_id" value="{{ p.id }}">
+            <button class="cs-btn cs-btn-sm cs-btn-danger" style="font-size:9px; padding:3px 8px;">{{ icon('trash-2',11) }}</button>
+          </form>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px; font-size:10px;">
+        <div><span class="muted">Chegirma:</span> <strong>{{ p.discount_value }}{{ '%' if p.discount_type=='pct' else ' so\'m' }}</strong></div>
+        <div><span class="muted">Ishlatildi:</span> <strong>{{ p.used_count }} / {{ p.max_uses }}</strong></div>
+        <div><span class="muted">Muddat:</span> <strong>{{ p.expires_at[:10] if p.expires_at else '∞' }}</strong></div>
+        <div><span class="muted">Yaratdi:</span> <strong>{{ p.ism if p.ism else 'Admin' }}</strong></div>
+      </div>
+      {% if p.note %}
+      <div style="font-size:10px; color:#4a7fa0; margin-top:4px;">📝 {{ p.note }}</div>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="muted" style="text-align:center; padding:30px;">Hali promo kodlar yo'q</div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('dtypeSelect').addEventListener('change', function(){
+    var hint = document.getElementById('discHint');
+    if(this.value === 'pct'){
+        hint.textContent = "Misol: 10% = to'lov summasining 10% chegirma";
+    } else {
+        hint.textContent = "Misol: 5000 = 5,000 so'm chegirma qilinadi";
+    }
+});
+</script>
+{% endblock %}

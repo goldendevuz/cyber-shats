@@ -1,0 +1,14 @@
+/* FUTBOL TEMA — O'ZBEKISTON MILLIY JAMOASI */
+:root {
+    --cs-bg-primary:#020b18; --cs-bg-secondary:#031220;
+    --cs-bg-card:#051a2e; --cs-bg-sidebar:#031420; --cs-bg-input:#041826;
+    --cs-text-primary:#1e90ff; --cs-text-secondary:#00c853;
+    --cs-text-muted:#4a7fa0; --cs-text-cyan:#38bff8;
+    --cs-text-white:#e8f4ff; --cs-text-red:#ff4444; --cs-text-accent:#ffd700;
+    --cs-border:rgba(30,144,255,0.22); --cs-border-active:rgba(30,144,255,0.7);
+    --cs-glow:0 0 12px rgba(30,144,255,0.3);
+}
+body::before{content:'';position:fixed;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#1d84cc 33%,#fff 33%,#fff 66%,#1db954 66%);z-index:99999;}
+.cs-btn-primary{background:linear-gradient(135deg,#1e4a8a,#1e90ff)!important;border-color:#1e90ff!important;}
+.cs-card{background:linear-gradient(135deg,#051a2e,#031220)!important;border-color:rgba(30,144,255,0.18)!important;}

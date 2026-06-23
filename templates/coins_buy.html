@@ -5,8 +5,8 @@
 
 <div class="flex-between" style="margin-bottom:20px;">
   <div>
-    <h1 style="font-size:20px;">{{ icon('zap',18) }} CODE sotib olish</h1>
-    <p class="muted" style="font-size:11.5px; margin-top:4px;">1 CODE = 1 so'm. Kartadan to'lab, chek rasmini yuklang.</p>
+    <h1 style="font-size:20px;">{{ icon('zap',18) }} CODE SOTIB OLISH</h1>
+    <p class="muted" style="font-size:11.5px; margin-top:4px;">Kartadan to'lab, chek rasmini yuklang — g'azna tekshirib tasdiqlaydi.</p>
   </div>
   <a href="{{ url_for('coins_page') }}" class="cs-btn cs-btn-sm">← Code Tangalar</a>
 </div>
@@ -19,82 +19,187 @@
     <form method="post" action="{{ url_for('coins_buy_submit') }}" enctype="multipart/form-data" id="buyForm">
 
       <label class="muted" style="font-size:11px; display:block; margin-bottom:5px;">Saytdagi ID raqamingiz</label>
-      <input type="text" name="custom_id" value="{{ my_custom_id or '' }}" required class="cs-input" style="margin-bottom:14px;" placeholder="masalan: 1234567">
+      <input type="text" name="custom_id" value="{{ my_custom_id or '' }}" required
+             class="cs-input" style="margin-bottom:14px;" placeholder="masalan: 1234567">
 
       <label class="muted" style="font-size:11px; display:block; margin-bottom:8px;">Tezkor paketlar</label>
       <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:10px;">
         {% for p in packages %}
-        <button type="button" class="cs-btn cs-btn-sm pkg-btn" data-amount="{{ p }}" style="font-size:11px;">
-          ⚡{{ "{:,}".format(p) }}
+        <button type="button" class="cs-btn cs-btn-sm pkg-btn"
+                data-amount="{{ p.amount }}" data-price="{{ p.price }}"
+                style="font-size:11px; flex-direction:column; padding:6px 4px;">
+          <span style="font-size:12px; font-weight:700;">⚡{{ "{:,}".format(p.amount) }}</span>
+          <span style="font-size:9px; color:#ffd700; margin-top:2px;">{{ "{:,}".format(p.price) }} so'm</span>
         </button>
         {% endfor %}
       </div>
 
       <label class="muted" style="font-size:11px; display:block; margin-bottom:5px;">Yoki o'zingiz miqdor kiriting (CODE)</label>
-      <input type="number" name="amount" id="amountInput" min="{{ min_amount }}" required class="cs-input" style="margin-bottom:6px;" placeholder="masalan: 15000">
-      <div class="muted" style="font-size:11px; margin-bottom:16px;">
-        To'lov summasi: <strong id="priceDisplay" style="color:var(--cs-text-primary);">0</strong> so'm
+      <input type="number" name="amount" id="amountInput" min="{{ min_amount }}" required
+             class="cs-input" style="margin-bottom:6px;" placeholder="masalan: 15000">
+      <div class="muted" style="font-size:11px; margin-bottom:14px;">
+        To'lov summasi: <strong id="priceDisplay" style="color:var(--cs-text-primary);">—</strong> so'm
+        <span id="discountDisplay" style="color:#00c853; display:none; font-size:10px; margin-left:6px;"></span>
       </div>
 
-      <div class="cs-card" style="padding:14px; margin-bottom:16px; background:rgba(255,210,63,.04); border-color:rgba(255,210,63,.3);">
-        <div class="muted" style="font-size:11px; margin-bottom:8px;">💳 Karta raqamlari (to'lovni shu kartalarga qiling)</div>
-        <div style="font-family:var(--cs-font-mono); font-size:14px; color:#ffd23f; margin-bottom:4px;">UZCARD: {{ cards.uzcard }}</div>
-        <div style="font-family:var(--cs-font-mono); font-size:14px; color:#ffd23f;">HUMO: {{ cards.humo }}</div>
+      <!-- PROMO KOD -->
+      <div style="margin-bottom:14px; padding:10px 12px; background:rgba(255,215,0,.04); border:1px solid rgba(255,215,0,.2); border-radius:6px;">
+        <div class="muted" style="font-size:11px; margin-bottom:6px;">{{ icon('tag',11) }} Promo kod (ixtiyoriy)</div>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="promoInput" name="promo_code" placeholder="PROMO25"
+                 class="cs-input" style="flex:1; text-transform:uppercase; font-size:12px;" maxlength="20">
+          <button type="button" id="promoCheckBtn" class="cs-btn cs-btn-sm" style="white-space:nowrap;">Tekshirish</button>
+        </div>
+        <div id="promoMsg" style="font-size:11px; margin-top:5px; display:none;"></div>
+        <input type="hidden" name="promo_discount" id="promoDiscount" value="0">
+      </div>
+
+      <div class="cs-card" style="padding:12px 14px; margin-bottom:14px; background:rgba(255,210,63,.04); border-color:rgba(255,210,63,.3);">
+        <div class="muted" style="font-size:11px; margin-bottom:6px;">💳 Karta raqamlari</div>
+        <div style="font-family:var(--cs-font-mono); font-size:13px; color:#ffd700; margin-bottom:3px;">UZCARD: {{ cards.uzcard }}</div>
+        <div style="font-family:var(--cs-font-mono); font-size:13px; color:#ffd700;">HUMO: {{ cards.humo }}</div>
       </div>
 
       <label class="muted" style="font-size:11px; display:block; margin-bottom:5px;">To'lov chekining rasmi (yoki PDF)</label>
-      <input type="file" name="receipt" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf" required style="margin-bottom:16px; font-size:12px;">
+      <input type="file" name="receipt" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf" required
+             style="margin-bottom:16px; font-size:12px;">
 
       <button type="submit" class="cs-btn cs-btn-primary cs-btn-full" style="font-size:14px; padding:12px;">
-        {{ icon('send',14) }} So'rovni yuborish
+        {{ icon('send',14) }} SO'ROVNI YUBORISH
       </button>
-      <p class="muted" style="font-size:10.5px; margin-top:10px; text-align:center;">
+      <p class="muted" style="font-size:10.5px; text-align:center; margin-top:8px;">
         G'azna tekshirib tasdiqlagandan keyin CODE hisobingizga tushadi.
       </p>
     </form>
   </div>
 
-  <!-- MENING SO'ROVLARIM -->
-  <div class="cs-card">
-    <h3 style="font-size:13px; margin-bottom:14px;">{{ icon('clock',14) }} MENING SO'ROVLARIM</h3>
-    <div id="requestsList">
-    {% for r in requests_list %}
-    <div style="padding:12px 0; border-bottom:1px solid rgba(0,255,65,.06);">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <strong style="font-size:13px;">⚡ {{ "{:,}".format(r.code_amount) }} CODE</strong>
-        {% if r.status == 'pending' %}<span class="cs-chip" style="color:#ffd23f; font-size:10px;">Kutilmoqda</span>
-        {% elif r.status == 'completed' %}<span class="cs-chip solid" style="font-size:10px;">{{ icon('check',10) }} Tasdiqlandi</span>
-        {% elif r.status == 'rejected' %}<span class="cs-chip" style="color:#ff5555; font-size:10px;">Rad etildi</span>
-        {% else %}{{ r.status }}{% endif %}
-      </div>
-      <div class="muted" style="font-size:10.5px; margin-top:3px;">{{ r.created_at[:16] }}</div>
-      {% if r.status == 'rejected' and r.admin_note %}
-      <div style="font-size:10.5px; color:#ff5555; margin-top:3px;">Sabab: {{ r.admin_note }}</div>
-      {% endif %}
+  <!-- O'NG PANEL -->
+  <div>
+    <!-- Paket narxlari jadvali -->
+    <div class="cs-card" style="margin-bottom:14px;">
+      <h3 style="font-size:12px; margin-bottom:12px; color:#ffd700;">⚡ CODE PAKETLARI VA NARXLARI</h3>
+      <table class="cs-table" style="font-size:12px;">
+        <thead><tr><th>CODE miqdori</th><th style="text-align:right;">Narxi (so'm)</th></tr></thead>
+        <tbody>
+        {% for p in packages %}
+        <tr style="cursor:pointer;" onclick="selectPackage({{ p.amount }}, {{ p.price }})">
+          <td>⚡ {{ "{:,}".format(p.amount) }} Code</td>
+          <td style="text-align:right; color:#ffd700; font-family:monospace;">{{ "{:,}".format(p.price) }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
-    {% else %}
-    <p class="muted" style="text-align:center; padding:30px;">Hali so'rov yo'q</p>
-    {% endfor %}
-    </div>
-  </div>
 
+    <!-- Oxirgi so'rovlar -->
+    {% if requests_list %}
+    <div class="cs-card">
+      <h3 style="font-size:12px; margin-bottom:10px;">📋 Oxirgi so'rovlarim</h3>
+      {% for r in requests_list[:5] %}
+      <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,.05); font-size:11px;">
+        <div>
+          <div>⚡ {{ "{:,}".format(r.code_amount) }} CODE</div>
+          <div class="muted" style="font-size:10px;">{{ r.created_at|tashkent_time }}</div>
+        </div>
+        <div>
+          {% if r.status == 'approved' %}<span style="color:#00c853;">✓ Tasdiqlandi</span>
+          {% elif r.status == 'rejected' %}<span style="color:#ff4444;">✗ Rad etildi</span>
+          {% else %}<span style="color:#ffd700;">⏳ Kutilmoqda</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
 </div>
 
 {% endblock %}
-
 {% block scripts %}
 <script>
-document.querySelectorAll('.pkg-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        document.getElementById('amountInput').value = this.dataset.amount;
-        updatePrice();
+var packages = {{ packages | tojson }};
+
+// Paket tanlash
+function selectPackage(amount, price) {
+    document.getElementById('amountInput').value = amount;
+    document.getElementById('priceDisplay').textContent = price.toLocaleString();
+    checkPromoIfEntered();
+    document.querySelectorAll('.pkg-btn').forEach(function(b){
+        b.classList.toggle('cs-btn-primary', parseInt(b.dataset.amount)===amount);
+    });
+}
+
+document.querySelectorAll('.pkg-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+        selectPackage(parseInt(this.dataset.amount), parseInt(this.dataset.price));
     });
 });
 
-function updatePrice() {
-    var amount = parseInt(document.getElementById('amountInput').value, 10) || 0;
-    document.getElementById('priceDisplay').textContent = amount.toLocaleString('uz-UZ');
+document.getElementById('amountInput').addEventListener('input', function(){
+    var amount = parseInt(this.value) || 0;
+    // Bazadagi narxdan topish
+    var price = amount;
+    packages.forEach(function(p){ if(p.amount === amount) price = p.price; });
+    document.getElementById('priceDisplay').textContent = price.toLocaleString();
+    checkPromoIfEntered();
+});
+
+// Promo kod
+var promoValid = false, promoDiscount = 0;
+
+document.getElementById('promoCheckBtn').addEventListener('click', function(){
+    var code = document.getElementById('promoInput').value.trim().toUpperCase();
+    var amount = parseInt(document.getElementById('amountInput').value) || 0;
+    if(!code){ alert('Promo kodni kiriting'); return; }
+    if(!amount){ alert('Avval CODE miqdorini tanlang'); return; }
+
+    this.disabled = true;
+    this.textContent = '...';
+    fetch('/api/promo/check', {
+        method:'POST', credentials:'same-origin',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({code: code, amount: amount})
+    }).then(function(r){return r.json();})
+      .then(function(d){
+        document.getElementById('promoCheckBtn').disabled = false;
+        document.getElementById('promoCheckBtn').textContent = 'Tekshirish';
+        var msgEl = document.getElementById('promoMsg');
+        msgEl.style.display = 'block';
+        if(d.success){
+            promoValid = true;
+            promoDiscount = d.data.discount;
+            document.getElementById('promoDiscount').value = promoDiscount;
+            msgEl.textContent = d.data.message;
+            msgEl.style.color = '#00c853';
+            updateDiscountDisplay(amount);
+        } else {
+            promoValid = false; promoDiscount = 0;
+            document.getElementById('promoDiscount').value = 0;
+            msgEl.textContent = d.error || 'Promo kod noto\'g\'ri';
+            msgEl.style.color = '#ff4444';
+        }
+      }).catch(function(){
+        document.getElementById('promoCheckBtn').disabled = false;
+        document.getElementById('promoCheckBtn').textContent = 'Tekshirish';
+      });
+});
+
+function checkPromoIfEntered() {
+    var code = document.getElementById('promoInput').value.trim();
+    if(code && promoValid) {
+        promoValid = false; promoDiscount = 0;
+        document.getElementById('promoDiscount').value = 0;
+        document.getElementById('promoMsg').style.display = 'none';
+    }
 }
-document.getElementById('amountInput').addEventListener('input', updatePrice);
+
+function updateDiscountDisplay(amount) {
+    var discEl = document.getElementById('discountDisplay');
+    if(promoDiscount > 0){
+        discEl.style.display = 'inline';
+        discEl.textContent = '(-' + promoDiscount.toLocaleString() + ' so\'m chegirma)';
+    } else {
+        discEl.style.display = 'none';
+    }
+}
 </script>
 {% endblock %}

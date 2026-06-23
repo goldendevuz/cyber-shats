@@ -329,3 +329,14 @@ PYTHON REPL:
 """
     return base
 
+
+
+def get_terminal_type(direction_slug: str) -> str:
+    """Yo'nalishga qarab terminal turini qaytaradi."""
+    if direction_slug == "cyber-security":
+        return "kali"
+    if direction_slug == "python":
+        return "python"
+    if direction_slug in ("web-dev", "javascript"):
+        return "node"
+    return "generic"

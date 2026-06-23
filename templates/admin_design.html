@@ -1,0 +1,170 @@
+{% extends "app_base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block title %}Dizayn Boshqaruv — Admin{% endblock %}
+{% block app_content %}
+
+<div class="flex-between" style="margin-bottom:20px;">
+  <h1 style="font-size:19px;">{{ icon('sun',18) }} DIZAYN BOSHQARUVI</h1>
+  <a href="{{ url_for('admin_dashboard') }}" class="cs-btn cs-btn-sm">← Admin Panel</a>
+</div>
+
+<div class="grid" style="grid-template-columns:1fr 1fr; gap:16px;">
+
+  <!-- TEMA TANLASH -->
+  <div class="cs-card">
+    <h3 style="font-size:13px; margin-bottom:16px; color:#ffd700;">{{ icon('sun',14) }} SAYT TEMASI (Hamma uchun)</h3>
+    <div style="margin-bottom:12px; padding:10px 12px; background:rgba(255,215,0,.06); border:1px solid rgba(255,215,0,.2); border-radius:6px;">
+      <div class="muted" style="font-size:10px;">HOZIRGI TEMA</div>
+      <div style="font-size:15px; font-weight:700; margin-top:3px;">{{ settings.get('site_theme_name', 'Futbol — O\'zbekiston') }}</div>
+    </div>
+    <form method="post">
+      <input type="hidden" name="action" value="save_theme">
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;">
+        {% set themes = [
+          ('football', 'Futbol — O\'zbekiston', '⚽', 'Ko\'k-yashil, bayroq chiziqlari, milliy ruh',
+           'linear-gradient(135deg,#020b18,#051a2e)', 'rgba(30,144,255,0.3)'),
+          ('hack', 'Hacker / Kali Linux', '💻', 'Qora-yashil, matritsa uslubi, hacker estetikasi',
+           'linear-gradient(135deg,#050505,#0d0d0d)', 'rgba(0,255,65,0.3)'),
+          ('navrus', 'Navruz Bayrami', '🌸', 'Ko\'k-yashil-sariq, bahoriy ranglar',
+           'linear-gradient(135deg,#0a1a0a,#122012)', 'rgba(76,175,80,0.3)'),
+          ('independence', 'Mustaqillik Kuni', '🇺🇿', 'Ko\'k-oq-yashil, milliy bayroq ranglari',
+           'linear-gradient(135deg,#020810,#041520)', 'rgba(21,101,192,0.3)'),
+        ] %}
+        {% for key, name, emoji, desc, bg, border in themes %}
+        <label style="display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid {{ border }}; border-radius:8px; cursor:pointer; background:{{ bg }}; {{ 'border-width:2px;' if settings.get('site_theme') == key }}">
+          <input type="radio" name="theme" value="{{ key }}" {{ 'checked' if settings.get('site_theme') == key }}
+                 style="accent-color:var(--cs-text-primary);">
+          <div style="font-size:24px;">{{ emoji }}</div>
+          <div>
+            <div style="font-size:12px; font-weight:700; margin-bottom:2px;">{{ name }}</div>
+            <div class="muted" style="font-size:10px;">{{ desc }}</div>
+          </div>
+          {% if settings.get('site_theme') == key %}
+          <span class="cs-chip solid" style="font-size:9px; margin-left:auto;">Faol</span>
+          {% endif %}
+        </label>
+        {% endfor %}
+      </div>
+      <button type="submit" class="cs-btn cs-btn-primary cs-btn-full">
+        {{ icon('check',13) }} Temani qo'llash (real vaqtda o'zgaradi)
+      </button>
+    </form>
+  </div>
+
+  <!-- O'NG USTUN -->
+  <div style="display:flex; flex-direction:column; gap:14px;">
+
+    <!-- PANEL HOLATI -->
+    <div class="cs-card">
+      <h3 style="font-size:13px; margin-bottom:14px; color:#ff4444;">{{ icon('toggle-left',14) }} PANELLARNI BOSHQARISH</h3>
+      <form method="post">
+        <input type="hidden" name="action" value="save_panel">
+        {% set panel_list = [
+          ('trading', 'Trading bo\'limi'),
+          ('hacker_lab', 'Hacker Lab'),
+          ('startups', 'Startaplar'),
+          ('groups', 'Guruhlar'),
+          ('channels', 'Kanallar'),
+          ('reels', 'Reels'),
+          ('library', 'E-kutubxona'),
+          ('forum', 'Forum'),
+          ('ai', 'AI Yordamchi'),
+        ] %}
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+          {% for key, name in panel_list %}
+          {% set ps = panels.get(key, {'active': 1, 'msg': ''}) %}
+          <div style="padding:8px 10px; border:1px solid rgba(255,255,255,.06); border-radius:6px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:5px;">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px;">
+                <input type="checkbox" name="panel_{{ key }}" {{ 'checked' if ps.active }}
+                       style="accent-color:#00c853; width:16px; height:16px;">
+                {{ name }}
+              </label>
+              {% if ps.active %}
+              <span style="font-size:9px; color:#00c853; padding:2px 6px; background:rgba(0,200,83,.1); border-radius:4px;">● Yoqilgan</span>
+              {% else %}
+              <span style="font-size:9px; color:#ff4444; padding:2px 6px; background:rgba(255,68,68,.1); border-radius:4px;">● O'chirilgan</span>
+              {% endif %}
+            </div>
+            <input type="text" name="msg_{{ key }}"
+                   value="{{ ps.msg or '' }}"
+                   placeholder="Texnik xabar (ixtiyoriy)..."
+                   class="cs-input" style="font-size:10px; padding:4px 8px;">
+          </div>
+          {% endfor %}
+        </div>
+        <button type="submit" class="cs-btn cs-btn-sm cs-btn-full">{{ icon('save',12) }} Panel holatlarini saqlash</button>
+      </form>
+    </div>
+
+    <!-- TRADING TREND -->
+    <div class="cs-card">
+      <h3 style="font-size:13px; margin-bottom:14px; color:#1e90ff;">{{ icon('trending-up',14) }} TRADING TREND SOZLASH</h3>
+      <div style="margin-bottom:12px; padding:10px 12px; background:rgba(30,144,255,.06); border-radius:6px;">
+        <div style="display:flex; justify-content:space-between; font-size:11px;">
+          <div>
+            <div class="muted" style="font-size:9px;">JORIY NARX</div>
+            <div style="font-weight:700; color:#1e90ff; font-family:var(--cs-font-display);">{{ "%.4f"|format(current_price.price) }}</div>
+          </div>
+          {% if trend %}
+          <div style="text-align:right;">
+            <div class="muted" style="font-size:9px;">HOZIRGI TREND</div>
+            <div style="font-weight:700; color:{{ '#1e90ff' if trend.direction=='up' else '#ff4444' if trend.direction=='down' else '#888' }};">
+              {{ '⬆ UP' if trend.direction=='up' else '⬇ DOWN' if trend.direction=='down' else '—' }}
+              {{ trend.target_change_pct }}% / {{ trend.duration_days }} kun
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      <form method="post">
+        <input type="hidden" name="action" value="save_trading_trend">
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+          <div>
+            <div class="muted" style="font-size:10px; margin-bottom:4px;">YO'NALISH</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+              <label style="text-align:center; padding:8px; border:1px solid rgba(30,144,255,.3); border-radius:6px; cursor:pointer;">
+                <input type="radio" name="trend_direction" value="up" {{ 'checked' if not trend or trend.direction=='up' }} style="display:none;" id="dir_up" onclick="this.closest('label').style.borderColor='#1e90ff'">
+                <div style="font-size:16px;">⬆</div>
+                <div style="font-size:10px; color:#1e90ff;">Ko'tarilish</div>
+              </label>
+              <label style="text-align:center; padding:8px; border:1px solid rgba(255,68,68,.3); border-radius:6px; cursor:pointer;">
+                <input type="radio" name="trend_direction" value="down" {{ 'checked' if trend and trend.direction=='down' }} style="display:none;">
+                <div style="font-size:16px;">⬇</div>
+                <div style="font-size:10px; color:#ff4444;">Tushish</div>
+              </label>
+              <label style="text-align:center; padding:8px; border:1px solid rgba(255,255,255,.15); border-radius:6px; cursor:pointer;">
+                <input type="radio" name="trend_direction" value="neutral" {{ 'checked' if trend and trend.direction=='neutral' }} style="display:none;">
+                <div style="font-size:16px;">↔</div>
+                <div style="font-size:10px; color:#888;">Neytral</div>
+              </label>
+            </div>
+          </div>
+          <div>
+            <div class="muted" style="font-size:10px; margin-bottom:3px;">Maqsad o'zgarish (%) — muddatga</div>
+            <input type="number" name="target_pct" value="{{ trend.target_change_pct if trend else 5 }}"
+                   class="cs-input" style="font-size:13px;" min="0" max="100" step="0.5">
+            <div class="muted" style="font-size:9px; margin-top:2px;">Misol: 10% = narx {{ trend.duration_days if trend else 7 }} kunda 10% ko'tariladi/tushadi</div>
+          </div>
+          <div class="grid" style="grid-template-columns:1fr 1fr; gap:8px;">
+            <div>
+              <div class="muted" style="font-size:10px; margin-bottom:3px;">Muddat (kun)</div>
+              <input type="number" name="duration_days" value="{{ trend.duration_days if trend else 7 }}"
+                     class="cs-input" style="font-size:12px;" min="1" max="365">
+            </div>
+            <div>
+              <div class="muted" style="font-size:10px; margin-bottom:3px;">Volatillik (0.005–0.05)</div>
+              <input type="number" name="volatility" value="{{ trend.volatility if trend else 0.015 }}"
+                     class="cs-input" style="font-size:12px;" min="0.001" max="0.1" step="0.001">
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="cs-btn cs-btn-primary cs-btn-full">{{ icon('save',12) }} Trend sozlamalarini saqlash</button>
+        <div class="muted" style="font-size:9px; margin-top:6px; text-align:center;">Saqlangandan so'ng narx yangi tendensiyaga o'zgaradi</div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

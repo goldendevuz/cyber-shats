@@ -172,16 +172,10 @@
         if (!window.speechSynthesis) return null;
         var voices = window.speechSynthesis.getVoices();
         if (!voices.length) return null;
-        // Avval aniq o'zbek (uz-UZ)
-        var uz = voices.find(function(v) { return v.lang.toLowerCase().startsWith('uz'); });
-        if (uz) return uz;
-        // Keyin turk (yaqin)
-        var tr = voices.find(function(v) { return v.lang.toLowerCase().startsWith('tr'); });
-        if (tr) return tr;
-        // Keyin rus
+        // Birinchi navbatda Rus ovozi
         var ru = voices.find(function(v) { return v.lang.toLowerCase().startsWith('ru'); });
         if (ru) return ru;
-        // Keyin ingliz
+        // Agar rus bo'lmasa ingliz
         var en = voices.find(function(v) { return v.lang.toLowerCase().startsWith('en'); });
         if (en) return en;
         return voices[0];
@@ -197,7 +191,7 @@
         try {
             window.speechSynthesis.cancel();
             var utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'uz-UZ';
+            utterance.lang = 'ru-RU';
             utterance.rate = 0.8;
             utterance.pitch = 0.95;
             utterance.volume = 0.8;

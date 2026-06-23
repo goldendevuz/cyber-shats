@@ -1,6 +1,24 @@
 {% extends "base.html" %}
 {% from 'partials/icons.html' import icon %}
 {% block title %}CYBER SHATS — Barcha IT yo'nalishlari bir joyda{% endblock %}
+{% block extra_head %}<style>
+body {
+    background-image: url('/static/img/auth-bg.png');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(2,11,24,0.72) 0%, rgba(3,18,32,0.78) 100%);
+    z-index: 0;
+    pointer-events: none;
+}
+body > * { position: relative; z-index: 1; }
+</style>{% endblock %}
 {% block content %}
 
 <div id="intro-overlay">

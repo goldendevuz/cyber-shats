@@ -124,3 +124,21 @@ footer.site-footer a.f-link:hover { color: var(--cs-text-primary); }
 .curr-item .bar { margin-top:10px; }
 @media (max-width: 900px) { .curr-grid { grid-template-columns: repeat(2,1fr); } }
 @media (max-width: 480px) { .curr-grid { grid-template-columns: 1fr; } }
+
+/* Login va Register sahifalari uchun futbol fon rasmi */
+body.auth-body {
+    background-image: url('/static/img/auth-bg.png');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+body.auth-body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(2,11,24,0.60) 0%, rgba(3,18,32,0.65) 50%, rgba(2,11,24,0.60) 100%);
+    z-index: 0;
+    pointer-events: none;
+}
+body.auth-body > * { position: relative; z-index: 1; }

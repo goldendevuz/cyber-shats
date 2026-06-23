@@ -14,8 +14,8 @@ Tiklov mantig'i:
 - G'azna komisyasi: 2% (g'alaba va zarar summasidan)
 """
 import random
-import datetime
 import math
+import datetime
 from db import query_one, query_all, execute
 
 
@@ -29,22 +29,51 @@ MAX_PRICE = 3.0         # Maksimal narx
 VOLATILITY = 0.015      # Narx o'zgaruvchanlik koeffitsienti (0.1 sekunddagi)
 
 
+def _get_active_trend() -> dict:
+    """Admin belgilagan haftalik trend sozlamalarini qaytaradi."""
+    try:
+        row = query_one("SELECT * FROM trading_trend WHERE active=1 ORDER BY id DESC LIMIT 1")
+        if row:
+            return dict(row)
+    except Exception:
+        pass
+    return {"direction": "neutral", "target_change_pct": 0, "duration_days": 7, "volatility": VOLATILITY}
+
+
 def generate_next_price(current_price: float) -> tuple[float, float, int]:
     """
-    Geometric Brownian Motion (GBM) asosida keyingi narxni hisoblaydi.
-    Soddalashtirilgan, lekin haqiqiy bozordagi kabi ko'rinadi.
-    Returns: (yangi_narx, o'zgarish_%, yo'nalish)
-    """
-    # Random komponent (normal taqsimlangan)
-    drift = 0  # Trend yo'q — neytr
-    random_component = random.gauss(drift, VOLATILITY)
+    GBM asosida keyingi narxni hisoblaydi.
+    Admin haftalik trend belgilagan bo'lsa (up/down/neutral), shu tomonga moyil bo'ladi.
 
+    Drift hisoblash: volatility × trend_strength
+    Trend kuchi: target_pct / 100 / duration_days ni volatility ga nisbat sifatida
+    Bu usul real bozor tendensiyasini aks ettiradi — kichik, lekin sezilarli moyillik.
+    """
+    trend = _get_active_trend()
+    volatility = float(trend.get("volatility") or VOLATILITY)
+    duration_days = max(1, int(trend.get("duration_days") or 7))
+    target_pct = float(trend.get("target_change_pct") or 0)
+    direction_str = trend.get("direction", "neutral")
+
+    if direction_str == "neutral" or target_pct == 0:
+        drift = 0.0
+    else:
+        # Drift = volatility × (target_pct_per_day / 100)
+        # Bu real vaqtda sezilarli trend beradi
+        # 8% / 7 kun = 1.14% / kun = kunlik trend kuchi
+        daily_target = target_pct / duration_days / 100
+        # Drift = volatility × daily_target × 0.1 (yumshatish)
+        # Bu trend bor ekanini ko'rsatadi, lekin narx hali ham ikki tomonlama harakat qiladi
+        drift = volatility * daily_target * 0.08
+        sign = 1 if direction_str == "up" else -1
+        drift = sign * abs(drift)
+
+    random_component = random.gauss(drift, volatility)
     new_price = current_price * math.exp(random_component)
     new_price = max(MIN_PRICE, min(MAX_PRICE, round(new_price, 4)))
 
     change_pct = round(((new_price - current_price) / current_price) * 100, 3)
     direction = 1 if new_price > current_price else (-1 if new_price < current_price else 0)
-
     return new_price, change_pct, direction
 
 
@@ -230,8 +259,7 @@ def _close_position(pos: dict):
 
     # Foyda/zarar miqdori: tiklov × o'zgarish%
     pnl_raw = int(amount * price_change_pct / 100)
-    # commission_pct = 2  # 2%
-    commission_pct = 0  # 0%
+    commission_pct = 2  # 2%
 
     if correct:
         # G'alaba — tiklov qaytariladi + foyda qo'shiladi

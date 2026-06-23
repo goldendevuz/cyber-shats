@@ -1,0 +1,14 @@
+/* MUSTAQILLIK KUNI TEMA — Ko'k-Oq-Yashil */
+:root {
+    --cs-bg-primary:#020810; --cs-bg-secondary:#031015;
+    --cs-bg-card:#041520; --cs-bg-sidebar:#031015; --cs-bg-input:#051822;
+    --cs-text-primary:#1565c0; --cs-text-secondary:#2e7d32;
+    --cs-text-muted:#1a3a6a; --cs-text-cyan:#42a5f5;
+    --cs-text-white:#e3f2fd; --cs-text-red:#ef5350; --cs-text-accent:#ffd700;
+    --cs-border:rgba(21,101,192,0.25); --cs-border-active:rgba(21,101,192,0.6);
+    --cs-glow:0 0 12px rgba(21,101,192,0.3);
+}
+body::before{content:'';position:fixed;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,#1565c0 33%,#fff 33%,#fff 66%,#2e7d32 66%);z-index:99999;}
+.cs-btn-primary{background:linear-gradient(135deg,#0d47a1,#1976d2)!important;border-color:#1565c0!important;}
+.cs-card{background:#041520!important;border-color:rgba(21,101,192,0.2)!important;}

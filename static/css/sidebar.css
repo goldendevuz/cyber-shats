@@ -57,3 +57,63 @@
     .app-content { padding: 18px 14px; }
     body.sidebar-open::after { content:''; position:fixed; inset:0; background: rgba(0,0,0,0.6); z-index:190; }
 }
+
+/* Mobil qurilmalarda sidebar — kuchaytirilgan */
+@media (max-width: 900px) {
+    .cs-sidebar {
+        position: fixed !important;
+        top: 0; left: 0; bottom: 0;
+        z-index: 200 !important;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        width: var(--cs-sidebar-w) !important;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .cs-sidebar.open {
+        transform: translateX(0) !important;
+        box-shadow: 4px 0 30px rgba(0,0,0,0.8);
+    }
+    .app-main { margin-left: 0 !important; }
+
+    /* Overlay */
+    body.sidebar-open::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.65);
+        z-index: 199;
+        backdrop-filter: blur(2px);
+    }
+
+    /* Topbar tugmasi doimo ko'rinsin */
+    .mobile-topbar {
+        display: flex !important;
+        position: sticky;
+        top: 0;
+        z-index: 150;
+        background: var(--cs-bg-primary);
+    }
+
+    /* App content full width */
+    .app-content {
+        padding: 12px 10px !important;
+        min-height: calc(100vh - 60px);
+    }
+
+    /* Grid'lar mobilga moslashish */
+    .grid.grid-4 { grid-template-columns: 1fr 1fr !important; }
+    .grid.grid-3 { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 480px) {
+    .grid.grid-4 { grid-template-columns: 1fr 1fr !important; }
+    .grid.grid-3, .grid.grid-2 { grid-template-columns: 1fr !important; }
+
+    /* Trading paneli mobilda */
+    .grid[style*="1fr 295px"],
+    .grid[style*="1fr 300px"],
+    .grid[style*="1fr 280px"] {
+        grid-template-columns: 1fr !important;
+    }
+}
